@@ -1,0 +1,30 @@
+Mabel Zhang
+30 Aug 2018
+
+Uses BlenSor for rendering depth images of scenes with simulated Kinect sensor
+
+
+
+Paths to set:
+blender_add_py_paths.py
+  Paths of Python files to add to Blender search path
+config_paths.py
+  Path of data output
+
+
+In Blender, choose a pane you'd like to switch to console view, press Shift+F4.
+
+From within Blender console, run this to add the Python scripts to Blender
+  search path:
+  >>> exec(open('/media/master/Data_Ubuntu/courses/research/graspingRepo/visuotactile_grasping/catkin_ws/src/depth_scene_rendering/src/blender_add_py_paths.py').read())
+
+Now Blender knows about all scripts in the src directory.
+
+Import whatever functions you need, from the files in the added directories:
+>>> from scan_kinect import scan_kinect
+
+Now you can use the functions in Blender:
+>>> scan_kinect ()
+
+
+

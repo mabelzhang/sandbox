@@ -1,0 +1,16 @@
+path: /home/master/graspingRepo/train/dexnet/mini_dexnet
+objects:
+  - bar_clamp.obj
+  - climbing_hold.obj
+  - endstop_holder.obj
+  - gearbox.obj
+  - mount1.obj
+  - mount2.obj
+  - nozzle.obj
+  - part1.obj
+  - part3.obj
+  - pawn.obj
+  - pipe_connector.obj
+  - turbine_housing.obj
+  - vase.obj
+

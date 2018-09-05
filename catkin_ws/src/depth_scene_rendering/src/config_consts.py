@@ -10,7 +10,7 @@
 # Ref: https://blender.stackexchange.com/questions/5287/using-3rd-party-python-modules
 #
 
-path = '/home/master/graspingRepo/train/dexnet/mini_dexnet'
+obj_path = '/home/master/graspingRepo/train/dexnet/mini_dexnet'
 objects = [
   # Rotated in Blender manually to align to axis
   'bar_clamp_rotated.obj',

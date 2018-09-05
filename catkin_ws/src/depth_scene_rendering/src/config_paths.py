@@ -2,6 +2,9 @@
 
 # Mabel Zhang
 # 3 Sep 2018
+#
+# Paths that are not constants
+#
 
 import sys
 import os

@@ -1,0 +1,10 @@
+Mabel Zhang
+30 Aug 2018
+
+Data collection of simulated tactile grasps in GraspIt
+
+Tactile contact locations are simulated by xyzs of collisions between hand
+  mesh and object mesh.
+
+
+

@@ -6,6 +6,9 @@
 // Given a contact point, test whether the point is in front of, or behind,
 //   depth camera's reach.
 //
+// Usage:
+//   $ rosrun tactile_graspit_collection occlusion_test
+//
 
 // C++
 #include <fstream>
@@ -14,6 +17,7 @@
 //#include <experimental/filesystem>  // C++17
 
 // ROS
+#include <ros/ros.h>
 #include <ros/package.h>
 
 // Custom packages
@@ -25,6 +29,10 @@
 
 int main (int argc, char ** argv)
 {
+  ros::init (argc, argv, "occlusion_test");
+  ros::NodeHandle nh;
+
+
   // Need C++17. Doesn't work with linker, not sure why.
   //std::string this_dir = std::experimental::filesystem::current_path ();
   // Can use boost version instead
@@ -59,13 +67,16 @@ int main (int argc, char ** argv)
 
     // Make octree to hold point cloud, for raytrace test
     // Ref: http://pointclouds.org/documentation/tutorials/octree.php
-    RayTracer raytracer = RayTracer (cloud_ptr, octree_res);
+    RayTracer raytracer = RayTracer (cloud_ptr, octree_res, true, &nh);
 
     printf ("Testing ray-tracing...\n");
-    Eigen::Vector3f origin (-1, 0, 0);
-    Eigen::Vector3f direction (1, 0, 0);
-    Eigen::Vector3f point (0, 0, 0);
-    raytracer.raytrace_occlusion_test (origin, direction, point);
+    // Origin of ray is always from camera center, 0 0 0.
+    Eigen::Vector3f origin (0, 0, 0);
+    // 1 m along z of camera frame, i.e. straight out of and normal to image
+    //   plane.
+    Eigen::Vector3f endpoint (0, 0, 1);
+    bool occluded = raytracer.raytrace_occlusion_test (origin, endpoint);
+    printf ("Occluded? %s\n", occluded ? "true" : "false");
 
 
   }

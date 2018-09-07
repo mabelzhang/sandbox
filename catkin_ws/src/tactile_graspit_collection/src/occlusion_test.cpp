@@ -74,7 +74,11 @@ int main (int argc, char ** argv)
     Eigen::Vector3f origin (0, 0, 0);
     // 1 m along z of camera frame, i.e. straight out of and normal to image
     //   plane.
-    Eigen::Vector3f endpoint (0, 0, 1);
+    // TODO: Seems like Blender decides camera faces -z. So will shoot to -z.
+    //   Either that, or BlenSor pcd is in world frame. Check if that is the
+    //   case, by moving object elsewhere. Fix it so that the pcd is in camera
+    //   frame!
+    Eigen::Vector3f endpoint (0, 0, -1);
     bool occluded = raytracer.raytrace_occlusion_test (origin, endpoint);
     printf ("Occluded? %s\n", occluded ? "true" : "false");
 

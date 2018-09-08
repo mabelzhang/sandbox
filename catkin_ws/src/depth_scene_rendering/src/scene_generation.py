@@ -17,7 +17,7 @@
 
 
 import sys
-# Add current directory to path
+# Add current directory to Blender path
 sys.path.append ('/media/master/Data_Ubuntu/courses/research/graspingRepo/visuotactile_grasping/catkin_ws/src/depth_scene_rendering/src')
 # Add utilities
 sys.path.append ('/media/master/Data_Ubuntu/courses/research/github_repos/clean_repos/catkin_ws/src/util/util/src')
@@ -35,7 +35,7 @@ import bpy
 from scan_kinect import init_kinect, scan
 #from util.yaml_util import load_yaml
 import config_consts
-from config_paths import get_data_root
+from config_paths import get_intrinsics_path
 from util.ansi_colors import ansi_colors
 
 
@@ -109,27 +109,35 @@ for obj in bpy.context.selectable_objects:
   #bpy.ops.outliner.object_operation (type='TOGSEL')
 
 intrinsics = init_kinect ()
-intrinsics_name = os.path.join (get_data_root (), 'intrinsics.txt')
+intrinsics_path = get_intrinsics_path ()
 # Save camera intrinsics matrix to text file, formatted as YAML
 #   (Cannot write YAML directly, as Blender Python does not have PyYAML)
 # Don't want NumPy format, because might load in C++.
-np.savetxt (intrinsics_name, intrinsics, '%g')
+np.savetxt (intrinsics_path, intrinsics, '%g')
 print ('%sCamera intrinsics matrix written to %s%s' % (ansi_colors.OKCYAN,
-  intrinsics_name, ansi_colors.ENDC))
-print ('')
-
-
-#####
-# Define paths
+  intrinsics_path, ansi_colors.ENDC))
 
 # Get directory of current file
 this_dir = os.path.dirname (os.path.realpath (__file__))
 # Concatenate config file's relative path
 config_path = os.path.realpath (os.path.join (this_dir, '..', 'config'))
 
+# Write config text file with path to camera intrinsics path, for
+#   postprocess_scenes.py to read.
+intrinsics_cfg_path = os.path.join (config_path, 'intrinsics_path.txt')
+with open (intrinsics_cfg_path, 'w') as intrinsics_cfg_f:
+  intrinsics_cfg_f.write (intrinsics_path)
+print ('%sPath of camera intrinsics matrix written to %s%s' % (ansi_colors.OKCYAN,
+  intrinsics_cfg_path, ansi_colors.ENDC))
+print ('')
+
+
+#####
+# Define paths
+
 # Define file with list of scene .pcd names
 scene_list_path = os.path.join (config_path, 'scenes.txt')
-noisy_scene_list_path = os.path.join (config_path, 'noisy_scenes.txt')
+noisy_scene_list_path = os.path.join (config_path, 'scenes_noisy.txt')
 scene_list_f = open (scene_list_path, 'w')
 noisy_scene_list_f = open (noisy_scene_list_path, 'w')
 print ('%sPaths of output scenes .pcd files will be written to\n  %s\n  and noisy scenes to\n  %s%s' % (

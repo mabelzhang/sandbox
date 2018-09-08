@@ -14,14 +14,13 @@
 #include <fstream>
 #include <string>
 #include <stdio.h>
-//#include <experimental/filesystem>  // C++17
 
 // ROS
 #include <ros/ros.h>
 #include <ros/package.h>
 
 // Custom packages
-#include <util/io_util.h>
+#include <util/io_util.h>  // join_paths ()
 #include <util/pcd_util.h>
 #include <util/pcl_raytrace_util.h>
 
@@ -33,19 +32,12 @@ int main (int argc, char ** argv)
   ros::NodeHandle nh;
 
 
-  // Need C++17. Doesn't work with linker, not sure why.
-  //std::string this_dir = std::experimental::filesystem::current_path ();
-  // Can use boost version instead
-  //boost::filesystem::path this_dir (boost:filesystem::current_path ());
-
-
-  // Get path of this package
-  std::string pkg_path = ros::package::getPath ("tactile_graspit_collection");
+  // Get path of package
+  std::string pkg_path = ros::package::getPath ("depth_scene_rendering");
 
   // Text file with list of .pcd scene names
   std::string noisy_scene_list_path = "";
-  join_paths (pkg_path, "../depth_scene_rendering/config/noisy_scenes.txt",
-    noisy_scene_list_path);
+  join_paths (pkg_path, "config/noisy_scenes.txt", noisy_scene_list_path);
   std::ifstream noisy_scene_list_f (noisy_scene_list_path.c_str ());
 
   // Octree resolution

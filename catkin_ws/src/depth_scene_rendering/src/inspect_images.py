@@ -59,6 +59,21 @@ def main ():
   print (np.unique (im_pgm))
   matshow_image (im_pgm [:, :, 0], title='BlenSor PGM')
 
+
+  print ('My custom postprocess_scenes.cpp PNG output')
+  # Outputted from BlenSor Kinect camera directly
+  im_png_rawdepth = np_from_depth ('/media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/2018-09-04-15-41-22_noisy00000_view0.png')
+  print (im_png_rawdepth.shape)
+  # This prints True. So can simply matshow() on one channel and look at
+  #   colorbar to tell value.
+  print (np.all (im_png_rawdepth [:, :, 0] == im_png_rawdepth [:, :, 1]))
+  print (np.all (im_png_rawdepth [:, :, 1] == im_png_rawdepth [:, :, 2]))
+  print ('min %f, median %f, max %f' % (np.min (im_png_rawdepth), np.median (im_png_rawdepth),
+    np.max (im_png_rawdepth)))
+  print (np.unique (im_png_rawdepth))
+  matshow_image (im_png_rawdepth [:, :, 0], title='My Custom Raw Depth PNG')
+
+
   raw_input ('Press enter: ')
 
 

@@ -10,6 +10,8 @@ import sys
 import os
 
 
+# NOTE: Called by scene_generation.py, which runs in Blender Python.
+#   Do not use libraries not in Blender Python, e.g. PyYAML.
 def get_data_root ():
 
   # Get directory of current file
@@ -22,5 +24,13 @@ def get_data_root ():
     os.makedirs (data_root)
 
   return data_root
+
+
+# NOTE: Called by scene_generation.py, which runs in Blender Python.
+#   Do not use libraries not in Blender Python, e.g. PyYAML.
+def get_intrinsics_path ():
+
+  return os.path.join (get_data_root (), 'intrinsics.txt')
+
 
 

@@ -1,0 +1,15 @@
+cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
+
+project(depth_scene_rendering)
+
+find_package(PCL 1.2 REQUIRED)
+
+set(UTIL_PKG_DIR /media/master/Data_Ubuntu/courses/research/github_repos/clean_repos/catkin_ws/src/util/util/include)
+
+include_directories(${PCL_INCLUDE_DIRS} ${UTIL_PKG_DIR})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
+
+add_executable (postprocess_scenes src/postprocess_scenes.cpp)
+target_link_libraries (postprocess_scenes ${PCL_LIBRARIES})
+

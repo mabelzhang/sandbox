@@ -5,12 +5,29 @@ Uses BlenSor for rendering depth images of scenes with simulated Kinect sensor
 
 
 
-Paths to set:
+Paths to define:
 blender_add_py_paths.py
   Paths of Python files to add to Blender search path
 config_paths.py
   Path of data output
 
+
+==============================================================================
+Generate BlenSor scenes
+
+Entry point: scene_generation.py
+Core implementation of BlenSor Kinect scanning: scan_kinect.py
+
+
+To run from terminal:
+$ blensor -P scene_generation.py
+
+Headless (add -b):
+$ blensor -b -P scene_generation.py
+
+
+
+To run from Blender:
 
 In Blender, choose a pane you'd like to switch to console view, press Shift+F4.
 
@@ -25,6 +42,28 @@ Import whatever functions you need, from the files in the added directories:
 
 Now you can use the functions in Blender:
 >>> scan_kinect ()
+
+
+==============================================================================
+Convert pcd 3D scenes to 2D images with raw depth values
+
+Entry point: postprocess_scenes.cpp
+
+
+To build:
+Requires CMakeLists.txt.
+
+To build the first time:
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make
+
+
+
+
+
+
 
 
 

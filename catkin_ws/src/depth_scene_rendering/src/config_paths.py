@@ -29,8 +29,9 @@ def get_data_root ():
 # NOTE: Called by scene_generation.py, which runs in Blender Python.
 #   Do not use libraries not in Blender Python, e.g. PyYAML.
 def get_intrinsics_path ():
-
   return os.path.join (get_data_root (), 'intrinsics.txt')
 
+def get_depth_range_path ():
+  return os.path.join (get_data_root (), 'cam_depth_range.txt')
 
 

@@ -86,7 +86,9 @@ def init_kinect (cam_name='Camera'):
 
   ScanKinect.kinect_initialized = True
 
-  return P
+  return (P,
+    scanner.kinect_min_dist,  # Default 6.00
+    scanner.kinect_max_dist)  # Default 0.70
 
 
 # Parameters:

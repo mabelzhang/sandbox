@@ -45,10 +45,8 @@ int main (int argc, char ** argv)
   std::string pkg_path = ros::package::getPath ("depth_scene_rendering");
 
 
-  // Works, but don't need it. Raw depths already saved in .pcd!
-  /*
   ////////
-  // Load camera intrinsics matrix, written by scene_generation.py
+  // Load camera configuration, written by scene_generation.py
 
   // Load the file containing the path to camera intrinsics matrix
   std::string intrinsics_cfg_path = "";
@@ -57,6 +55,16 @@ int main (int argc, char ** argv)
   // Read the file
   std::string intrinsics_path = "";
   std::getline (intrinsics_cfg_f, intrinsics_path);
+  intrinsics_cfg_f.close ();
+
+  // Works, but don't need it. Raw depths already saved in .pcd!
+  /*
+  if (! boost::filesystem::exists (intrinsics_path))
+  {
+    fprintf (stderr, "%sERROR: Camera intrinsics file does not exist: "
+      "%s%s\n", FAIL, intrinsics_path.c_str (), ENDC);
+    return 0;
+  }
 
   // Read camera intrinsics matrix
   Eigen::Matrix3f intrinsics = Eigen::Matrix3f ();
@@ -71,7 +79,7 @@ int main (int argc, char ** argv)
     float c1, c2, c3;
     if (! (iss >> c1 >> c2 >> c3))
     {
-      printf ("ERROR: error reading row %d of camera intrinsics matrix in %s. Stopping.\n", row_i, intrinsics_path.c_str ());
+      printf ("%sERROR: error reading row %d of camera intrinsics matrix in %s. Stopping.%s\n", FAIL, row_i, intrinsics_path.c_str (), ENDC);
       break;
     }
 
@@ -83,22 +91,65 @@ int main (int argc, char ** argv)
   */
 
 
+  // Read BlenSor Kinect min/max depth range that generated the .pcd scenes.
+  //   File was written by scene_generation.py.
+  // Significance:
+  // This will be used to scale raw depth values to integer range [0, 255] to
+  //   save as image files. Rescaling all images by this same range is
+  //   important - it creates an absolute scale so that the raw depth can
+  //   always be recovered from the images.
+  //
+  //   BlenSor's PGM output does not allow recovering the raw depths, `.` each
+  //   image is rescaled to the image's own max depth, so the scale is relative
+  //   within each image, values across images are not comparable.
+
+  std::string depth_range_path;
+  dirname (intrinsics_path, depth_range_path);
+  join_paths (depth_range_path, "cam_depth_range.txt", depth_range_path);
+
+  if (! boost::filesystem::exists (depth_range_path))
+  {
+    fprintf (stderr, "%sERROR: Camera depth range config file does not exist: "
+      "%s%s\n", FAIL, depth_range_path.c_str (), ENDC);
+    return 0;
+  }
+
+  printf ("Reading camera depth range from %s\n", depth_range_path.c_str ());
+  std::ifstream depth_range_f (depth_range_path.c_str ());
+
+  std::string row = "";
+  float depth_range [2] = {0.0f, 0.0f};
+  int range_row_i = 0;
+  while (std::getline (depth_range_f, row))
+  {
+    //printf ("%s\n", row.c_str ());
+    std::istringstream iss (row);
+
+    if (! (iss >> depth_range [range_row_i]))
+    {
+      printf ("%sERROR: error reading row %d of camera depth range in %s. Stopping.%s\n", FAIL, range_row_i, depth_range_path.c_str (), ENDC);
+      break;
+    }
+
+    range_row_i ++;
+  }
+
+  float MIN_DEPTH = depth_range [0];
+  float MAX_DEPTH = depth_range [1];
+  printf ("%sGot Kinect range from configuration file: min %f, max %f.%s Will scale raw depths in .pcd files by this range to get integer image RGBs.\n",
+    OKCYAN, MIN_DEPTH, MAX_DEPTH, ENDC);
+
+  depth_range_f.close ();
+
+
+  /////
+  // Convert raw depths in pcd to integers to save as images
+
   // Text file with list of .pcd scene names, written by scene_generation.py
   std::string scene_list_path = "";
   //join_paths (pkg_path, "config/scenes_noisy.txt", scene_list_path);
   join_paths (pkg_path, "config/scenes_test.txt", scene_list_path);
   std::ifstream scene_list_f (scene_list_path.c_str ());
-
-  // Camera is never more than 2 m from table. PNG integer color values will be
-  //   obtained by scaling the raw floating point depth by this. This
-  //   corresponds to RGB values of 255.
-  //float MAX_DEPTH = 2.0;
-  // TODO: TEMPORARILY set to larger depth to test on BlenSor default cube scene
-  // TODO: Use BlenSor Kinect camera's max/min depth instead... using that, we can
-  //   recover the raw depth from their PGM, I think. Try it.
-  float MIN_DEPTH = 0.7;
-  float MAX_DEPTH = 6.0;
-
 
   // Read text file line by line
   std::string scene_path = "";
@@ -144,15 +195,6 @@ int main (int argc, char ** argv)
     }
 
     // Write raw depth values to file
-    // TODO: This is no good, image files are all of integer format!!! That is
-    //   why none of the PNG or PGM files had raw floating point depth, now I
-    //   see... duh!! To make values on the same scale for all integer images,
-    //   a max depth needs to be defined, and all images need to be scaled by
-    //   that depth.
-    //   But preferably the scaling is done at the CNN input step. I still
-    //   prefer storing raw depth map. The question is how do I visualize it to
-    //   make sure it looks right. I should scale it the same way as I would
-    //   scale it at the CNN input, and inspect it to make sure it makes sense.
     std::vector <std::string> exts;
     splitext (scene_path, exts);
     std::string depth_path = exts [0] + "_view0.png";

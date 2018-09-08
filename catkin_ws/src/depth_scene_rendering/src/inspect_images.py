@@ -44,8 +44,13 @@ def main ():
   print ('min %f, median %f, max %f' % (np.min (im_png_JPpcd2png2),
     np.median (im_png_JPpcd2png2), np.max (im_png_JPpcd2png2)))
   print (np.unique (im_png_JPpcd2png2))
-  matshow_image (im_png_JPpcd2png2 [:, :, 0], title='JP pcd2png2')
+  matshow_image (im_png_JPpcd2png2 [:, :, 0], title='JP pcd2png2 (Euclidean dist to camera center?)')
 
+  # BlenSor PGM scales the raw depth by the max depth in that specific image,
+  #   therefore values are not comparable across different images. It is a
+  #   relative scale within image, not an absolute scale across images. You
+  #   can never recover the raw depth from the PGM image.
+  # Ref writePGMFile() source max_depth https://github.com/mgschwan/blensor/blob/master/release/scripts/addons/blensor/evd.py
   print ('BlenSor Kinect camera PGM output')
   # Outputted from BlenSor Kinect camera directly
   im_pgm = np_from_depth ('/media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/2018-09-04-18-35-4700000.pgm')
@@ -57,7 +62,7 @@ def main ():
   print ('min %f, median %f, max %f' % (np.min (im_pgm), np.median (im_pgm),
     np.max (im_pgm)))
   print (np.unique (im_pgm))
-  matshow_image (im_pgm [:, :, 0], title='BlenSor PGM')
+  matshow_image (im_pgm [:, :, 0], title='BlenSor PGM (scaled by relative per-image depth)')
 
 
   print ('My custom postprocess_scenes.cpp PNG output')

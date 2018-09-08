@@ -35,7 +35,7 @@ import bpy
 from scan_kinect import init_kinect, scan
 #from util.yaml_util import load_yaml
 import config_consts
-from config_paths import get_intrinsics_path
+from config_paths import get_intrinsics_path, get_depth_range_path
 from util.ansi_colors import ansi_colors
 
 
@@ -108,14 +108,25 @@ for obj in bpy.context.selectable_objects:
   # Ref: https://docs.blender.org/api/blender_python_api_2_77_1/bpy.ops.outliner.html#bpy.ops.outliner.object_operation
   #bpy.ops.outliner.object_operation (type='TOGSEL')
 
-intrinsics = init_kinect ()
-intrinsics_path = get_intrinsics_path ()
-# Save camera intrinsics matrix to text file, formatted as YAML
+cam_info = init_kinect ()
+intrinsics = cam_info [0]
+kinect_min_dist = cam_info [1]
+kinect_max_dist = cam_info [2]
+# Write camera intrinsics matrix to text file, formatted as YAML
 #   (Cannot write YAML directly, as Blender Python does not have PyYAML)
 # Don't want NumPy format, because might load in C++.
+intrinsics_path = get_intrinsics_path ()
 np.savetxt (intrinsics_path, intrinsics, '%g')
 print ('%sCamera intrinsics matrix written to %s%s' % (ansi_colors.OKCYAN,
   intrinsics_path, ansi_colors.ENDC))
+
+# Write Kinect min/max depth range to text file, for postprocessing
+depth_range_path = get_depth_range_path ()
+with open (depth_range_path, 'w') as depth_range_f:
+  depth_range_f.write (str (kinect_min_dist) + os.linesep)
+  depth_range_f.write (str (kinect_max_dist))
+print ('%sCamera depth range written to %s%s' % (ansi_colors.OKCYAN,
+  depth_range_path, ansi_colors.ENDC))
 
 # Get directory of current file
 this_dir = os.path.dirname (os.path.realpath (__file__))

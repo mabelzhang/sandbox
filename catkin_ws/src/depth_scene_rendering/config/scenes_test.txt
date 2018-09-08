@@ -1,0 +1,1 @@
+/media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/2018-09-04-15-41-22_noisy00000.pcd

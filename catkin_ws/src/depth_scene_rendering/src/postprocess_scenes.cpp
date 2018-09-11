@@ -227,7 +227,14 @@ void inspect_image (cv::Mat & mat, double & min, double & max)
         if (mat.at <double> (r, c) > max)
           max = mat.at <double> (r, c);
       }
-      else if (depth == CV_8U || depth == CV_16U)
+      else if (depth == CV_8U)
+      {
+        if (mat.at <char> (r, c) < min)
+          min = mat.at <char> (r, c);
+        if (mat.at <char> (r, c) > max)
+          max = mat.at <char> (r, c);
+      }
+      else if (depth == CV_16U)
       {
         if (mat.at <unsigned int> (r, c) < min)
           min = mat.at <unsigned int> (r, c);
@@ -297,6 +304,7 @@ int main (int argc, char ** argv)
       CV_32F);
 
     float min_depth = FLT_MAX, max_depth = FLT_MIN;
+    float min_neg_depth = FLT_MAX, max_neg_depth = FLT_MIN;
 
     // Convert pcd to 2D matrix with raw depth values
     //   2D coordinates (u, v) are already in the pcl::PointCloud, since it's
@@ -308,18 +316,27 @@ int main (int argc, char ** argv)
     {
       for (int c = 0; c < cloud_ptr -> width; c ++)
       {
-        //raw_depth (r, c) = cloud_ptr -> at (c, r).z;
-        // TODO: z is all negative right now, need to find out why. For now,
-        //   just take absolute var, to debug png outputted
+        // NOTE: Blender camera's z-axis points behind camera. So all z's are
+        //   negative. Multiply by -1 to get positive depth.
         raw_depth.at <float> (r, c) = cloud_ptr -> at (c, r).z * -1.0;
 
-        if (- cloud_ptr -> at (c, r).z > max_depth)
-          max_depth = - cloud_ptr -> at (c, r).z;
-        if (- cloud_ptr -> at (c, r).z < min_depth)
-          min_depth = - cloud_ptr -> at (c, r).z;
+        // DEBUG
+        if (cloud_ptr -> at (c, r).z > max_depth)
+          max_depth = cloud_ptr -> at (c, r).z;
+        if (cloud_ptr -> at (c, r).z < min_depth)
+          min_depth = cloud_ptr -> at (c, r).z;
+
+        // DEBUG
+        if (- cloud_ptr -> at (c, r).z > max_neg_depth)
+          max_neg_depth = - cloud_ptr -> at (c, r).z;
+        if (- cloud_ptr -> at (c, r).z < min_neg_depth)
+          min_neg_depth = - cloud_ptr -> at (c, r).z;
       }
     }
-    fprintf (stderr, "(TODO: NEGATIVE) Cloud inspection: min %g, max %g\n", min_depth, max_depth);
+    fprintf (stderr, "Cloud inspection (raw): min %g, max %g\n",
+      min_depth, max_depth);
+    fprintf (stderr, "Cloud inspection (after * -1): min %g, max %g\n",
+      min_neg_depth, max_neg_depth);
 
     double min_raw = 0.0, max_raw = 0.0;
     fprintf (stderr, "raw_depth inspection: ");
@@ -341,11 +358,6 @@ int main (int argc, char ** argv)
     double min_scaled = 0.0, max_scaled = 0.0;
     fprintf (stderr, "depth_img_channel inspection: ");
     inspect_image (depth_img_channel, min_scaled, max_scaled);
-
-    /*
-    // Convert type to ints
-    depth_img_channel.convertTo (depth_img_channel, CV_8UC1);
-    */
 
     // Duplicate the channel to 3 channels, to fit image formats for saving
     cv::Mat depth_img = cv::Mat::zeros (depth_img_channel.rows,
@@ -370,15 +382,43 @@ int main (int argc, char ** argv)
     fprintf (stderr, "depth_converted inspection: ");
     inspect_image (depth_converted, min_cvt, max_cvt);
 
-    // TODO: TEMPORARY, * -1 to reverse the temp compensation of negatve depth values in BlenSor scan
-    depth_converted *= -1;
-
+    // If all elts equal, all elts will == true, nonzero.
     // API https://docs.opencv.org/2.4/modules/core/doc/basic_structures.html#matrix-expressions
-    if (cv::countNonZero (raw_depth == depth_converted) == 0)
+    cv::Mat match = (raw_depth - depth_converted < 1e-6);
+    // NaN does not equal itself. If a != a, then it is nan.
+    int nNans = cv::countNonZero (raw_depth != raw_depth);
+    // Number of elements that match = num_matches + num_nans (nans never match)
+    int nMatches = cv::countNonZero (match) + nNans;
+
+    printf ("%d (should be %d) recovered depth values matched original (%d NaNs).\n",
+      nMatches, depth_converted.rows * depth_converted.cols, nNans);
+    if (nMatches == depth_converted.rows * depth_converted.cols)
       printf ("Converted depths == raw depths. "
-        "Raw depths recovered from converted image.\n");
+        "Raw depths correctly recovered from converted image.\n");
     else
       printf ("Converted depths != raw depths! Find out why.\n");
+
+    // DEBUG: Compare the two matrices
+    if (nMatches != depth_converted.rows * depth_converted.cols)
+    {
+      for (int r = 0; r < depth_converted.rows; r ++)
+      {
+        for (int c = 0; c < depth_converted.cols; c ++)
+        {
+          if (! match.at <char> (r, c) && ! isnan (raw_depth.at <float> (r, c)))
+            printf ("Mismatch: %f to %f\n", raw_depth.at <float> (r, c),
+              depth_converted.at <float> (r, c));
+        }
+      }
+    }
+
+    // Multiply -1 to compensate for Blender camera z pointing backwards.
+    cv::Mat depth_converted_neg = depth_converted * -1;
+
+    // Inspect to see if match values in original point cloud
+    min_cvt = 0.0, max_cvt = 0.0;
+    fprintf (stderr, "depth_converted inspection (after * -1): ");
+    inspect_image (depth_converted_neg, min_cvt, max_cvt);
   }
 
   scene_list_f.close ();

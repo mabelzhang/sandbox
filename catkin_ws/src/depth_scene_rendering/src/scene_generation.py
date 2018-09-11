@@ -4,7 +4,7 @@
 # 3 Sep 2018
 #
 # Entry point.
-# To be executed in Blender.
+# To be executed in Blender. All imports must exist in Blender Python.
 #
 # Usage:
 #   $ blensor -P scene_generation.py

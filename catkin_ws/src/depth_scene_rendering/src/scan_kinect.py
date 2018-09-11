@@ -4,7 +4,7 @@
 # 3 Sep 2018
 #
 # Make Kinect scans in Blender, using BlenSor.
-# To be executed in Blender.
+# To be executed in Blender. All imports must exist in Blender Python.
 #
 # Usage:
 #   $ blensor

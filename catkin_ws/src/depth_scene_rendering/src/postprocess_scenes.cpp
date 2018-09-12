@@ -2,10 +2,13 @@
 // 4 Sep 2018
 //
 // Convert .pcd files from BlenSor (outputted by scene_generation.py, which
-//   calls scan_kinect.py), to 2D images with raw depth values, using OpenCV and
-//   intrinsic camera matrix from BlenSor.
-// This can't be done from within Blender, `.` Blender doesn't know about
-//   OpenCV libraries. Must do as post-processing from terminal.
+//   calls scan_kinect.py), to 2D images, by scaling by constant min and max
+//   depth values saved from BlenSor. Scaling by constants enable us to later
+//   recover the raw depth values from the images, which have integer values.
+// This is not possible with BlenSor's PGM image output, because the PGMs are
+//   created by scaling the raw depth by the max depth in each individual
+//   image, not a constant across all images. This means 1. the image values
+//   are not comparable across images, and 2. raw depths cannot be recovered.
 //
 // Usage:
 // $ rosrun depth_scene_rendering postprocess_scenes 

@@ -137,6 +137,9 @@ int main (int argc, char ** argv)
  
     // Load scene cloud
     load_cloud_file (scene_path, cloud_ptr);
+    // NOTE: Blender camera's z-axis points behind camera. So all z's are
+    //   negative. Multiply by -1 to get positive depth.
+    flip_z (cloud_ptr);
     printf ("Cloud size: %ld points\n", cloud_ptr->size ());
     printf ("Organized? %s\n", cloud_ptr->isOrganized () ? "true" : "false");
 
@@ -158,9 +161,7 @@ int main (int argc, char ** argv)
     {
       for (int c = 0; c < cloud_ptr -> width; c ++)
       {
-        // NOTE: Blender camera's z-axis points behind camera. So all z's are
-        //   negative. Multiply by -1 to get positive depth.
-        raw_depth.at <float> (r, c) = cloud_ptr -> at (c, r).z * -1.0;
+        raw_depth.at <float> (r, c) = cloud_ptr -> at (c, r).z;
 
         // DEBUG
         if (cloud_ptr -> at (c, r).z > max_depth)
@@ -177,8 +178,6 @@ int main (int argc, char ** argv)
     }
     fprintf (stderr, "Cloud inspection (raw): min %g, max %g\n",
       min_depth, max_depth);
-    fprintf (stderr, "Cloud inspection (after * -1): min %g, max %g\n",
-      min_neg_depth, max_neg_depth);
 
     double min_raw = 0.0, max_raw = 0.0;
     fprintf (stderr, "raw_depth inspection: ");
@@ -253,15 +252,6 @@ int main (int argc, char ** argv)
         }
       }
     }
-
-    // Debug
-    // Multiply -1 to compensate for Blender camera z pointing backwards.
-    cv::Mat depth_converted_neg = depth_converted * -1;
-
-    // Inspect to see if match values in original point cloud
-    min_cvt = 0.0, max_cvt = 0.0;
-    fprintf (stderr, "depth_converted inspection (after * -1): ");
-    inspect_image (depth_converted_neg, min_cvt, max_cvt);
   }
 
   scene_list_f.close ();

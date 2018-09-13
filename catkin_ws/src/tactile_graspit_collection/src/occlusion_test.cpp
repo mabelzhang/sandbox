@@ -78,11 +78,7 @@ public:
   //   visible_uv, occluded_uv: Return values. Image coordinates (u, v) of
   //     3D points in pts parameter, projected onto image plane by P.
   void separate_and_project (Eigen::MatrixXf & pts,
-    std::vector <bool> occluded,
-    //std::vector <int> & visible, std::vector <int> & occluded,
-    Eigen::MatrixXf & P,
-    //Eigen::MatrixXf & visible_uv, Eigen::MatrixXf & occluded_uv)
-    int height, int width,
+    std::vector <bool> occluded, Eigen::MatrixXf & P, int height, int width,
     cv::Mat & visible_img, cv::Mat & occluded_img)
   {
     // Pseudocode, this function simply does this, but is a lot of code because
@@ -91,6 +87,12 @@ public:
     // img_coords_visible = P * pts [not occluded]
 
 
+    // Don't need last column of P. No distortion in simulated cam,
+    //   P[0:3, 0:3] == K.
+    //   Also don't need to divide by w, which just == depth z. (u, v) are
+    //   already the correct image coordinates. Dividing by w simply always
+    //   gives the center point of image.
+    /*
     // Make matrices homogeneous
     // Concatenate a row of 1s to bottom of matrix, using comma operator
     //   Ref: https://stackoverflow.com/questions/21496157/eigen-how-to-concatenate-matrix-along-a-specific-dimension
@@ -98,8 +100,8 @@ public:
     Eigen::MatrixXf pts4 (4, pts.cols ());
     pts4 << pts, Eigen::MatrixXf::Ones (1, pts.cols ());
 
-    // Project points into image plane, to find (u, v) image coords of the
-    //   3D points.
+    // Project points into image plane, to find (u, v) rectified image coords
+    //   of the 3D points.
     //   [u v w]' = P * [X Y Z 1]'
     //   x = u / w
     //   y = v / w
@@ -117,48 +119,18 @@ public:
     //   reallocate a new matrix.
     Eigen::MatrixXi uv = uv3.topRows (2).array ().round ().cast <int> ();
     std::cerr << "Final image coordinates:" << std::endl << uv << std::endl;
-
-
-    /*
-    // Separate visible and occluded points
-
-    // Instantiate matrices of visible and occluded points
-    //   Init to 3 x n, as opposed to n x 3, so that each column is a point,
-    //     indexing gets faster `.` Eigen is column-major by default.
-    // 2 x n_visible
-    Eigen::MatrixXf visible_uv = Eigen::MatrixXf::Zero (2, visible.size ());
-    // 2 x n_occluded
-    Eigen::MatrixXf occluded_uv = Eigen::MatrixXf::Zero (2, occluded.size ());
-
-    // Populate matrices of points, separating visible and occluded points
-    // No slice indexing in Eigen default, other than in dev, so will use
-    //   for-loop
-    for (int i = 0; i < visible.size (); i ++)
-    {
-      visible_uv.col (i) = uv.col (visible.at (i));
-    }
-    for (int i = 0; i < occluded.size (); i ++)
-    {
-      occluded_uv.col (i) = uv.col (occluded.at (i));
-    }
     */
 
+    // 3 x 3
+    // Project points into image plane, to find (u, v) image coords of the
+    //   3D points.
+    //   [u v z] = K * [X Y Z]'
+    // Extract intrinsics matrix K from projection matrix P.
+    // Multiplication result is (u, v, depth)
+    Eigen::MatrixXf K = P.leftCols (3);
+    Eigen::MatrixXi uv = (K * pts).array ().round ().cast <int> ();
+    std::cerr << "Final image coordinates:" << std::endl << uv << std::endl;
 
-/*
-  }
-
-  // Parameters:
-  //   visible_uv, occluded_uv: Inputs. Returned from separate_and_project(),
-  //     2D image coordinates (u, v) of visible and occluded points projected
-  //     into the image plane.
-  //   visible_img, occluded_img: Return values. 2D images of mostly 0s, with 1s
-  //     at visible and occluded points.
-  void create_heatmap (
-    Eigen::MatrixXf & visible_uv, Eigen::MatrixXf & occluded_uv,
-    int height, int width,
-    cv::Mat & visible_img, cv::Mat & occluded_img)
-  {
-*/
 
     // Instantiate empty heat maps
     cv::Mat visible_f = cv::Mat::zeros (height, width, CV_32F);
@@ -168,14 +140,13 @@ public:
     for (int i = 0; i < occluded.size (); i ++)
     {
       // I(v, u) = depth z
-      // Multiply by -1, to account for Blender camera facing -z.
       if (occluded.at (i) == false)
-        visible_f.at <float> (uv (1, i), uv (0, i)) = -1.0 * pts (2, i); 
+        visible_f.at <float> (uv (1, i), uv (0, i)) = pts (2, i); 
       else
-        occluded_f.at <float> (uv (1, i), uv (0, i)) = -1.0 * pts (2, i); 
+        occluded_f.at <float> (uv (1, i), uv (0, i)) = pts (2, i); 
 
-      fprintf (stderr, "%f (scaled to %d)\n", -1.0 * pts (2, i),
-        converter_.convert_depth_to_int (-1.0 * pts (2, i)));
+      fprintf (stderr, "%f (scaled to %d)\n", pts (2, i),
+        converter_.convert_depth_to_int (pts (2, i)));
     }
 
 
@@ -243,6 +214,8 @@ int main (int argc, char ** argv)
  
     // Load scene cloud
     load_cloud_file (scene_path, cloud_ptr);
+    // Multiply by -1, to account for Blender camera facing -z.
+    flip_z (cloud_ptr);
     fprintf (stderr, "Cloud size: %ld points\n", cloud_ptr->size ());
     fprintf (stderr, "Organized? %s\n",
       cloud_ptr->isOrganized () ? "true" : "false");
@@ -289,10 +262,10 @@ int main (int argc, char ** argv)
       //std::cerr << "noisy_pt: " << endpoints.col (i).transpose () << std::endl;
     }
 
+    std::cerr << "endpoints: " << std::endl;
+    std::cerr << endpoints << std::endl;
+
     // Do ray-trace occlusion test for each endpoint
-    // Indices of occluded and visible endpoints
-    //std::vector <int> occluded;
-    //std::vector <int> visible;
     std::vector <bool> occluded;
     for (int i = 0; i < nPts; i ++)
     {
@@ -307,13 +280,6 @@ int main (int argc, char ** argv)
       occluded.push_back (curr_occluded);
       fprintf (stderr, "Occluded? %s\n", curr_occluded ? "true" : "false");
 
-      /*
-      if (curr_occluded)
-        occluded.push_back (curr_occluded);
-      else
-        visible.push_back (curr_occluded);
-      */
-
       // Debug
       //char enter;
       //std::cerr << "Press any character, then press enter: ";
@@ -327,15 +293,11 @@ int main (int argc, char ** argv)
 
     // Separate endpoints into visible and occluded, in pixel coordinates
     Eigen::MatrixXf visible_uv, occluded_uv;
-    //separator.separate_and_project (endpoints, visible, occluded, P,
-    //  visible_uv, occluded_uv);
 
     // Create heatmaps of visible and occluded points, in image plane.
     // In order to save images as images, esp convenient for debugging, images
     //   must be integers, 3 channels.
     cv::Mat visible_img, occluded_img;
-    //separator.create_heatmap (visible_uv, occluded_uv, cloud_ptr -> height,
-    //  cloud_ptr -> width, visible_img, occluded_img);
 
     separator.separate_and_project (endpoints, occluded, P,
       cloud_ptr -> height, cloud_ptr -> width, visible_img, occluded_img);
@@ -345,8 +307,11 @@ int main (int argc, char ** argv)
     cv::Mat dst;
     cv::normalize (visible_img, dst, 0, 1, cv::NORM_MINMAX);
     cv::imshow ("Visible contacts", visible_img);
+    cv::waitKey (0);
+
     //cv::namedWindow ("Occluded contacts", cv::WINDOW_AUTOSIZE);
-    //cv::imshow ("Occluded contacts", occluded_img);
+    cv::normalize (occluded_img, dst, 0, 1, cv::NORM_MINMAX);
+    cv::imshow ("Occluded contacts", occluded_img);
     // Press in the open window to close it
     cv::waitKey (0);
 

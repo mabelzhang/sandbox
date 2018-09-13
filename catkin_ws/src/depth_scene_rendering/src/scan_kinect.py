@@ -54,7 +54,8 @@ class ScanKinect:
 # Call this before calling scan()
 # Parameters:
 #   cam_name: Name of BlenSor camera in Blender scene.
-# Returns camera intrinsics matrix
+# Returns 3 x 4 camera projection matrix (really the intrinsics matrix,
+#   with Tx = Ty = 0 added to be projection, `.` no distortion in simulation.)
 def init_kinect (cam_name='Camera'):
 
   print ('Initializing camera...')
@@ -84,11 +85,15 @@ def init_kinect (cam_name='Camera'):
   print ('Camera intrinsics matrix:')
   print (P)
 
+  # TODO: 13 Sep 2018 TEMPORARY: Trying to shrink range to see if makes
+  #   scaled tactile heatmaps have more varied range and visible.
+  scanner.kinect_max_dist = 2.0
+
   ScanKinect.kinect_initialized = True
 
   return (P,
-    scanner.kinect_min_dist,  # Default 6.00
-    scanner.kinect_max_dist)  # Default 0.70
+    scanner.kinect_min_dist,  # Default 0.70
+    scanner.kinect_max_dist)  # Default 6.00
 
 
 # Parameters:

@@ -49,18 +49,7 @@ Convert pcd 3D scenes to 2D images with raw depth values
 
 Entry point: postprocess_scenes.cpp
 
-
-To build:
-Requires CMakeLists.txt.
-
-To build the first time:
-$ mkdir build
-$ cd build
-$ cmake ..
-$ make
-
-
-
+$ rosrun depth_scene_rendering postprocess_scenes
 
 
 

@@ -12,12 +12,16 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   util
+  depth_scene_rendering
 )
 
 # cmake_modules is needed to find Eigen!
 find_package(cmake_modules REQUIRED)
 # For Indigo and Ubuntu 14.04, use Eigen3 http://answers.ros.org/44140/fatal-error-eigencore-no-such-file-or-directory
 find_package(Eigen3 REQUIRED)
+
+# Ref https://answers.ros.org/question/241499/cmakeliststxt-and-packagexml-files-of-ros-image-to-cv-image-conversion/
+find_package(OpenCV REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
@@ -109,10 +113,10 @@ find_package(Boost REQUIRED COMPONENTS system)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+  INCLUDE_DIRS include
 #  LIBRARIES tactile_graspit_collection
 #  CATKIN_DEPENDS roscpp rospy std_msgs
-  CATKIN_DEPENDS roscpp util
+  CATKIN_DEPENDS roscpp util depth_scene_rendering
 #  DEPENDS system_lib
 )
 
@@ -123,9 +127,10 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  include
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIR}
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -154,9 +159,8 @@ add_executable(occlusion_test src/occlusion_test.cpp)
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(occlusion_test
-  ${catkin_LIBRARIES} ${Boost_LIBRARIES}
-)
+target_link_libraries(occlusion_test ${catkin_LIBRARIES} ${Boost_LIBRARIES}
+  ${OpenCV_LIBRARIES})
 
 #############
 ## Install ##

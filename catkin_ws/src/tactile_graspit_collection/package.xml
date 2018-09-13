@@ -62,6 +62,10 @@
   <build_depend>util</build_depend>
   <exec_depend>util</exec_depend>
 
+  <build_depend>depth_scene_rendering</build_depend>
+  <build_export_depend>depth_scene_rendering</build_export_depend>
+  <exec_depend>depth_scene_rendering</exec_depend>
+
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

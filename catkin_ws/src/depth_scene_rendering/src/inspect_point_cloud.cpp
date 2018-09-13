@@ -21,7 +21,8 @@
 
 int main (int argc, char ** argv)
 {
-  std::string cloud_path = "/media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/2018-09-08-01-18-17_noisy00000.pcd";
+  //std::string cloud_path = "/media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/2018-09-08-01-18-17_noisy00000.pcd";
+  std::string cloud_path = "/media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/2018-09-13-00-08-53_noisy00000.pcd";
 
   // Instantiate cloud
   pcl::PointCloud <pcl::PointXYZ>::Ptr cloud_ptr =

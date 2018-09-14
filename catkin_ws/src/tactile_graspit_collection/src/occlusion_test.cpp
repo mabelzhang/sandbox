@@ -33,6 +33,7 @@
 #include <util/pcd_util.h>
 #include <util/pcl_raytrace_util.h>  // RayTracer
 #include <util/ansi_colors.h>
+#include <util/filter.h>  // blob_filter ()
 #include <depth_scene_rendering/camera_info.h>  // load_intrinsics ()
 #include <depth_scene_rendering/depth_to_image.h>  // RawDepthConversion
 
@@ -302,20 +303,7 @@ int main (int argc, char ** argv)
     separator.separate_and_project (endpoints, occluded, P,
       cloud_ptr -> height, cloud_ptr -> width, visible_img, occluded_img);
 
-    // Display visible_img, occluded_img, to debug
-    //cv::namedWindow ("Visible contacts", cv::WINDOW_AUTOSIZE);
-    cv::Mat dst;
-    cv::normalize (visible_img, dst, 0, 1, cv::NORM_MINMAX);
-    cv::imshow ("Visible contacts", visible_img);
-    cv::waitKey (0);
-
-    //cv::namedWindow ("Occluded contacts", cv::WINDOW_AUTOSIZE);
-    cv::normalize (occluded_img, dst, 0, 1, cv::NORM_MINMAX);
-    cv::imshow ("Occluded contacts", occluded_img);
-    // Press in the open window to close it
-    cv::waitKey (0);
-
-    // Save visible and occluded images
+    // Save visible and occluded channels
     std::vector <std::string> exts;
     splitext (scene_path, exts);
     std::string visible_path = exts [0];
@@ -329,6 +317,70 @@ int main (int argc, char ** argv)
     cv::imwrite (occluded_path, occluded_img);
     fprintf (stderr, "%sWritten occluded heatmap to %s%s\n", OKCYAN,
       occluded_path.c_str (), ENDC);
+
+
+    // Blob the visible and occluded images, to create heatmaps. Save to file
+    cv::Mat visible_blob, occluded_blob;
+    std::string vis_blob_path = exts [0];
+    vis_blob_path += "_vis_blob.png";
+    // In my visualize_dataset.py on adv_synth of dexnet, used BLOB_EXPAND=2, BLOB_GAUSS=0.5
+    blob_filter (visible_img, visible_blob, 11, 7);
+    cv::imwrite (vis_blob_path, visible_blob);
+    fprintf (stderr, "%sWritten visible blobbed heatmap to %s%s\n", OKCYAN,
+      vis_blob_path.c_str (), ENDC);
+
+    std::string occ_blob_path = exts [0];
+    occ_blob_path += "_occ_blob.png";
+    blob_filter (occluded_img, occluded_blob, 21, 17);
+    cv::imwrite (occ_blob_path, occluded_blob);
+    fprintf (stderr, "%sWritten occluded blobbed heatmap to %s%s\n", OKCYAN,
+      occ_blob_path.c_str (), ENDC);
+
+    // Debug blob_filter()
+    // Convert cv::Mat to std::vector
+    // https://gist.github.com/mryssng/f43c9ae4cae13b204855e108a004c73a
+    std::vector <float> vis_blob_vec;
+    if (visible_blob.isContinuous())
+    {
+      vis_blob_vec.assign((uchar*)visible_blob.datastart, (uchar*)visible_blob.dataend);
+    }
+    else
+    {
+      for (int i = 0; i < visible_blob.rows; ++i)
+      {
+        vis_blob_vec.insert(vis_blob_vec.end(), visible_blob.ptr<uchar>(i), visible_blob.ptr<uchar>(i)+visible_blob.cols);
+      }
+    }
+
+    // Debug blob_filter()
+    // Find unique elts
+    // https://stackoverflow.com/questions/1041620/whats-the-most-efficient-way-to-erase-duplicates-and-sort-a-vector
+    sort (vis_blob_vec.begin (), vis_blob_vec.end ());
+    vis_blob_vec.erase (unique (vis_blob_vec.begin (), vis_blob_vec.end ()),
+      vis_blob_vec.end ());
+    std::cerr << "Unique values in visible image:" << std::endl;
+    for (int i = 0; i < vis_blob_vec.size (); i ++)
+    {
+      std::cerr << vis_blob_vec.at (i) << std::endl;
+    }
+
+
+    // Display heatmaps to debug
+    //cv::namedWindow ("Visible contacts", cv::WINDOW_AUTOSIZE);
+    cv::Mat dst;
+    //cv::normalize (visible_img, dst, 0, 1, cv::NORM_MINMAX);
+    //cv::imshow ("Visible contacts", visible_img);
+    //cv::normalize (visible_blob, dst, 0, 1, cv::NORM_MINMAX);
+    cv::imshow ("Visible contacts", visible_blob);
+    cv::waitKey (0);
+
+    //cv::namedWindow ("Occluded contacts", cv::WINDOW_AUTOSIZE);
+    //cv::normalize (occluded_img, dst, 0, 1, cv::NORM_MINMAX);
+    //cv::imshow ("Occluded contacts", occluded_img);
+    //cv::normalize (occluded_blob, dst, 0, 1, cv::NORM_MINMAX);
+    cv::imshow ("Occluded contacts", occluded_blob);
+    // Press in the open window to close it
+    cv::waitKey (0);
   }
 
   return 0;

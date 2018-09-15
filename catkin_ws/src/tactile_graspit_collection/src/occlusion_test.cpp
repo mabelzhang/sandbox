@@ -292,6 +292,10 @@ int main (int argc, char ** argv)
     // Save visible and occluded channels
     std::vector <std::string> exts;
     splitext (scene_path, exts);
+
+    // Optional. Individual non-zero point. Saving because easier to test
+    //   different parameters of blob, than to regenerate contact points and
+    //   raytracing.
     std::string visible_path = exts [0];
     visible_path += "_vis.png";
     cv::imwrite (visible_path, visible_img);
@@ -318,8 +322,9 @@ int main (int argc, char ** argv)
     //   BLOB_GAUSS=0.5, for 32 x 32 images. Python gaussian function doesn't
     //   have size, only sigma.
     cv::Mat visible_blob, occluded_blob;
-    int BLOB_EXPAND = 31;
-    int GAUSS_SZ = 31;
+    // Use 31 for uncropped 640x480. 15 or smaller for cropped 100x100.
+    int BLOB_EXPAND = 15;
+    int GAUSS_SZ = 15;
     // Pass in 0 to let OpenCV calculating sigma from size
     float GAUSS_SIGMA = 0;
 
@@ -361,11 +366,11 @@ int main (int argc, char ** argv)
     // Debug blob_filter()
     // Find unique elts
     // https://stackoverflow.com/questions/1041620/whats-the-most-efficient-way-to-erase-duplicates-and-sort-a-vector
-    sort (vis_blob_vec.begin (), vis_blob_vec.end ());
-    vis_blob_vec.erase (unique (vis_blob_vec.begin (), vis_blob_vec.end ()),
-      vis_blob_vec.end ());
-    fprintf (stderr, "%ld unique values in visible image:\n",
-      vis_blob_vec.size ());
+    //sort (vis_blob_vec.begin (), vis_blob_vec.end ());
+    //vis_blob_vec.erase (unique (vis_blob_vec.begin (), vis_blob_vec.end ()),
+    //  vis_blob_vec.end ());
+    //fprintf (stderr, "%ld unique values in visible image:\n",
+    //  vis_blob_vec.size ());
     //for (int i = 0; i < vis_blob_vec.size (); i ++)
     //{
     //  std::cerr << vis_blob_vec.at (i) << std::endl;

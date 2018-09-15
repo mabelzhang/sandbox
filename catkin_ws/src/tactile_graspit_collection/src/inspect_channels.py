@@ -25,8 +25,8 @@ def main ():
 
   # Visible and occluded tactile channels outputted by occlusion_test.cpp
   ims = [
-    '/media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/2018-09-13-01-17-46_noisy00000_vis_blob.png',
-    '/media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/2018-09-13-01-17-46_noisy00000_occ_blob.png'
+    '/media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/2018-09-15-02-55-32_noisy00000_vis_blob.png',
+    '/media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/2018-09-15-02-55-32_noisy00000_occ_blob.png'
   ]
 
   for i in range (len (ims)):
@@ -36,12 +36,12 @@ def main ():
     print (im.shape)
     # This prints True. So can simply matshow() on one channel and look at
     #   colorbar to tell value.
-    print (np.all (im [:, :, 0] == im [:, :, 1]))
-    print (np.all (im [:, :, 1] == im [:, :, 2]))
+    #print (np.all (im [:, :, 0] == im [:, :, 1]))
+    #print (np.all (im [:, :, 1] == im [:, :, 2]))
     print ('min %f, median %f, max %f' % (np.min (im), np.median (im),
       np.max (im)))
-    print (np.unique (im))
-    print (np.nonzero (im))
+    #print (np.unique (im))
+    #print (np.nonzero (im))
 
     # For output of postprocess_scenes.cpp
     #convolved = blob_kernel (im [:, :, 0])

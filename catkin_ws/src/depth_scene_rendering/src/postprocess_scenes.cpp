@@ -286,8 +286,8 @@ int main (int argc, char ** argv)
 
   // Text file with list of .pcd scene names, written by scene_generation.py
   std::string scene_list_path = "";
-  //join_paths (pkg_path, "config/scenes_noisy.txt", scene_list_path);
-  join_paths (pkg_path, "config/scenes_test.txt", scene_list_path);
+  join_paths (pkg_path, "config/scenes_noisy.txt", scene_list_path);
+  //join_paths (pkg_path, "config/scenes_test.txt", scene_list_path);
   std::ifstream scene_list_f (scene_list_path.c_str ());
 
   // Read text file line by line. Each line is the path to one .pcd scene

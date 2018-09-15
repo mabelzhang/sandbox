@@ -24,6 +24,7 @@ sys.path.append ('/media/master/Data_Ubuntu/courses/research/graspingRepo/visuot
 
 # Python
 import os
+import math
 
 # Blender
 import bpy
@@ -71,23 +72,54 @@ def init_kinect (cam_name='Camera'):
   #       [fx'  0  cx' Tx]
   #   P = [ 0  fy' cy' Ty]
   #       [ 0   0   1   0]
-  #   where (fx', fy') are focal lengths, (cx', cy') is principal point.
+  #   where (fx', fy') are focal lengths in pixels, (cx', cy') is principal
+  #     point.
   # Ref BlenSor Kinect source code https://github.com/mgschwan/blensor/blob/master/release/scripts/addons/blensor/kinect.py
+  #   They set focal length 580 pixels (4.73 mm), from
+  #     http://www.ros.org/wiki/kinect_calibration/technical
+  #   They have kinect_flength = 4.73 mm, which is in world units.
+  #   Focal length F in world units can be obtained from f in pixels by:
+  #       F_world = f_px * (film_width / width_in_pixels)
+  #     They set pixel width to 7.8 um. Film width is 0.0078 mm * 640.
+  #       0.00473 = f * (0.0000078 * 640 / 640)
+  #             f = 0.00473/0.0000078 = 606.4102564102564
+  #   http://ksimek.github.io/2013/08/13/intrinsic/
   #   They calculate principal point like so:
   #     cx = scanner_object.kinect_xres / 2.0
   #     cy = scanner_object.kinect_yres / 2.0
+
+  # Copied from kinect.py line 60
+  vert_fov = 43.1845
+  horiz_fov = 55.6408
+
+  # Copied from kinect.py line 194. Default 0.0078 mm
+  pixel_width = max (0.0001,
+    (math.tan ((horiz_fov / 2.0) * math.pi / 180.0) * scanner.kinect_flength) / max (
+    1.0, scanner.kinect_xres / 2.0))
+  # Copied from kinect.py line 196. Default 0.0078 mm
+  pixel_height = max (0.0001,
+    (math.tan ((vert_fov / 2.0) * math.pi / 180.0) * scanner.kinect_flength) / max (
+    1.0, scanner.kinect_yres / 2.0))
+
+  # Copied from kinect.py line 199-200
   cx = scanner.kinect_xres / 2.0
   cy = scanner.kinect_yres / 2.0
-  P = [[scanner.kinect_flength, 0, cx, 0],
-       [0, scanner.kinect_flength, cy, 0],
+
+  # fx = fy = 606.411
+  P = [[scanner.kinect_flength / pixel_width, 0, cx, 0],
+       [0, scanner.kinect_flength / pixel_height, cy, 0],
        [0, 0, 1, 0]]
+
+  #P = [[580, 0, cx, 0],
+  #     [0, 580, cy, 0],
+  #     [0, 0, 1, 0]]
 
   print ('Camera intrinsics matrix:')
   print (P)
 
   # TODO: 13 Sep 2018 TEMPORARY: Trying to shrink range to see if makes
   #   scaled tactile heatmaps have more varied range and visible.
-  scanner.kinect_max_dist = 2.0
+  #scanner.kinect_max_dist = 2.0
 
   ScanKinect.kinect_initialized = True
 

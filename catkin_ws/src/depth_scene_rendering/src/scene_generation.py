@@ -116,7 +116,7 @@ kinect_max_dist = cam_info [2]
 #   (Cannot write YAML directly, as Blender Python does not have PyYAML)
 # Don't want NumPy format, because might load in C++.
 intrinsics_path = get_intrinsics_path ()
-np.savetxt (intrinsics_path, intrinsics, '%g')
+np.savetxt (intrinsics_path, intrinsics, '%f')
 print ('%sCamera intrinsics matrix written to %s%s' % (ansi_colors.OKCYAN,
   intrinsics_path, ansi_colors.ENDC))
 

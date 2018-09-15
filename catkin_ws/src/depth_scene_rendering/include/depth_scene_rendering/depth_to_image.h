@@ -7,7 +7,7 @@
 // Refactored from ../../src/postprocess_scenes.cpp
 //
 
-class RawDepthConversion
+class RawDepthScaling
 {
 
 private:
@@ -21,7 +21,9 @@ private:
 
 public:
 
-  RawDepthConversion ()
+  const static int CROP_W = 100, CROP_H = 100;
+
+  RawDepthScaling ()
   {
     error_ = false;
 
@@ -105,12 +107,12 @@ public:
   }
 
 
-  int convert_depth_to_int (float depth)
+  int scale_depth_to_int (float depth)
   {
     return (int) (round ((depth - MIN_DEPTH) / (MAX_DEPTH - MIN_DEPTH) * 255.0));
   }
 
-  float convert_int_to_depth (int gray)
+  float scale_int_to_depth (int gray)
   {
     return gray / 255.0 * (MAX_DEPTH - MIN_DEPTH) + MIN_DEPTH;
   }
@@ -119,25 +121,40 @@ public:
   //   can save as image format file.
   // Parameters:
   //   raw_depth: CV_32F. Input. 2D image of raw floating point depths.
-  //   img: CV_8UC1. Output. Same size as input. Integer values
-  void convert_depths_to_ints (cv::Mat & raw_depth, cv::Mat & img)
+  //   img: Output. Same size as input.
+  void scale_depths_to_ints (cv::Mat & raw_depth, cv::Mat & img)
   {
     img = (raw_depth - MIN_DEPTH) / (MAX_DEPTH - MIN_DEPTH) * 255.0;
   }
   
-  // Reverse operation of convert_depths_to_ints().
-  // NOTE: If change formula in convert_depths_to_ints(), update this fn
+  // Reverse operation of scale_depths_to_ints().
+  // NOTE: If change formula in scale_depths_to_ints(), update this fn
   //   accordingly, so that this fn still recovers *raw depths*!!
-  // Recover the 3D raw depths that the 2D image was converted from, using the
+  // Recover the 3D raw depths that the 2D image was scaled from, using the
   //   Kinect min/max ranges saved in configuration file.
   // Parameters:
   //   img: Input. Integer values.
   //   raw_depth: Output. Raw floating point depth values.
-  void convert_ints_to_depths (cv::Mat & img, cv::Mat raw_depth)
+  void scale_ints_to_depths (cv::Mat & img, cv::Mat raw_depth)
   {
     raw_depth = img / 255.0 * (MAX_DEPTH - MIN_DEPTH) + MIN_DEPTH;
   }
 
 };
+
+
+// Crop out the center region of image, by the given dimensions.
+void crop_image (cv::Mat & image, cv::Mat & cropped, int width=32, int height=32)
+{
+  // Top-left corner of crop
+  float x = image.cols * 0.5 - width * 0.5;
+  float y = image.rows * 0.5 - height * 0.5;
+
+  // Extract the CENTER of image. Do not move to elsewhere in the image! `.`
+  //   otherwise the camera intrinsics matrix won't work with the depth values!
+  cv::Rect rect = cv::Rect (x, y, width, height);
+
+  cropped = cv::Mat (image, rect);
+}
 
 #endif

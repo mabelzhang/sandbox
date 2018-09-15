@@ -35,7 +35,8 @@
 #include <util/ansi_colors.h>
 #include <util/filter.h>  // blob_filter ()
 #include <depth_scene_rendering/camera_info.h>  // load_intrinsics ()
-#include <depth_scene_rendering/depth_to_image.h>  // RawDepthConversion
+#include <depth_scene_rendering/depth_to_image.h>  // RawDepthScaling, crop_image()
+#include <util/cv_util.h>  // project_3d_to_2d()
 
 
 // Separate contact points into visible and occluded channels.
@@ -43,7 +44,7 @@ class OcclusionSeparation
 {
 private:
 
-  RawDepthConversion converter_;
+  RawDepthScaling scaler_;
 
 
 public:
@@ -56,10 +57,11 @@ public:
   //   configuration were loaded correctly.
   bool getError ()
   {
-    return converter_.getError ();
+    return scaler_.getError ();
   }
 
-  // Separate visible and occluded contact points into two heatmaps.
+  // Separate visible and occluded contact points into two heatmaps. Find image
+  //   coordinates of the 3D points by camera intrinsics matrix P.
   //   If ray goes through free space, it is in front of point cloud, or
   //     visible (green ray visualized in RViz by RayTracer).
   //   If ray goes through or hits the camera point cloud, it is occluded by
@@ -88,48 +90,16 @@ public:
     // img_coords_visible = P * pts [not occluded]
 
 
-    // Don't need last column of P. No distortion in simulated cam,
-    //   P[0:3, 0:3] == K.
-    //   Also don't need to divide by w, which just == depth z. (u, v) are
-    //   already the correct image coordinates. Dividing by w simply always
-    //   gives the center point of image.
-    /*
-    // Make matrices homogeneous
-    // Concatenate a row of 1s to bottom of matrix, using comma operator
-    //   Ref: https://stackoverflow.com/questions/21496157/eigen-how-to-concatenate-matrix-along-a-specific-dimension
-    // 4 x n
-    Eigen::MatrixXf pts4 (4, pts.cols ());
-    pts4 << pts, Eigen::MatrixXf::Ones (1, pts.cols ());
-
-    // Project points into image plane, to find (u, v) rectified image coords
-    //   of the 3D points.
-    //   [u v w]' = P * [X Y Z 1]'
-    //   x = u / w
-    //   y = v / w
-    //   http://docs.ros.org/melodic/api/sensor_msgs/html/msg/CameraInfo.html
-    // 3 x n = (3 x 4) * (4 x n)
-    std::cerr << "pts:" << std::endl << pts4 << std::endl;
-    Eigen::MatrixXf uv3 = P * pts4;
-    std::cerr << "u, v, w:" << std::endl << uv3 << std::endl;
-    // Divide by w, to get [u/w y/w 1]' in each column.
-    // Replicate row to 3 rows, to be same dimension as divider
-    uv3 = uv3.cwiseQuotient (uv3.row (2).replicate (uv3.rows (), 1));
-    std::cerr << "u/w, y/w, 1:" << std::endl << uv3 << std::endl;
-    // 2 x n. Eliminate 3rd row
-    // NOTE: can't do uv3 = uv3.topRows (2), first column all 0s. Need to
-    //   reallocate a new matrix.
-    Eigen::MatrixXi uv = uv3.topRows (2).array ().round ().cast <int> ();
-    std::cerr << "Final image coordinates:" << std::endl << uv << std::endl;
-    */
-
-    // 3 x 3
     // Project points into image plane, to find (u, v) image coords of the
     //   3D points.
-    //   [u v z] = K * [X Y Z]'
+    //   [u v w]' = P * [X Y Z 1]'
+    //          x = u / w
+    //          y = v / w
     // Extract intrinsics matrix K from projection matrix P.
     // Multiplication result is (u, v, depth)
-    Eigen::MatrixXf K = P.leftCols (3);
-    Eigen::MatrixXi uv = (K * pts).array ().round ().cast <int> ();
+    // 2 x n
+    Eigen::MatrixXi uv;
+    project_3d_to_2d_homo (pts, P, uv);
     std::cerr << "Final image coordinates:" << std::endl << uv << std::endl;
 
 
@@ -154,7 +124,7 @@ public:
       }
 
       fprintf (stderr, "%f (scaled to %d)\n", pts (2, i),
-        converter_.convert_depth_to_int (pts (2, i)));
+        scaler_.scale_depth_to_int (pts (2, i)));
     }
     fprintf (stderr, "%d points visible, %d points occluded\n", n_vis, n_occ);
 
@@ -165,8 +135,8 @@ public:
 
     // Scale raw depths by camera max depth, so scaled values are consistent
     //   across all images in the dataset.
-    converter_.convert_depths_to_ints (visible_f, visible_ch);
-    converter_.convert_depths_to_ints (occluded_f, occluded_ch);
+    scaler_.scale_depths_to_ints (visible_f, visible_ch);
+    scaler_.scale_depths_to_ints (occluded_f, occluded_ch);
 
     // Duplicate the channel to 3 channels, to fit image formats for saving
     // Ref: https://stackoverflow.com/questions/3614163/convert-single-channle-image-to-3-channel-image-c-opencv
@@ -185,6 +155,7 @@ int main (int argc, char ** argv)
   ros::NodeHandle nh;
 
   bool DEBUG_RAYTRACE = false;
+  bool VIS_RAYTRACE = false;
 
   // Random seed
   srand (time (NULL));
@@ -192,7 +163,7 @@ int main (int argc, char ** argv)
   OcclusionSeparation separator = OcclusionSeparation ();
   if (separator.getError ())
   {
-    fprintf (stderr, "%sRawDepthConversion errored. Terminating program.%s\n",
+    fprintf (stderr, "%sRawDepthScaling errored. Terminating program.%s\n",
       OKCYAN, ENDC);
     return 0;
   }
@@ -233,7 +204,7 @@ int main (int argc, char ** argv)
 
     // Make octree to hold point cloud, for raytrace test
     // Ref: http://pointclouds.org/documentation/tutorials/octree.php
-    RayTracer raytracer = RayTracer (cloud_ptr, octree_res, false, &nh);
+    RayTracer raytracer = RayTracer (cloud_ptr, octree_res, VIS_RAYTRACE, &nh);
 
 
     fprintf (stderr, "Testing ray-tracing...\n");
@@ -334,6 +305,14 @@ int main (int argc, char ** argv)
       occluded_path.c_str (), ENDC);
 
 
+    // Crop the heat maps
+    cv::Mat vis_crop, occ_crop;
+    crop_image (visible_img, vis_crop, RawDepthScaling::CROP_W,
+      RawDepthScaling::CROP_H);
+    crop_image (visible_img, occ_crop, RawDepthScaling::CROP_W,
+      RawDepthScaling::CROP_H);
+
+
     // Blob the visible and occluded images, to create heatmaps. Save to file
     // In my visualize_dataset.py on adv_synth of dexnet, used BLOB_EXPAND=2,
     //   BLOB_GAUSS=0.5, for 32 x 32 images. Python gaussian function doesn't
@@ -346,14 +325,18 @@ int main (int argc, char ** argv)
 
     std::string vis_blob_path = exts [0];
     vis_blob_path += "_vis_blob.png";
-    blob_filter (visible_img, visible_blob, BLOB_EXPAND, GAUSS_SZ, GAUSS_SIGMA);
+    //blob_filter (visible_img, visible_blob, BLOB_EXPAND, GAUSS_SZ, GAUSS_SIGMA);
+    // Operate on the cropped img
+    blob_filter (vis_crop, visible_blob, BLOB_EXPAND, GAUSS_SZ, GAUSS_SIGMA);
     cv::imwrite (vis_blob_path, visible_blob);
     fprintf (stderr, "%sWritten visible blobbed heatmap to %s%s\n", OKCYAN,
       vis_blob_path.c_str (), ENDC);
 
     std::string occ_blob_path = exts [0];
     occ_blob_path += "_occ_blob.png";
-    blob_filter (occluded_img, occluded_blob, BLOB_EXPAND, GAUSS_SZ, 
+    //blob_filter (occluded_img, occluded_blob, BLOB_EXPAND, GAUSS_SZ, 
+    // Operate on the cropped img
+    blob_filter (occ_crop, occluded_blob, BLOB_EXPAND, GAUSS_SZ, 
       GAUSS_SIGMA);
     cv::imwrite (occ_blob_path, occluded_blob);
     fprintf (stderr, "%sWritten occluded blobbed heatmap to %s%s\n", OKCYAN,

@@ -19,31 +19,41 @@ from util.filter import blob_kernel
 
 def main ():
 
-  print ('My custom postprocess_scenes.cpp PNG output')
+  # Single-dots binary image outputted by postprocess_scenes.cpp
   # Outputted from BlenSor Kinect camera directly
-  im = np_from_depth ('/media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/2018-09-13-00-08-53_noisy00000_vis.png')
-  print (im.shape)
-  # This prints True. So can simply matshow() on one channel and look at
-  #   colorbar to tell value.
-  print (np.all (im [:, :, 0] == im [:, :, 1]))
-  print (np.all (im [:, :, 1] == im [:, :, 2]))
-  print ('min %f, median %f, max %f' % (np.min (im), np.median (im),
-    np.max (im)))
-  print (np.unique (im))
-  print (np.nonzero (im))
+  #ims = [np_from_depth ('/media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/2018-09-13-00-08-53_noisy00000_vis.png')]
 
-  convolved = blob_kernel (im [:, :, 0])
+  # Visible and occluded tactile channels outputted by occlusion_test.cpp
+  ims = [
+    '/media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/2018-09-13-01-17-46_noisy00000_vis_blob.png',
+    '/media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/2018-09-13-01-17-46_noisy00000_occ_blob.png'
+  ]
 
-  #matshow_image (im [:, :, 0], title='Visible Channel')
-  #show_image (im, title='Visible Channel')
-  #matshow (im [:, :, 0])
+  for i in range (len (ims)):
 
-  matshow (convolved)
+    im = np_from_depth (ims [i])
 
-  plt.show ()
+    print (im.shape)
+    # This prints True. So can simply matshow() on one channel and look at
+    #   colorbar to tell value.
+    print (np.all (im [:, :, 0] == im [:, :, 1]))
+    print (np.all (im [:, :, 1] == im [:, :, 2]))
+    print ('min %f, median %f, max %f' % (np.min (im), np.median (im),
+      np.max (im)))
+    print (np.unique (im))
+    print (np.nonzero (im))
 
-
-  raw_input ('Press enter: ')
+    # For output of postprocess_scenes.cpp
+    #convolved = blob_kernel (im [:, :, 0])
+    #matshow (convolved)
+ 
+    #matshow_image (im [:, :, 0], title='Visible Channel')
+    #show_image (im, title='Visible Channel')
+    matshow (im [:, :, 0])
+    colorbar ()
+ 
+    plt.show ()
+    #raw_input ('Press enter: ')
 
 
 if __name__ == '__main__':

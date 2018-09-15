@@ -136,19 +136,27 @@ public:
     // Instantiate empty heat maps
     cv::Mat visible_f = cv::Mat::zeros (height, width, CV_32F);
     cv::Mat occluded_f = cv::Mat::zeros (height, width, CV_32F);
+    int n_vis = 0, n_occ = 0;
 
     // Set image coordinates corresponding to 3D points to raw depths
     for (int i = 0; i < occluded.size (); i ++)
     {
       // I(v, u) = depth z
       if (occluded.at (i) == false)
+      {
+        n_vis += 1;
         visible_f.at <float> (uv (1, i), uv (0, i)) = pts (2, i); 
+      }
       else
+      {
+        n_occ += 1;
         occluded_f.at <float> (uv (1, i), uv (0, i)) = pts (2, i); 
+      }
 
       fprintf (stderr, "%f (scaled to %d)\n", pts (2, i),
         converter_.convert_depth_to_int (pts (2, i)));
     }
+    fprintf (stderr, "%d points visible, %d points occluded\n", n_vis, n_occ);
 
 
     // Instantiate integer channels
@@ -175,6 +183,8 @@ int main (int argc, char ** argv)
 {
   ros::init (argc, argv, "occlusion_test");
   ros::NodeHandle nh;
+
+  bool DEBUG_RAYTRACE = false;
 
   // Random seed
   srand (time (NULL));
@@ -223,7 +233,7 @@ int main (int argc, char ** argv)
 
     // Make octree to hold point cloud, for raytrace test
     // Ref: http://pointclouds.org/documentation/tutorials/octree.php
-    RayTracer raytracer = RayTracer (cloud_ptr, octree_res, true, &nh);
+    RayTracer raytracer = RayTracer (cloud_ptr, octree_res, false, &nh);
 
 
     fprintf (stderr, "Testing ray-tracing...\n");
@@ -263,14 +273,18 @@ int main (int argc, char ** argv)
       //std::cerr << "noisy_pt: " << endpoints.col (i).transpose () << std::endl;
     }
 
-    std::cerr << "endpoints: " << std::endl;
-    std::cerr << endpoints << std::endl;
+    if (DEBUG_RAYTRACE)
+    {
+      std::cerr << "endpoints: " << std::endl;
+      std::cerr << endpoints << std::endl;
+    }
 
     // Do ray-trace occlusion test for each endpoint
     std::vector <bool> occluded;
     for (int i = 0; i < nPts; i ++)
     {
-      //std::cerr << "Ray through " << endpoints.col (i).transpose () << std::endl;
+      if (DEBUG_RAYTRACE)
+        std::cerr << "Ray through " << endpoints.col (i).transpose () << std::endl;
 
       // Ray trace
       // Occluded = red arrow drawn in RViz, unoccluded = green
@@ -279,7 +293,8 @@ int main (int argc, char ** argv)
       bool curr_occluded = raytracer.raytrace_occlusion_test (origin,
         endpoints.col (i));
       occluded.push_back (curr_occluded);
-      fprintf (stderr, "Occluded? %s\n", curr_occluded ? "true" : "false");
+      if (DEBUG_RAYTRACE)
+        fprintf (stderr, "Occluded? %s\n", curr_occluded ? "true" : "false");
 
       // Debug
       //char enter;
@@ -320,18 +335,26 @@ int main (int argc, char ** argv)
 
 
     // Blob the visible and occluded images, to create heatmaps. Save to file
+    // In my visualize_dataset.py on adv_synth of dexnet, used BLOB_EXPAND=2,
+    //   BLOB_GAUSS=0.5, for 32 x 32 images. Python gaussian function doesn't
+    //   have size, only sigma.
     cv::Mat visible_blob, occluded_blob;
+    int BLOB_EXPAND = 31;
+    int GAUSS_SZ = 31;
+    // Pass in 0 to let OpenCV calculating sigma from size
+    float GAUSS_SIGMA = 0;
+
     std::string vis_blob_path = exts [0];
     vis_blob_path += "_vis_blob.png";
-    // In my visualize_dataset.py on adv_synth of dexnet, used BLOB_EXPAND=2, BLOB_GAUSS=0.5
-    blob_filter (visible_img, visible_blob, 11, 7);
+    blob_filter (visible_img, visible_blob, BLOB_EXPAND, GAUSS_SZ, GAUSS_SIGMA);
     cv::imwrite (vis_blob_path, visible_blob);
     fprintf (stderr, "%sWritten visible blobbed heatmap to %s%s\n", OKCYAN,
       vis_blob_path.c_str (), ENDC);
 
     std::string occ_blob_path = exts [0];
     occ_blob_path += "_occ_blob.png";
-    blob_filter (occluded_img, occluded_blob, 21, 17);
+    blob_filter (occluded_img, occluded_blob, BLOB_EXPAND, GAUSS_SZ, 
+      GAUSS_SIGMA);
     cv::imwrite (occ_blob_path, occluded_blob);
     fprintf (stderr, "%sWritten occluded blobbed heatmap to %s%s\n", OKCYAN,
       occ_blob_path.c_str (), ENDC);
@@ -358,11 +381,12 @@ int main (int argc, char ** argv)
     sort (vis_blob_vec.begin (), vis_blob_vec.end ());
     vis_blob_vec.erase (unique (vis_blob_vec.begin (), vis_blob_vec.end ()),
       vis_blob_vec.end ());
-    std::cerr << "Unique values in visible image:" << std::endl;
-    for (int i = 0; i < vis_blob_vec.size (); i ++)
-    {
-      std::cerr << vis_blob_vec.at (i) << std::endl;
-    }
+    fprintf (stderr, "%ld unique values in visible image:\n",
+      vis_blob_vec.size ());
+    //for (int i = 0; i < vis_blob_vec.size (); i ++)
+    //{
+    //  std::cerr << vis_blob_vec.at (i) << std::endl;
+    //}
 
 
     // Display heatmaps to debug
@@ -371,6 +395,7 @@ int main (int argc, char ** argv)
     //cv::normalize (visible_img, dst, 0, 1, cv::NORM_MINMAX);
     //cv::imshow ("Visible contacts", visible_img);
     //cv::normalize (visible_blob, dst, 0, 1, cv::NORM_MINMAX);
+    // TODO: Actually the images written to file do look blurred! These displayed versions have sharp edges for some reason. Use inspect_channels.py to inspect with matplotlib, better visualization.
     cv::imshow ("Visible contacts", visible_blob);
     cv::waitKey (0);
 

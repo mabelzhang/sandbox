@@ -313,7 +313,7 @@ int main (int argc, char ** argv)
     cv::Mat vis_crop, occ_crop;
     crop_image (visible_img, vis_crop, RawDepthScaling::CROP_W,
       RawDepthScaling::CROP_H);
-    crop_image (visible_img, occ_crop, RawDepthScaling::CROP_W,
+    crop_image (occluded_img, occ_crop, RawDepthScaling::CROP_W,
       RawDepthScaling::CROP_H);
 
 

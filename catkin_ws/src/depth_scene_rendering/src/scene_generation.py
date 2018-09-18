@@ -31,12 +31,14 @@ import numpy as np
 # Blender
 import bpy
 
+# Custom
+from util.ansi_colors import ansi_colors
+
 # Local, from paths added above
 from scan_kinect import init_kinect, scan
 #from util.yaml_util import load_yaml
 import config_consts
 from config_paths import get_intrinsics_path, get_depth_range_path
-from util.ansi_colors import ansi_colors
 
 
 

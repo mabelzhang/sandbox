@@ -18,7 +18,7 @@ def get_data_root ():
   this_dir = os.path.dirname (os.path.realpath (__file__))
 
   # Set where you desire to place all output data
-  data_root = os.path.realpath (os.path.join (this_dir, '../../../../../train/visuotactile_grasping'))
+  data_root = os.path.realpath (os.path.join (this_dir, '../../../../../train/visuotactile_grasping/data'))
 
   if not os.path.exists (data_root):
     os.makedirs (data_root)

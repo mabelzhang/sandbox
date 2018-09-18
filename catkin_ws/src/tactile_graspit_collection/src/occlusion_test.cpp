@@ -323,8 +323,8 @@ int main (int argc, char ** argv)
     //   have size, only sigma.
     cv::Mat visible_blob, occluded_blob;
     // Use 31 for uncropped 640x480. 15 or smaller for cropped 100x100.
-    int BLOB_EXPAND = 15;
-    int GAUSS_SZ = 15;
+    int BLOB_EXPAND = 11;
+    int GAUSS_SZ = 11;
     // Pass in 0 to let OpenCV calculating sigma from size
     float GAUSS_SIGMA = 0;
 

@@ -289,6 +289,14 @@ int main (int argc, char ** argv)
     separator.separate_and_project (endpoints, occluded, P,
       cloud_ptr -> height, cloud_ptr -> width, visible_img, occluded_img);
 
+
+    // Crop the heatmaps
+    cv::Mat vis_crop, occ_crop;
+    crop_image (visible_img, vis_crop, RawDepthScaling::CROP_W,
+      RawDepthScaling::CROP_H);
+    crop_image (occluded_img, occ_crop, RawDepthScaling::CROP_W,
+      RawDepthScaling::CROP_H);
+
     // Save visible and occluded channels
     std::vector <std::string> exts;
     splitext (scene_path, exts);
@@ -298,23 +306,15 @@ int main (int argc, char ** argv)
     //   raytracing.
     std::string visible_path = exts [0];
     visible_path += "_vis.png";
-    cv::imwrite (visible_path, visible_img);
+    cv::imwrite (visible_path, vis_crop);  //visible_img);
     fprintf (stderr, "%sWritten visible heatmap to %s%s\n", OKCYAN,
       visible_path.c_str (), ENDC);
 
     std::string occluded_path = exts [0];
     occluded_path += "_occ.png";
-    cv::imwrite (occluded_path, occluded_img);
+    cv::imwrite (occluded_path, occ_crop);  //occluded_img);
     fprintf (stderr, "%sWritten occluded heatmap to %s%s\n", OKCYAN,
       occluded_path.c_str (), ENDC);
-
-
-    // Crop the heat maps
-    cv::Mat vis_crop, occ_crop;
-    crop_image (visible_img, vis_crop, RawDepthScaling::CROP_W,
-      RawDepthScaling::CROP_H);
-    crop_image (occluded_img, occ_crop, RawDepthScaling::CROP_W,
-      RawDepthScaling::CROP_H);
 
 
     // Blob the visible and occluded images, to create heatmaps. Save to file
@@ -323,8 +323,8 @@ int main (int argc, char ** argv)
     //   have size, only sigma.
     cv::Mat visible_blob, occluded_blob;
     // Use 31 for uncropped 640x480. 15 or smaller for cropped 100x100.
-    int BLOB_EXPAND = 11;
-    int GAUSS_SZ = 11;
+    int BLOB_EXPAND = 9;
+    int GAUSS_SZ = 9;
     // Pass in 0 to let OpenCV calculating sigma from size
     float GAUSS_SIGMA = 0;
 

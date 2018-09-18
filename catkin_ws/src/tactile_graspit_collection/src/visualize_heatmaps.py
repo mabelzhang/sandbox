@@ -28,7 +28,7 @@ from util.ansi_colors import ansi_colors
 from util.image_util import np_from_depth, show_image, matshow_image
 
 # Local
-from config_paths import get_heatmap_blob_fmt, get_vis_path
+from config_paths import get_heatmap_raw_fmt, get_heatmap_blob_fmt, get_vis_path
 from depth_to_image import RawDepthScaling
 
 
@@ -40,6 +40,7 @@ def main ():
   scene_list_f = open (scene_list_path, 'rb')
 
   vis_fmt, occ_fmt = get_heatmap_blob_fmt ()
+  #vis_fmt, occ_fmt = get_heatmap_raw_fmt ()
 
   scaler = RawDepthScaling ()
   success, depth_range = scaler.load_depth_range ()
@@ -67,21 +68,23 @@ def main ():
     fig = plt.figure (figsize=(15,6))
 
     ax = plt.subplot (1,3,1)
-    depth_obj = plt.imshow (depth_im [:, :, 0], cmap=plt.cm.gray_r)
-    plt.title ('Depth')
+    # gray_r
+    depth_obj = plt.imshow (depth_im [:, :, 0], cmap=plt.cm.jet)
+      #clim=[MIN_DEPTH, MAX_DEPTH])
+    plt.title ('Raw Depth')
     plt.colorbar (depth_obj, fraction=0.046, pad=0.01)
 
     ax = plt.subplot (1,3,2)
-    plt.imshow (depth_im [:, :, 0], cmap=plt.cm.gray_r, alpha=0.4)
+    plt.imshow (depth_im [:, :, 0], cmap=plt.cm.jet, alpha=0.4)
     vis_obj = plt.imshow (vis_im [:, :, 0], cmap=plt.cm.jet, alpha=0.6)
-      #clim=[0, 15])
+      #clim=[MIN_DEPTH, MAX_DEPTH])
     plt.title ('Visible')
     plt.colorbar (vis_obj, fraction=0.046, pad=0.01)
 
     ax = plt.subplot (1,3,3)
-    plt.imshow (depth_im [:, :, 0], cmap=plt.cm.gray_r, alpha=0.4)
+    plt.imshow (depth_im [:, :, 0], cmap=plt.cm.jet, alpha=0.4)
     occ_obj = plt.imshow (occ_im [:, :, 0], cmap=plt.cm.jet, alpha=0.6)
-      #clim=[0, 15])
+      #clim=[MIN_DEPTH, MAX_DEPTH])
     plt.title ('Occluded')
     # Flush colorbar with image
     fig.colorbar (occ_obj, fraction=0.046, pad=0.01)

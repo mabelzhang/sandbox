@@ -7,4 +7,7 @@ Tactile contact locations are simulated by xyzs of collisions between hand
   mesh and object mesh.
 
 
+$ rosrun tactile_graspit_collection occlusion_test 
+
+
 

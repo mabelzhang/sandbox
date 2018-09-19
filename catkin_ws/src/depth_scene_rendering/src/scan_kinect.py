@@ -189,7 +189,8 @@ def scan (cam_name='Camera', pos=(0, -4, 0), quat=(0.707, 0.707, 0, 0)):
     #world_transformation=cam_pose)
 
   # BlenSor's filename format tacks on 00000 and _noisy00000
-  return (os.path.splitext (out_name) [0] + '00000' + os.path.splitext (out_name) [1],
+  return (out_name,
+    os.path.splitext (out_name) [0] + '00000' + os.path.splitext (out_name) [1],
     os.path.splitext (out_name) [0] + '_noisy00000' + os.path.splitext (out_name) [1])
 
 

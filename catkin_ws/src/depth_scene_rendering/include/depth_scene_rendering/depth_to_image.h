@@ -7,6 +7,9 @@
 // Refactored from ../../src/postprocess_scenes.cpp
 //
 
+// Local
+#include "camera_info.h"
+
 class RawDepthScaling
 {
 
@@ -37,7 +40,7 @@ public:
  
     // Load the file containing the path to camera intrinsics matrix
     std::string intrinsics_cfg_path = "";
-    join_paths (pkg_path, "config/intrinsics_path.txt", intrinsics_cfg_path);
+    join_paths (pkg_path, CAM_CFG_SUFF, intrinsics_cfg_path);
     std::ifstream intrinsics_cfg_f (intrinsics_cfg_path.c_str ());
     // Read the file
     std::string intrinsics_path = "";

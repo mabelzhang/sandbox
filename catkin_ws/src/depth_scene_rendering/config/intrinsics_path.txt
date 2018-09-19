@@ -1,1 +1,0 @@
-/media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/intrinsics.txt

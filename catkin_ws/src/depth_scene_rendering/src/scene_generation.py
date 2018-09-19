@@ -118,14 +118,16 @@ def save_extrinsics_from_pose (cam_pos, cam_quat, noisy_scene_name):
   # Blender camera has y up, -z points toward object, unconventional for
   #   cameras in robotics. However, when camera quaternion is w1 0 0 0, its
   #   matrix saved is -1 -1 1 on the diagonal, not identity for some reason!
-  #   Makes no sense.
+  #   Makes no sense. This doesn't match camera's RGB axes shown in Blender GUI.
   #   Account for that in this file, `.` other code files should not need to
   #   know about blender conventions.
   # Wrt world frame, identity camera pose (quaternion w1, 0, 0, 0, pointing
-  #   downward in world) should be
+  #   downward in world) in computer vision convention should be
   #   [1, 0, 0
   #    0, -1, 0
   #    0, 0, -1]
+  #   This has z pointing toward object (as opposed to Blender convention),
+  #   x to the right, y downwards in image plane.
   # To get this diagonal (1, -1, -1) from the diagonal (-1, -1, 1) of identity
   #   camera pose, rotate pi wrt y.
   # Rotation matrix 180 wrt y

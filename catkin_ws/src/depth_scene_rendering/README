@@ -21,6 +21,7 @@ $ rosrun depth_scene_rendering postprocess_scenes
 $ rosrun tactile_graspit_collection occlusion_test 
 
 
+
 ==============================================================================
 Generate BlenSor scenes
 
@@ -61,6 +62,24 @@ Entry point: postprocess_scenes.cpp
 $ rosrun depth_scene_rendering postprocess_scenes
 
 
+==============================================================================
+To pick a range of camera poses to generate random poses within
+
+$ blensor -b -P render_camera_poses.py
+Renders from normal Blender RGB camera, at different camera poses in a grid.
+Renders are saved to disk.
+Used to systematically pick a range of camera poses within which to generate
+  random camera poses (in scene_generation.py) for collecting data for training.
+  The range is picked such that the object has a chance to appear in any edge
+  and corner of the image (not just at the center), for generalization.
+Note that the camera renders at 640 x 480, as the Kinect, but training images
+  are cropped (e.g. 100 x 100) from the center of the image. So you only need
+  to pick ranges so that the object appears within the center 100 x 100, which
+  requires a much smaller range than in the entire 640 x 480.
+
+$ python crop_images.py
+Crop 100 x 100 in center of image. Must be in center, so that camera intrinsics
+  matrix still works.
 
 
 

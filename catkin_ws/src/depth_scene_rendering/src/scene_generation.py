@@ -38,7 +38,7 @@ from util.spherical_pose_generation import get_rand_pose
 from util.tf_transformations import quaternion_matrix
 
 # Local, from paths added above
-from scan_kinect import init_kinect, scan
+from scan_kinect import ScanKinect
 import config_consts
 from config_paths import get_intrinsics_path, get_depth_range_path, \
   get_render_path
@@ -100,9 +100,9 @@ def reset_scene ():
     #bpy.ops.outliner.object_operation (type='TOGSEL')
 
 
-def setup_camera ():
+def setup_camera (kinect_obj):
 
-  cam_info = init_kinect ()
+  cam_info = kinect_obj.init_kinect ()
   intrinsics = cam_info [0]
   kinect_min_dist = cam_info [1]
   kinect_max_dist = cam_info [2]
@@ -117,7 +117,7 @@ def setup_camera ():
   # Write Kinect min/max depth range to text file, for postprocessing
   depth_range_path = get_depth_range_path ()
   with open (depth_range_path, 'w') as depth_range_f:
-    depth_range_f.write (str (kinect_min_dist) + os.linesep)
+    depth_range_f.write (str (kinect_min_dist) + '\n')
     depth_range_f.write (str (kinect_max_dist))
   print ('%sCamera depth range written to %s%s' % (ansi_colors.OKCYAN,
     depth_range_path, ansi_colors.ENDC))
@@ -216,7 +216,8 @@ if __name__ == '__main__':
   
   reset_scene ()
   
-  setup_camera ()
+  kinect_obj = ScanKinect ()
+  setup_camera (kinect_obj)
   
   
   #####
@@ -268,8 +269,8 @@ if __name__ == '__main__':
     for c_i in range (n_camera_poses):
   
       # Scan scene
-      out_name, orig_scene_name, orig_noisy_scene_name = scan ('Camera', cam_pos,
-        cam_quat)
+      out_name, orig_scene_name, orig_noisy_scene_name = kinect_obj.scan (
+        'Camera', cam_pos, cam_quat)
    
       # Rename files using better convention
       scene_name = out_name
@@ -280,8 +281,8 @@ if __name__ == '__main__':
    
       # Write scene output file names in a text file, for postprocessing script
       #   to read.
-      scene_list_f.write (scene_name + os.linesep)
-      noisy_scene_list_f.write (noisy_scene_name + os.linesep)
+      scene_list_f.write (scene_name + '\n')
+      noisy_scene_list_f.write (noisy_scene_name + '\n')
    
       # Write the camera extrinsics used to capture the scene, to file with same
       #   prefix as scene just captured.

@@ -35,3 +35,17 @@ def get_depth_range_path ():
   return os.path.join (get_data_root (), 'cam_depth_range.txt')
 
 
+def get_render_path ():
+
+  # Get directory of current file
+  this_dir = os.path.dirname (os.path.realpath (__file__))
+
+  # Set where you desire to place all output data
+  path = os.path.realpath (os.path.join (this_dir, '../../../../../train/visuotactile_grasping/renders'))
+
+  if not os.path.exists (path):
+    os.makedirs (path)
+
+  return path
+
+

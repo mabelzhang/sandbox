@@ -195,7 +195,7 @@ def scan (cam_name='Camera', pos=(0, -4, 0), quat=(0.707, 0.707, 0, 0)):
 
 
 
-def main ():
+if __name__ == '__main__':
 
   init_kinect ()
 

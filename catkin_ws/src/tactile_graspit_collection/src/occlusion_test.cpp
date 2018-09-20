@@ -196,8 +196,8 @@ int main (int argc, char ** argv)
  
     // Load scene cloud
     load_cloud_file (scene_path, cloud_ptr);
-    // Multiply by -1, to account for Blender camera facing -z.
-    flip_z (cloud_ptr);
+    // Multiply y and z by -1, to account for Blender camera facing -z.
+    flip_yz (cloud_ptr);
     fprintf (stderr, "Cloud size: %ld points\n", cloud_ptr->size ());
     fprintf (stderr, "Organized? %s\n",
       cloud_ptr->isOrganized () ? "true" : "false");

@@ -101,6 +101,20 @@ def load_obj (obj_name):
   bpy.ops.import_scene.obj (filepath=obj_name)
 
 
+# Create a 45-degree cone, useful for debugging camera matrix.
+# Correct camera image should have cone tip in upper-left quadrant, large base
+#   in lower-right quadrant.
+def create_cone ():
+
+  bpy.ops.mesh.primitive_cone_add ()
+  bpy.data.objects ['Cone'].location = (0, 0, 0)
+  # Ref API https://docs.blender.org/api/blender_python_api_2_62_release/bpy.types.Object.html
+  bpy.data.objects ['Cone'].rotation_mode = 'XYZ'
+  bpy.data.objects ['Cone'].rotation_euler = (1.25*np.pi, 0.5*np.pi, 0)
+  bpy.data.objects ['Cone'].scale = (0.05, 0.05, 0.05)
+  bpy.data.objects ['Cone'].dimensions = (0.1, 0.05, 0.1)
+
+
 # Convert a 7-tuple pose to a 4 x 4 matrix, and save to file.
 # Parameters:
 #   cam_pos: 3-elt list or numpy array
@@ -237,7 +251,8 @@ for o_i in range (n_objs):
   obj_path = os.path.join (obj_dir, obj_base)
 
   print ('%s  %s%s' % (ansi_colors.OKCYAN, obj_base, ansi_colors.ENDC))
-  load_obj (obj_path)
+  #load_obj (obj_path)
+  create_cone ()
 
   # Set stationary camera pose. Do first shot using this, as reference
   cam_pos = (0.0, 0.0, 1.0)
@@ -279,6 +294,13 @@ for o_i in range (n_objs):
     #   above horizon, `.` tabletop
     # Blender quaternion has (w, x, y, z), w first.
     cam_pos, cam_quat = get_rand_pose (lat_range=(0, 0.5*np.pi), qwFirst=True)
+
+    # TODO: Add noise to cam_pos, up to 20 cm
+    # TODO: Constrain cam_quat to point somewhere near object. Easiest is to
+    #   point at object frame 0 0 0 (after moving cam_pos, subtract by object
+    #   location), then add up to 5-10 degrees of jitter,
+    #   however much needed to put object everywhere in image frame, for
+    #   generalization.
 
 
   # Select all - with the above setup that made all default objs unselectable,

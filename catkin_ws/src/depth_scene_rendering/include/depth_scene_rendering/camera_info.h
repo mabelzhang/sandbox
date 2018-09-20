@@ -95,4 +95,21 @@ bool load_extrinsics (const std::string path, int nrows, Eigen::MatrixXf & T)
   load_nx4_matrix (path, nrows, T);
 }
 
+/* Unused. Now using flip_yz in util pcd_util.h to flip point cloud coords
+     directly.
+void flip_y (Eigen::MatrixXf & P)
+{
+  // Account for Blender's camera frame in computer graphics convention, which
+  //   has z flipped to -z, y flipped to -y. It is 180 degrees off wrt x-axis
+  //   from robotic perception convention.
+  Eigen::Matrix3f Ry_pi;
+  Ry_pi = Eigen::Matrix3f::Identity (3, 3) *
+    Eigen::AngleAxisf (M_PI, Eigen::Vector3f::UnitY ());
+
+  Eigen::Matrix4f Ry_pi4 = Eigen::Matrix4f::Identity ();
+  Ry_pi4.block (0, 0, 3, 3) = Ry_pi;
+  P = P * Ry_pi4;
+}
+*/
+
 #endif

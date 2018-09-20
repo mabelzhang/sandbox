@@ -106,7 +106,7 @@ void inspect_image (cv::Mat & mat, double & min, double & max)
 }
 
 
-// Convert a point cloud to 2D depth image
+// Project a point cloud to 2D depth image, using camera intrinsics matrix.
 // Parameters:
 //   scaler: Constants and methods to scale raw depth to integers, for images.
 //     Constants scale all images by the same range, so scaled values across
@@ -132,8 +132,6 @@ void convert_pcd_to_image (RawDepthScaling & scaler,
   // Load 3 x 4 camera intrinsics matrix
   Eigen::MatrixXf P;
   load_intrinsics (P);
-  // 3 x 3
-  Eigen::MatrixXf K = P.leftCols (3);
 
   // 3 x n
   Eigen::MatrixXf pts = cloud_ptr -> getMatrixXfMap ().block (0, 0, 3,
@@ -308,9 +306,10 @@ int main (int argc, char ** argv)
  
     // Load scene cloud
     load_cloud_file (scene_path, cloud_ptr);
-    // NOTE: Blender camera's z-axis points behind camera. So all z's are
-    //   negative. Multiply by -1 to get positive depth.
-    flip_z (cloud_ptr);
+    // Account for Blender's camera frame in computer graphics convention, which
+    //   has z flipped to -z (pointing behind camera), y flipped to -y. It is
+    //   180 degrees off wrt x-axis from robotic perception convention.
+    flip_yz (cloud_ptr);
     fprintf (stderr, "Cloud size: %ld points\n", cloud_ptr->size ());
     fprintf (stderr, "Organized? %s\n",
       cloud_ptr->isOrganized () ? "true" : "false");

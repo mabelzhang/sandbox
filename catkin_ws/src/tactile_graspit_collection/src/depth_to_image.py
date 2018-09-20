@@ -15,6 +15,9 @@ import rospkg
 # Custom
 from util.ansi_colors import ansi_colors
 
+# Local
+from config_paths import get_cam_config_path
+
 
 class RawDepthScaling:
 
@@ -37,12 +40,11 @@ class RawDepthScaling:
     #   each image is rescaled to the image's own max depth, so the scale is
     #   relative within each image, values across images are not comparable.
  
-    pkg_path = rospkg.RosPack ().get_path ('depth_scene_rendering')
-    intrinsics_cfg_path = os.path.join (pkg_path, "config/intrinsics_path.txt")
-    with open (intrinsics_cfg_path, 'rb') as intrinsics_cfg_f:
-      intrinsics_path = intrinsics_cfg_f.read ()
+    cam_cfg_path = get_cam_config_path ()
+    with open (cam_cfg_path, 'rb') as cam_cfg_f:
+      cam_cfg = cam_cfg_f.read ()
  
-    depth_range_path = os.path.join (os.path.dirname (intrinsics_path), 
+    depth_range_path = os.path.join (os.path.dirname (cam_cfg), 
       'cam_depth_range.txt')
     if not os.path.exists (depth_range_path):
       print ('%sERROR: Camera depth range config file does not exist: %s%s' %

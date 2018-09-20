@@ -31,17 +31,11 @@ from config_paths import get_render_path
 import config_consts
 
 
-# Render from different angles of the camera, to pick a range of camera
-#   orientation within which to generate random poses, so that the object can
-#   appear in every edge and corner of the image, for generalization.
-def render_from_different_poses (kinect_obj):
+def setup_render_camera (kinect_obj):
 
   cam = bpy.data.objects ['Camera']
 
-  cam.location = (0, 0, 1)
-
   cam.rotation_mode = 'XYZ'
-  cam.rotation_euler = (0, 0, 0)
 
   # Set Blender regular camera configuration, for rendering.
   # Set to same focal length and sensor width as the Kinect used to render
@@ -53,6 +47,54 @@ def render_from_different_poses (kinect_obj):
     cam.kinect_xres
   print ('Setting focal length to %g, sensor width to %g' % (
     bpy.data.cameras ['Camera'].lens, bpy.data.cameras ['Camera'].sensor_width))
+
+  # Render config
+  bpy.data.scenes ['Scene'].render.resolution_x = 640
+  bpy.data.scenes ['Scene'].render.resolution_y = 480
+
+
+# tx, ty, tz, rx, ry, rz: All have same length. t is for translation, r is
+#   for rotation. rx ry rz are Euler XYZ rotation, Blender default.
+def render_at_poses (tx, ty, tz, rx, ry, rz, out_path):
+
+  # Convert to radians
+  rx_rads = rx * np.pi / 180.0
+  ry_rads = ry * np.pi / 180.0
+  rz_rads = rz * np.pi / 180.0
+
+  # To write paths of images outputted
+  meta_path = os.path.join (out_path, 'uncropped.txt')
+  meta_f = open (meta_path, 'w')
+
+  cam = bpy.data.objects ['Camera']
+
+  for i in range (rx.size):
+
+    cam.location = (tx [i], ty [i], tz [i])
+
+    cam.rotation_euler = (rx_rads [i], ry_rads [i], rz_rads [i])
+
+    # Render an image. Save rotation in degrees for readability
+    # Ref https://stackoverflow.com/questions/14982836/rendering-and-saving-images-through-blender-python
+    bpy.data.scenes ['Scene'].render.filepath = os.path.join (out_path,
+      'x%g_y%g_z%g_rx%g_ry%g_rz%g.png' % (tx[i], ty[i], tz[i], rx[i], ry[i], rz[i]))
+    bpy.ops.render.render (write_still=True)
+
+    # Write image path to file
+    # Ref do not use os.linesep()  https://stackoverflow.com/questions/6159900/correct-way-to-write-line-to-file
+    meta_f.write (bpy.data.scenes ['Scene'].render.filepath + '\n')
+
+    print ('%sWritten render to %s%s' % (ansi_colors.OKCYAN,
+      bpy.data.scenes ['Scene'].render.filepath, ansi_colors.ENDC))
+
+  meta_f.close ()
+
+
+
+# Render from different angles of the camera, to pick a range of camera
+#   orientation within which to generate random poses, so that the object can
+#   appear in every edge and corner of the image, for generalization.
+def render_from_different_rots (kinect_obj, out_path):
 
   # Ranges for object bar_clamp to appear everywhere in 640 x 480:
   #   x range(-20, 21, 10), y (-20, 21, 10), z (-180, 181, 60)
@@ -74,53 +116,64 @@ def render_from_different_poses (kinect_obj):
   rz = np.tile (rz, (n_rx, n_ry, 1))
 
   # Linearize
+  # Size m*n*p
   rx = rx.flatten ()
   ry = ry.flatten ()
   rz = rz.flatten ()
 
-  # Convert to radians
-  rx_rads = rx * np.pi / 180.0
-  ry_rads = ry * np.pi / 180.0
-  rz_rads = rz * np.pi / 180.0
+  n_poses = rx.size
 
 
-  # TODO: Move location too
-  # Objects are about 10-20 cm, so move camera up to 10 cm max, in xy-plane.
-  #   Keep z (height from tabletop) fixed.
-  tx = 0 # np.array (range (0, 10, 5)) [np.newaxis]
-  ty = 0 #np.array (range (0, 10, 5)) [np.newaxis].T
+  # Keep position fixed
+  tx = 0
+  ty = 0
   tz = 1
 
-
-  # Render config
-  bpy.data.scenes ['Scene'].render.resolution_x = 640
-  bpy.data.scenes ['Scene'].render.resolution_y = 480
-  render_path = get_render_path ()
-
-  meta_path = os.path.join (render_path, 'uncropped.txt')
-  meta_f = open (meta_path, 'w')
+  tx = np.tile (tx, n_poses)
+  ty = np.tile (ty, n_poses)
+  tz = np.tile (tz, n_poses)
 
 
-  for i in range (rx.size):
+  render_at_poses (tx, ty, tz, rx, ry, rz, out_path)
 
-    cam.location = (tx, ty, tz)
 
-    cam.rotation_euler = (rx_rads [i], ry_rads [i], rz_rads [i])
+def render_from_different_pots (kinect_obj, out_path):
 
-    # Render an image. Save rotation in degrees for readability
-    # Ref https://stackoverflow.com/questions/14982836/rendering-and-saving-images-through-blender-python
-    bpy.data.scenes ['Scene'].render.filepath = os.path.join (render_path,
-      'x%g_y%g_z%g_rx%g_ry%g_rz%g.png' % (tx, ty, tz, rx[i], ry[i], rz[i]))
-    bpy.ops.render.render (write_still=True)
+  # Objects are about 10-20 cm, so move camera up to 10 cm max, in xy-plane.
+  # m x 1
+  tx = np.array (np.arange (-0.08, 0.11, 0.05)) [np.newaxis].T
+  # 1 x n
+  ty = np.array (np.arange (-0.08, 0.11, 0.05)) [np.newaxis]
 
-    # Write image path to file
-    # Ref do not use os.linesep()  https://stackoverflow.com/questions/6159900/correct-way-to-write-line-to-file
-    meta_f.write (bpy.data.scenes ['Scene'].render.filepath + '\n')
+  n_tx = tx.size
+  n_ty = ty.size
 
-    print ('%sWritten render to %s%s' % (ansi_colors.OKCYAN,
-      bpy.data.scenes ['Scene'].render.filepath, ansi_colors.ENDC))
+  # m x n
+  tx = np.tile (tx, (1, n_ty))
+  ty = np.tile (ty, (n_tx, 1))
 
-  meta_f.close ()
+  # 1D, size m*n
+  tx = tx.flatten ()
+  ty = ty.flatten ()
+
+  n_poses = tx.size
+
+  # Keep z (height from table) fixed
+  tz = 1
+  tz = np.tile (tz, n_poses)
+
+
+  # Keep orientation fixed
+  rx = 0
+  ry = 0
+  rz = 0
+
+  rx = np.tile (rx, n_poses)
+  ry = np.tile (ry, n_poses)
+  rz = np.tile (rz, n_poses)
+
+
+  render_at_poses (tx, ty, tz, rx, ry, rz, out_path)
 
 
 
@@ -134,6 +187,12 @@ if __name__ == '__main__':
   kinect_obj = ScanKinect ()
   setup_camera (kinect_obj)
 
+  setup_render_camera (kinect_obj)
+
+
+  render_path = get_render_path ()
+  rots_path = os.path.join (render_path, 'rotations')
+  pots_path = os.path.join (render_path, 'translations')
 
 
   # Path with object .obj files
@@ -159,7 +218,8 @@ if __name__ == '__main__':
  
 
     # Render from a range of camera poses and save renders to files
-    render_from_different_poses (kinect_obj)
+    #render_from_different_rots (kinect_obj, rots_path)
+    render_from_different_pots (kinect_obj, pots_path)
 
   end_time = time.time ()
 

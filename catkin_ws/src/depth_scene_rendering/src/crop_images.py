@@ -44,7 +44,7 @@ def main ():
 
   if not meta_path:
     render_path = get_render_path ()
-    meta_path = os.path.join (render_path, 'uncropped.txt')
+    meta_path = os.path.join (render_path, 'translations', 'uncropped.txt')
 
 
   start_time = time.time ()

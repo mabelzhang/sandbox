@@ -34,15 +34,17 @@ import bpy
 
 # Custom
 from util.ansi_colors import ansi_colors
-from util.spherical_pose_generation import get_rand_pose
-from util.tf_transformations import quaternion_matrix
+#from util.spherical_pose_generation import get_rand_pose
+from util.euler_pose_generation import get_rand_rot
+# NOTE that this has quaternions ordered (w, x, y, z), same as Blender, unlike
+#   the ROS tf.transformations version, which has (x, y, z, w)!
+from util.tf_transformations import quaternion_matrix, euler_matrix
 
 # Local, from paths added above
 from scan_kinect import ScanKinect
 import config_consts
 from config_paths import get_intrinsics_path, get_depth_range_path, \
   get_render_path
-
 
 
 # Clear current scene with whatever is in it, set up our scene
@@ -89,6 +91,9 @@ def reset_scene ():
   bpy.data.objects ['Point'].rotation_quaternion.y = 0.272
   bpy.data.objects ['Point'].rotation_quaternion.z = 0.756
   '''
+
+
+def make_all_unselectable ():
 
   # Make default scene objects (camera, light) unselectable, so that later can
   #   select all and delete loaded objects, without deleting camera and light.
@@ -137,6 +142,28 @@ def setup_camera (kinect_obj):
   print ('')
 
 
+def setup_render_camera (kinect_obj):
+
+  cam = bpy.data.objects ['Camera']
+
+  cam.rotation_mode = 'XYZ'
+
+  # Set Blender regular camera configuration, for rendering.
+  # Set to same focal length and sensor width as the Kinect used to render
+  #   data, so that the object appears the same size in image!
+  # 4.73
+  bpy.data.cameras ['Camera'].lens = cam.kinect_flength
+  # 4.992
+  bpy.data.cameras ['Camera'].sensor_width = kinect_obj.pixel_width * \
+    cam.kinect_xres
+  print ('Setting focal length to %g, sensor width to %g' % (
+    bpy.data.cameras ['Camera'].lens, bpy.data.cameras ['Camera'].sensor_width))
+
+  # Render config
+  bpy.data.scenes ['Scene'].render.resolution_x = 640
+  bpy.data.scenes ['Scene'].render.resolution_y = 480
+
+
 # Load OBJ file into Blender
 # Parameters:
 #   obj_name: Full path to CAD file
@@ -166,14 +193,18 @@ def create_cone ():
 # Parameters:
 #   cam_pos: 3-elt list or numpy array
 #   cam_quat: Blender Quaternion convention, (w, x, y, z), w first.
+#   T_W_obj: Transform of object wrt world, expressed in world frame
 #   noisy_scene_name: Full path to where the extrinsics is to be saved, can be
 #     with a wrong extension. Will replace extension to .txt.
-def save_extrinsics_from_pose (cam_pos, cam_quat, noisy_scene_name):
+def save_extrinsics_from_pose (cam_pos, cam_quat, T_W_obj, noisy_scene_name):
 
+  # Camera transformation wrt world, expressed in world frame
+  # T^W_c
   # Convert cam_pos and cam_quat into a 4 x 4 matrix.
   # quaternion_matrix() takes quaternion (x, y, z, w), w last
-  extrinsics = quaternion_matrix ((cam_quat[1], cam_quat[2], cam_quat[3],
-    cam_quat[0]))
+  T_W_cam = quaternion_matrix ((cam_quat[0], cam_quat[1], cam_quat[2],
+    cam_quat[3]))
+
 
   # Correct the extrinsics matrix to computer vision convention.
   # Blender camera has y up, -z points toward object, unconventional for
@@ -196,17 +227,24 @@ def save_extrinsics_from_pose (cam_pos, cam_quat, noisy_scene_name):
              [0, 1, 0, 0],
              [-np.sin(np.pi), 0, np.cos(np.pi), 0],
              [0, 0, 0, 1]]
-  extrinsics = np.dot (extrinsics, R_flipZ)
+  T_W_cam = np.dot (T_W_cam, R_flipZ)
 
   # Set position after all the rotations are done
-  extrinsics [0:3, 3] = cam_pos
+  T_W_cam [0:3, 3] = cam_pos
+
+
+  # Camera transformation wrt object, expressed in object frame
+  # T^o_c = T^o_W * T^W_c
+  #       = (T^W_o)^-1 * T^W_c
+  T_o_cam = np.dot (np.linalg.inv (T_W_obj), T_W_cam)
+
 
   # Write the camera extrinsics used to capture the scene, to file with same
   #   prefix as scene just captured.
   extrinsics_path = os.path.splitext (noisy_scene_name) [0] + '.txt'
-  np.savetxt (extrinsics_path, extrinsics, '%f')
-  print ('%sCamera extrinsics matrix written to %s%s' % (ansi_colors.OKCYAN,
-    extrinsics_path, ansi_colors.ENDC))
+  np.savetxt (extrinsics_path, T_o_cam, '%f')
+  print ('%sCamera extrinsics matrix wrt object written to %s%s' % (
+    ansi_colors.OKCYAN, extrinsics_path, ansi_colors.ENDC))
 
 
 if __name__ == '__main__':
@@ -215,9 +253,13 @@ if __name__ == '__main__':
   # Scene setup
   
   reset_scene ()
+  make_all_unselectable ()
   
   kinect_obj = ScanKinect ()
   setup_camera (kinect_obj)
+
+  # For human inspection
+  setup_render_camera (kinect_obj)
   
   
   #####
@@ -244,7 +286,32 @@ if __name__ == '__main__':
   #n_objs = len (config_consts.objects)
   n_objs = 1
   
-  n_camera_poses = 1 #2
+  n_camera_poses = 10
+
+  # Not good to randomize on spherical coordinates, `.` when convert to
+  #   Quaternion, only 2 degrees of freedom. Would need to combine with
+  #   position to achieve 3DOF. But position is also only 2DOF, x and y, so
+  #   better to randomize on Euler angles.
+  # Blender rotation is set by Euler or Quaternion. Quaternion is not easy
+  #   to quantify a range per parameter. So will define range using Euler
+  #   XYZ.
+  # Range in Euler XYZ is empirically chosen using render_camera_poses.py.
+  rx_range = np.array ([-20, 21]) * np.pi / 180.0
+  ry_range = np.array ([-20, 21]) * np.pi / 180.0
+  rz_range = np.array ([-180, 180]) * np.pi / 180.0
+  # This convention produces results that match Blender "Euler XYZ" convention,
+  #   tested in Euler-to-Quaternion conversion in render_camera_poses.py
+  #   render_at_euler_poses().
+  euler_convention = 'sxyz'
+
+  tx_range = np.array ([-0.08, 0.11])
+  ty_range = np.array ([-0.08, 0.11])
+  tz = 1
+
+  # Don't need noise for random poses. Only need noise for fixed grid
+  # Noise for camera position (meters) and orientation (radians)
+  #T_NOISE_RANGE = 0.01
+  #R_NOISE_RANGE = 
   
   # Loop through each object file
   for o_i in range (n_objs):
@@ -263,6 +330,7 @@ if __name__ == '__main__':
     # Set stationary camera pose. Do first shot using this, as reference
     cam_pos = (0.0, 0.0, 1.0)
     # Blender quaternion has (w, x, y, z), w first.
+    cam_euler = (0, 0, 0)
     cam_quat = (1, 0, 0, 0)
   
   
@@ -283,41 +351,89 @@ if __name__ == '__main__':
       #   to read.
       scene_list_f.write (scene_name + '\n')
       noisy_scene_list_f.write (noisy_scene_name + '\n')
-   
-      # Write the camera extrinsics used to capture the scene, to file with same
-      #   prefix as scene just captured.
-      save_extrinsics_from_pose (cam_pos, cam_quat, noisy_scene_name)
-   
-   
-      # Generate camera pose for next iteration.
-      # Use spherical coordinates (long, lat) to calculate rot and pos.
-   
+
+
+      # Render the RGB image for easy human inspection
+
+      # Render an image using Blender default camera type
+      # Ref https://stackoverflow.com/questions/14982836/rendering-and-saving-images-through-blender-python
+      
+      render_name = os.path.splitext (out_name) [0] + \
+        '_rgb_x%.2f_y%.2f_z%.2f_rx%.2f_ry%.2f_rz%.2f.png' % (cam_pos[0], cam_pos[1],
+        cam_pos[2], cam_euler[0]*180/np.pi, cam_euler[1]*180/np.pi,
+        cam_euler[2]*180/np.pi)
+      bpy.data.scenes ['Scene'].render.filepath = render_name
+      bpy.ops.render.render (write_still=True)
+
+
+      # Calculate camera extrinsics pose wrt object frame, for scene above
+
       # TODO: Get object transformation matrix, then calculate camera transform
       #   wrt object. `.` camera matrix needs to be wrt object, not wrt world!
-      #   This is needed to reproduce the view independent of Blender world frame.
+      #   This is needed to reproduce the view independent of Blender world
+      #   frame. TODO: Coded. Debug this once scene loaded into GraspIt.
+      # NOTE: Assumption: object file name ends with _rotated, the rest is the
+      #   same as the mesh named loaded into Blender. If change any OBJ files,
+      #   make sure this is still satisfied. Else won't be able to get object
+      #   transformation.   
+      obj_mesh_name = os.path.splitext (obj_base) [0].replace ('_rotated', '')
+      obj_pos = bpy.data.objects [obj_mesh_name].location
+      # (qw, qx, qy, qz)
+      obj_quat = bpy.data.objects [obj_mesh_name].rotation_quaternion
+
+      # 4 x 4 matrix
+      T_W_obj = quaternion_matrix ((obj_quat[0], obj_quat[1], obj_quat[2],
+        obj_quat[3]))
+      T_W_obj [0:3, 3] = obj_pos
+
+      print ('DEBUG extrinsics. Object pose:')
+      print (T_W_obj)
+
+      # Write the camera extrinsics used to capture the scene, to file with same
+      #   prefix as scene just captured.
+      save_extrinsics_from_pose (cam_pos, cam_quat, T_W_obj, noisy_scene_name)
    
+   
+      # Generate camera pose for NEXT loop iteration.
+      # Blender quaternion has (w, x, y, z), w first.
+
+      # Use spherical coordinates (long, lat) to calculate rot and pos.
       # Normally, latitude range (-90, 90). Truncate to (0, 90), so it is always
       #   above horizon, `.` tabletop
-      # Blender quaternion has (w, x, y, z), w first.
-      cam_pos, cam_quat = get_rand_pose (lat_range=(0, 0.5*np.pi), qwFirst=True)
+      #cam_pos, cam_quat = get_rand_pose (lat_range=(0, 0.5*np.pi), qwFirst=True)
+
+      tx = tx_range [0] + np.random.rand () * (tx_range[1] - tx_range[0])
+      ty = ty_range [0] + np.random.rand () * (ty_range[1] - ty_range[0])
+      cam_pos = [tx, ty, tz]
+
+      # T^W_c
+      # Use Euler XYZ, easier to find range
+      # (qw, qx, qy, qz)
+      cam_euler, cam_quat = get_rand_rot (rx_range, ry_range, rz_range,
+        axes=euler_convention, qwFirst=True)
   
-      # TODO: Add noise to cam_pos, up to 20 cm
-      # TODO: Constrain cam_quat to point somewhere near object. Easiest is to
-      #   point at object frame 0 0 0 (after moving cam_pos, subtract by object
-      #   location), then add up to 5-10 degrees of jitter,
-      #   however much needed to put object everywhere in image frame, for
-      #   generalization.
-  
-  
+      #print (euler_matrix (cam_euler[0], cam_euler[1], cam_euler[2],
+      #  euler_convention))
+      #print (quaternion_matrix ((cam_quat[0], cam_quat[1], cam_quat[2],
+      #  cam_quat[3])))
+
+
+      # Don't need noise for random poses. Only need noise for fixed grid
+      # Add uniformly random noise
+      #t_noise = np.random.rand (3) * T_NOISE_RANGE
+      #cam_pos += t_noise
+      #r_noise = np.random.rand (3) * R_NOISE_RANGE
+      #cam_euler += r_noise
+
+
+    # Delete loaded object
     # Select all - with the above setup that made all default objs unselectable,
     #   this will select only the loaded object, without needing to know the
     #   object's name - because there is no way to know.
     print ('%sDeleting loaded object%s' % (ansi_colors.OKCYAN, ansi_colors.ENDC))
     bpy.ops.object.select_all (action='SELECT')
     #bpy.ops.object.delete ()
-  
-  
-  
+
   
   # Close text files
   scene_list_f.close ()
@@ -332,4 +448,4 @@ if __name__ == '__main__':
   #print ('Sleeping a few seconds to wait for memory to be freed...')
   #time.sleep (5)
   #bpy.ops.wm.quit_blender ()
-  
+

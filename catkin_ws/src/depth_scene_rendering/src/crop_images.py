@@ -5,6 +5,9 @@
 #
 # Crop images at the paths in the given text file. One path per line.
 #
+# Usage:
+# $ python crop_images.py --textfile /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/renders/rotations/uncropped.txt
+#
 
 import os
 import argparse

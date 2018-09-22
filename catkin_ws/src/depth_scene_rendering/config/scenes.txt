@@ -1,1 +1,10 @@
-/media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-09-20-07-23-46.pcd
+/media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-09-22-03-51-05.pcd
+/media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-09-22-03-51-13.pcd
+/media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-09-22-03-51-22.pcd
+/media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-09-22-03-51-29.pcd
+/media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-09-22-03-51-37.pcd
+/media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-09-22-03-51-43.pcd
+/media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-09-22-03-51-51.pcd
+/media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-09-22-03-51-59.pcd
+/media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-09-22-03-52-06.pcd
+/media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-09-22-03-52-13.pcd

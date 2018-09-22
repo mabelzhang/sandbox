@@ -41,9 +41,12 @@
 #include <util/ansi_colors.h>
 #include <util/io_util.h>  // join_paths(), dirname(), basename(), splitext()
 #include <util/pcd_util.h>  // load_cloud_file()
-#include <depth_scene_rendering/depth_to_image.h>  // RawDepthScaling
-#include <depth_scene_rendering/camera_info.h>  // load_intrinsics()
 #include <util/cv_util.h>  // project_3d_to_2d()
+
+// Local
+#include <depth_scene_rendering/depth_to_image.h>  // RawDepthScaling, crop_image_center()
+#include <depth_scene_rendering/camera_info.h>  // load_intrinsics(), load_nx4_matrix()
+#include <depth_scene_rendering/postprocess_scenes.h>  // calc_object_pose_wrt_cam()
 
 
 // Parameters:
@@ -111,12 +114,14 @@ void inspect_image (cv::Mat & mat, double & min, double & max)
 //   scaler: Constants and methods to scale raw depth to integers, for images.
 //     Constants scale all images by the same range, so scaled values across
 //     all images are comparable.
+//   P: Camera projection matrix
+//   depth_path: Path to write image to
+//   depth_img: Return value
 void convert_pcd_to_image (RawDepthScaling & scaler,
-  pcl::PointCloud <pcl::PointXYZ>::Ptr & cloud_ptr,
-  cv::Mat & depth_img, const std::string & depth_path)
+  pcl::PointCloud <pcl::PointXYZ>::Ptr & cloud_ptr, Eigen::MatrixXf & P,
+  const std::string & depth_path, cv::Mat & depth_img)
 {
   bool DEBUG_CONVERSION = true;
-
 
   // Instantiate image with raw depths
   cv::Mat raw_depth = cv::Mat::zeros (cloud_ptr -> height, cloud_ptr -> width,
@@ -126,12 +131,7 @@ void convert_pcd_to_image (RawDepthScaling & scaler,
   float min_neg_depth = FLT_MAX, max_neg_depth = FLT_MIN;
 
 
-
   // Project with intrinsics matrix. This makes object centered correctly.
-
-  // Load 3 x 4 camera intrinsics matrix
-  Eigen::MatrixXf P;
-  load_intrinsics (P);
 
   // 3 x n
   Eigen::MatrixXf pts = cloud_ptr -> getMatrixXfMap ().block (0, 0, 3,
@@ -157,37 +157,6 @@ void convert_pcd_to_image (RawDepthScaling & scaler,
     raw_depth.at <float> (uv (1, c), uv (0, c)) = pts (2, c);
   }
 
-
-
-  /*
-  // Convert pcd to 2D matrix with raw depth values
-  //   2D coordinates (u, v) are already in the pcl::PointCloud, since it's
-  //   organized. Only need to fetch z directly from each point.
-  // Ref .pcd file format and pcl::PointCloud are row-major:
-  //   http://docs.pointclouds.org/1.5.1/classpcl_1_1_p_c_d_reader.html
-  //   http://docs.pointclouds.org/trunk/classpcl_1_1_point_cloud.html
-  for (int r = 0; r < cloud_ptr -> height; r ++)
-  {
-    for (int c = 0; c < cloud_ptr -> width; c ++)
-    {
-      raw_depth.at <float> (r, c) = cloud_ptr -> at (c, r).z;
-
-      // DEBUG
-      if (cloud_ptr -> at (c, r).z > max_depth)
-        max_depth = cloud_ptr -> at (c, r).z;
-      if (cloud_ptr -> at (c, r).z < min_depth)
-        min_depth = cloud_ptr -> at (c, r).z;
-
-      // DEBUG
-      if (- cloud_ptr -> at (c, r).z > max_neg_depth)
-        max_neg_depth = - cloud_ptr -> at (c, r).z;
-      if (- cloud_ptr -> at (c, r).z < min_neg_depth)
-        min_neg_depth = - cloud_ptr -> at (c, r).z;
-    }
-  }
-  fprintf (stderr, "Cloud inspection (raw): min %g, max %g\n",
-    min_depth, max_depth);
-  */
 
   double min_raw = 0.0, max_raw = 0.0;
   fprintf (stderr, "raw_depth inspection: ");
@@ -288,6 +257,10 @@ int main (int argc, char ** argv)
   //join_paths (pkg_path, "config/scenes_test.txt", scene_list_path);
   std::ifstream scene_list_f (scene_list_path.c_str ());
 
+  // Load 3 x 4 camera intrinsics matrix
+  Eigen::MatrixXf P;
+  load_intrinsics (P);
+
   // Read text file line by line. Each line is the path to one .pcd scene
   std::string scene_path = "";
   while (std::getline (scene_list_f, scene_path))
@@ -320,15 +293,25 @@ int main (int argc, char ** argv)
     std::string depth_path = exts [0] + ".png";
 
     cv::Mat depth_img;
-    convert_pcd_to_image (scaler, cloud_ptr, depth_img, depth_path);
+    convert_pcd_to_image (scaler, cloud_ptr, P, depth_path, depth_img);
 
- 
+
+    // TODO: Copy this block to occlusion_test.cpp, for new crop_image().
+    // Find object center in image pixels
+    Eigen::VectorXf p_obj_2d;
+    calc_object_pose_wrt_cam (scene_path, P, p_obj_2d, depth_img.rows,
+      depth_img.cols);
+
+
     // Crop image, without changing image center, so that intrinsics matrix
     //   still works with the raw depths!
+    // NOTE after cropping, camera intrinsics / projection matrix will no
+    //   longer work, `.` center of cropped image is different! Crop must be
+    //   AFTER done using camera projection matrix.
     // TODO: Figure out a size that works for all objects.
     cv::Mat cropped;
-    crop_image (depth_img, cropped, RawDepthScaling::CROP_W,
-      RawDepthScaling::CROP_H);
+    crop_image (depth_img, cropped, p_obj_2d[0], p_obj_2d[1],
+      RawDepthScaling::CROP_W, RawDepthScaling::CROP_H, false);
 
     // Write converted integers image to file
     // API https://docs.opencv.org/2.4/modules/highgui/doc/reading_and_writing_images_and_video.html#imwrite

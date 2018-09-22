@@ -9,6 +9,7 @@
 
 // Local
 #include "camera_info.h"
+#include <util/ansi_colors.h>
 
 class RawDepthScaling
 {
@@ -147,15 +148,80 @@ public:
 
 
 // Crop out the center region of image, by the given dimensions.
-void crop_image (cv::Mat & image, cv::Mat & cropped, int width=32, int height=32)
+void crop_image_center (cv::Mat & image, cv::Mat & cropped, int width=32,
+  int height=32)
 {
   // Top-left corner of crop
-  float x = image.cols * 0.5 - width * 0.5;
-  float y = image.rows * 0.5 - height * 0.5;
+  int x = (int) round (image.cols * 0.5 - width * 0.5);
+  int y = (int) round (image.rows * 0.5 - height * 0.5);
 
   // Extract the CENTER of image. Do not move to elsewhere in the image! `.`
   //   otherwise the camera intrinsics matrix won't work with the depth values!
   cv::Rect rect = cv::Rect (x, y, width, height);
+
+  cropped = cv::Mat (image, rect);
+}
+
+// Parameters:
+//   cropped: Return value
+void crop_image (cv::Mat & image, cv::Mat & cropped, int cx, int cy,
+  int width=32, int height=32, bool truncate=true)
+{
+  // Top-left corner of crop
+  int topleftx = (int) round (cx - width * 0.5);
+  int toplefty = (int) round (cy - height * 0.5);
+  //std::cerr << topleftx << std::endl << toplefty << std::endl;
+
+  fprintf (stderr, "topleftx %d, width %d, toplefty %d, height %d\n", topleftx,
+    width, toplefty, height);
+
+  if (topleftx < 0)
+  {
+    fprintf (stderr, "%sWARN: Crop top-left x < 0, setting to 0.%s\n", WARN,
+      ENDC);
+    topleftx = 0;
+  }
+  if (toplefty < 0)
+  {
+    fprintf (stderr, "%sWARN: Crop top-left y < 0, setting to 0.%s\n", WARN,
+      ENDC);
+    toplefty = 0;
+  }
+
+  // Truncate width and height so the crop stays within image boundaries
+  if (truncate)
+  {
+    if (topleftx + width > image.cols)
+    {
+      fprintf (stderr, "%sWARN: Crop boundaries go over image edges. Truncating crop to smaller size so that it fits in image.%s\n", WARN, ENDC);
+      width = image.cols - topleftx;
+    }
+    if (toplefty + height > image.rows)
+    {
+      fprintf (stderr, "%sWARN: Crop boundaries go over image edges. Truncating crop to smaller size so that it fits in image.%s\n", WARN, ENDC);
+      height = image.rows - toplefty;
+    }
+  }
+
+  // Shift center so width and height remain the same
+  else
+  {
+    if (topleftx + width > image.cols)
+    {
+      fprintf (stderr, "%sWARN: Crop boundaries go over image edges. Shifting crop center so crop dimensions remain as requested.%s\n", WARN, ENDC);
+      topleftx -= (topleftx + width - image.cols);
+    }
+    if (toplefty + height > image.rows)
+    {
+      fprintf (stderr, "%sWARN: Crop boundaries go over image edges. Shifting crop center so crop dimensions remain as requested.%s\n", WARN, ENDC);
+      toplefty -= (toplefty + height - image.rows);
+    }
+  }
+
+  fprintf (stderr, "topleftx %d, width %d, toplefty %d, height %d\n", topleftx,
+    width, toplefty, height);
+
+  cv::Rect rect = cv::Rect (topleftx, toplefty, width, height);
 
   cropped = cv::Mat (image, rect);
 }

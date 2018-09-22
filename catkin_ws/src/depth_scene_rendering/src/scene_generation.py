@@ -205,8 +205,11 @@ def save_extrinsics_from_pose (cam_pos, cam_quat, T_W_obj, noisy_scene_name):
   T_W_cam = quaternion_matrix ((cam_quat[0], cam_quat[1], cam_quat[2],
     cam_quat[3]))
 
+  # Set position after all the rotations are done
+  T_W_cam [0:3, 3] = cam_pos
 
-  # Correct the extrinsics matrix to computer vision convention.
+
+  # Correct the extrinsics matrix to robotics convention.
   # Blender camera has y up, -z points toward object, unconventional for
   #   cameras in robotics. However, when camera quaternion is w1 0 0 0, its
   #   matrix saved is -1 -1 1 on the diagonal, not identity for some reason!
@@ -223,26 +226,32 @@ def save_extrinsics_from_pose (cam_pos, cam_quat, T_W_obj, noisy_scene_name):
   # To get this diagonal (1, -1, -1) from the diagonal (-1, -1, 1) of identity
   #   camera pose, rotate pi wrt y.
   # Rotation matrix 180 wrt y
-  R_flipZ = [[np.cos(np.pi), 0, np.sin(np.pi), 0],
+  R_flipY = [[np.cos(np.pi), 0, np.sin(np.pi), 0],
              [0, 1, 0, 0],
              [-np.sin(np.pi), 0, np.cos(np.pi), 0],
              [0, 0, 0, 1]]
-  T_W_cam = np.dot (T_W_cam, R_flipZ)
-
-  # Set position after all the rotations are done
-  T_W_cam [0:3, 3] = cam_pos
+  T_W_cam = np.dot (T_W_cam, R_flipY)
 
 
+  '''
   # Camera transformation wrt object, expressed in object frame
   # T^o_c = T^o_W * T^W_c
   #       = (T^W_o)^-1 * T^W_c
   T_o_cam = np.dot (np.linalg.inv (T_W_obj), T_W_cam)
 
+  print ('camera pose wrt object:')
+  print (T_o_cam)
+  '''
+
+  print ('camera pose wrt world:')
+  print (T_W_cam)
+
 
   # Write the camera extrinsics used to capture the scene, to file with same
   #   prefix as scene just captured.
   extrinsics_path = os.path.splitext (noisy_scene_name) [0] + '.txt'
-  np.savetxt (extrinsics_path, T_o_cam, '%f')
+  #np.savetxt (extrinsics_path, T_o_cam, '%f')
+  np.savetxt (extrinsics_path, T_W_cam, '%f')
   print ('%sCamera extrinsics matrix wrt object written to %s%s' % (
     ansi_colors.OKCYAN, extrinsics_path, ansi_colors.ENDC))
 
@@ -286,7 +295,7 @@ if __name__ == '__main__':
   #n_objs = len (config_consts.objects)
   n_objs = 1
   
-  n_camera_poses = 10
+  n_camera_poses = 2
 
   # Not good to randomize on spherical coordinates, `.` when convert to
   #   Quaternion, only 2 degrees of freedom. Would need to combine with

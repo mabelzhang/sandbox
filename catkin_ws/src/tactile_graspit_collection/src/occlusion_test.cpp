@@ -34,9 +34,12 @@
 #include <util/pcl_raytrace_util.h>  // RayTracer
 #include <util/ansi_colors.h>
 #include <util/filter.h>  // blob_filter ()
-#include <depth_scene_rendering/camera_info.h>  // load_intrinsics ()
-#include <depth_scene_rendering/depth_to_image.h>  // RawDepthScaling, crop_image()
 #include <util/cv_util.h>  // project_3d_to_2d()
+
+// Local
+#include <depth_scene_rendering/camera_info.h>  // load_intrinsics ()
+#include <depth_scene_rendering/depth_to_image.h>  // RawDepthScaling, crop_image_center()
+#include <depth_scene_rendering/postprocess_scenes.h>  // calc_object_pose_wrt_cam()
 
 
 // Separate contact points into visible and occluded channels.
@@ -290,12 +293,20 @@ int main (int argc, char ** argv)
       cloud_ptr -> height, cloud_ptr -> width, visible_img, occluded_img);
 
 
+    // Find object center in image pixels
+    Eigen::VectorXf p_obj_2d;
+    calc_object_pose_wrt_cam (scene_path, P, p_obj_2d, visible_img.rows,
+      visible_img.cols);
+
     // Crop the heatmaps
+    // NOTE after cropping, camera intrinsics / projection matrix will no
+    //   longer work, `.` center of cropped image is different! Crop must be
+    //   AFTER done using camera projection matrix.
     cv::Mat vis_crop, occ_crop;
-    crop_image (visible_img, vis_crop, RawDepthScaling::CROP_W,
-      RawDepthScaling::CROP_H);
-    crop_image (occluded_img, occ_crop, RawDepthScaling::CROP_W,
-      RawDepthScaling::CROP_H);
+    crop_image (visible_img, vis_crop, p_obj_2d[0], p_obj_2d[1],
+      RawDepthScaling::CROP_W, RawDepthScaling::CROP_H, false);
+    crop_image (occluded_img, occ_crop, p_obj_2d[0], p_obj_2d[1],
+      RawDepthScaling::CROP_W, RawDepthScaling::CROP_H, false);
 
     // Save visible and occluded channels
     std::vector <std::string> exts;

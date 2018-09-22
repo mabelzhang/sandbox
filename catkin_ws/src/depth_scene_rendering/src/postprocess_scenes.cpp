@@ -296,12 +296,10 @@ int main (int argc, char ** argv)
     convert_pcd_to_image (scaler, cloud_ptr, P, depth_path, depth_img);
 
 
-    // TODO: Copy this block to occlusion_test.cpp, for new crop_image().
     // Find object center in image pixels
     Eigen::VectorXf p_obj_2d;
     calc_object_pose_wrt_cam (scene_path, P, p_obj_2d, depth_img.rows,
       depth_img.cols);
-
 
     // Crop image, without changing image center, so that intrinsics matrix
     //   still works with the raw depths!

@@ -233,15 +233,13 @@ def save_extrinsics_from_pose (cam_pos, cam_quat, T_W_obj, noisy_scene_name):
   T_W_cam = np.dot (T_W_cam, R_flipY)
 
 
-  '''
   # Camera transformation wrt object, expressed in object frame
   # T^o_c = T^o_W * T^W_c
   #       = (T^W_o)^-1 * T^W_c
   T_o_cam = np.dot (np.linalg.inv (T_W_obj), T_W_cam)
 
-  print ('camera pose wrt object:')
-  print (T_o_cam)
-  '''
+  #print ('camera pose wrt object:')
+  #print (T_o_cam)
 
   print ('camera pose wrt world:')
   print (T_W_cam)
@@ -377,10 +375,6 @@ if __name__ == '__main__':
 
       # Calculate camera extrinsics pose wrt object frame, for scene above
 
-      # TODO: Get object transformation matrix, then calculate camera transform
-      #   wrt object. `.` camera matrix needs to be wrt object, not wrt world!
-      #   This is needed to reproduce the view independent of Blender world
-      #   frame. TODO: Coded. Debug this once scene loaded into GraspIt.
       # NOTE: Assumption: object file name ends with _rotated, the rest is the
       #   same as the mesh named loaded into Blender. If change any OBJ files,
       #   make sure this is still satisfied. Else won't be able to get object

@@ -1,2 +1,2 @@
-/media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-09-22-13-36-19.pcd
-/media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-09-22-13-36-26.pcd
+/media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-09-22-14-51-02.pcd
+/media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-09-22-14-51-10.pcd

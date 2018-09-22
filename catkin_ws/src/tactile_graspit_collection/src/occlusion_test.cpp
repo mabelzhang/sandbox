@@ -394,7 +394,9 @@ int main (int argc, char ** argv)
     //cv::normalize (visible_img, dst, 0, 1, cv::NORM_MINMAX);
     //cv::imshow ("Visible contacts", visible_img);
     //cv::normalize (visible_blob, dst, 0, 1, cv::NORM_MINMAX);
-    // TODO: Actually the images written to file do look blurred! These displayed versions have sharp edges for some reason. Use inspect_channels.py to inspect with matplotlib, better visualization.
+    // These displayed versions have sharp edges for some reason. Actual image
+    //   does show Gaussian blurred. Use inspect_channels.py to inspect, and
+    //   visualize_heatmaps.py to visualize heatmap overlay on depth image.
     cv::imshow ("Visible contacts", visible_blob);
     cv::waitKey (0);
 

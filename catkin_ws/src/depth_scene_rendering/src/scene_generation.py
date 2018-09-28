@@ -290,8 +290,8 @@ if __name__ == '__main__':
   
   
   
-  #n_objs = len (config_consts.objects)
-  n_objs = 1
+  n_objs = len (config_consts.objects)
+  #n_objs = 1
   
   n_camera_poses = 2
 
@@ -319,6 +319,8 @@ if __name__ == '__main__':
   # Noise for camera position (meters) and orientation (radians)
   #T_NOISE_RANGE = 0.01
   #R_NOISE_RANGE = 
+
+  start_time = time.time ()
   
   # Loop through each object file
   for o_i in range (n_objs):
@@ -435,7 +437,7 @@ if __name__ == '__main__':
     #   object's name - because there is no way to know.
     print ('%sDeleting loaded object%s' % (ansi_colors.OKCYAN, ansi_colors.ENDC))
     bpy.ops.object.select_all (action='SELECT')
-    #bpy.ops.object.delete ()
+    bpy.ops.object.delete ()
 
   
   # Close text files
@@ -451,4 +453,8 @@ if __name__ == '__main__':
   #print ('Sleeping a few seconds to wait for memory to be freed...')
   #time.sleep (5)
   #bpy.ops.wm.quit_blender ()
+
+  print ('Elapsed time: %g seconds' % (time.time () - start_time))
+
+
 

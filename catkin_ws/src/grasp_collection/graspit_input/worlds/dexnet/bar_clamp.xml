@@ -4,23 +4,36 @@
      28 Sep 2018 -->
 
 <world>
+    <obstacle>
+        <filename>models/obstacles/simpleFloor.xml</filename>
+        <transform>
+            <fullTransform>(+1 0 0 0)[0 0 1303]</fullTransform>
+        </transform>
+    </obstacle>
     <graspableBody>
         <filename>models/objects/dexnet/bar_clamp.xml</filename>
         <transform>
-            <fullTransform>(+1 0 0 0)[0 0 0]</fullTransform>
+            <!-- bar_clamp dimension in y: 55.783 mm. Shift up 0.5 * dim_y to sit above floor -->
+            <!-- Rotate 90 degs wrt x, to offset the axis rotation in .obj -->
+            <fullTransform>(0.70710678 0.70710678 0 0)[0 0 +28.1]</fullTransform>
         </transform>
     </graspableBody>
     <robot>
         <filename>models/robots/RobotIQ/RobotIQ.xml</filename>
         <dofValues>0 0 +0 +0 0 +0 +0 0 +0 +0</dofValues>
         <transform>
-            <fullTransform>(+1 0 0 0)[+500 0 0]</fullTransform>
+            <fullTransform>(+1 0 0 0)[+200 -200 +200]</fullTransform>
         </transform>
     </robot>
+    <!--camera>
+        <position>-59.8117 +436.797 +535.407</position>
+        <orientation>-0.0571702 +0.418298 +0.899687 -0.111005</orientation>
+        <focalDistance>+676.279</focalDistance>
+    </camera-->
+    <!-- With sky in view -->
     <camera>
-        <position>+231.528 +449.284 -822.335</position>
-        <orientation>+0.0228176 +0.975645 +0.218148 +0.00284601</orientation>
-        <focalDistance>+1008.89</focalDistance>
+        <position>-271.194 +469.752 +334.05</position>
+        <orientation>-0.163684 +0.548015 +0.787843 -0.228451</orientation>
+        <focalDistance>+676.279</focalDistance>
     </camera>
-
 </world>

@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+
+<!-- Mabel Zhang
+     28 Sep 2018 -->
+
+<world>
+    <graspableBody>
+        <filename>models/objects/dexnet/bar_clamp.xml</filename>
+        <transform>
+            <fullTransform>(+1 0 0 0)[0 0 0]</fullTransform>
+        </transform>
+    </graspableBody>
+    <robot>
+        <filename>models/robots/RobotIQ/RobotIQ.xml</filename>
+        <dofValues>0 0 +0 +0 0 +0 +0 0 +0 +0</dofValues>
+        <transform>
+            <fullTransform>(+1 0 0 0)[+500 0 0]</fullTransform>
+        </transform>
+    </robot>
+    <camera>
+        <position>+231.528 +449.284 -822.335</position>
+        <orientation>+0.0228176 +0.975645 +0.218148 +0.00284601</orientation>
+        <focalDistance>+1008.89</focalDistance>
+    </camera>
+
+</world>

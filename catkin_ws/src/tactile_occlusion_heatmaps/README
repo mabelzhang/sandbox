@@ -1,0 +1,15 @@
+Mabel Zhang
+30 Aug 2018
+
+Data collection of simulated tactile grasps in GraspIt
+
+Tactile contact locations are simulated by xyzs of collisions between hand
+  mesh and object mesh.
+
+
+Perform raytracing test on a set of random points and point clouds in depth_scene_rendering/config/scenes_noisy.txt, and output (visible, occluded) tactile heatmap pair, indicating which points are visible or occluded by the point cloud:
+$ rosrun tactile_occlusion_heatmaps occlusion_test 
+
+Visualize input triplet (depth, visible tacile heatmap, occluded tactile heatmap) of images in depth_scene_rendering/config/scenes_noisy.txt:
+$ rosrun tactile_occlusion_heatmaps visualize_heatmaps.py
+

@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+
+<!-- Mabel Zhang
+     28 Sep 2018
+
+     Inertia generated from MeshLab, using Gazebo tutorial
+       http://gazebosim.org/tutorials?tut=inertia&cat=build_robot -->
+
+<root>
+  <material>plastic</material>
+  <geometryFile type="Inventor">turbine_housing_rotated_scale1000.iv</geometryFile>
+</root>
+

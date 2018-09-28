@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+
+<!-- Mabel Zhang
+     26 Sep 2018
+
+     Inertia generated from MeshLab, using Gazebo tutorial
+       http://gazebosim.org/tutorials?tut=inertia&cat=build_robot -->
+
+<root>
+  <material>plastic</material>
+  <mass>147.450</mass>
+  <cog>-45.580 20.457 14.246</cog>
+  <inertia_matrix>
+0.00018233  0.00001032  0.00000099
+0.00001032  0.00019594  -0.00000729
+0.00000099 -0.00000729  0.00009455</inertia_matrix>
+  <geometryFile type="Inventor">bar_clamp_rotated_scale1000.iv</geometryFile>
+</root>
+

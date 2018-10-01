@@ -8,6 +8,6 @@
 
 <root>
   <material>plastic</material>
-  <geometryFile type="Inventor">gearbox_rotated_scale1000.iv</geometryFile>
+  <geometryFile type="Inventor">gearbox_rotated_centered_1000x.iv</geometryFile>
 </root>
 

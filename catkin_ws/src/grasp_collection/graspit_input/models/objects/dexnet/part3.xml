@@ -9,12 +9,12 @@
 <root>
   <material>plastic</material>
   <mass>64.308</mass>
-  <cog>-68.383 30.342 -61.313</cog>
+  <cog>-59.248 18.657 -148.888</cog>
   <inertia_matrix>
 0.348  0.0073  -0.0581
 0.0073  0.3471  -0.0171
 -0.0581  -0.0171  0.3105
 </inertia_matrix>
-  <geometryFile type="Inventor">part3_rotated_scale1000.iv</geometryFile>
+  <geometryFile type="Inventor">part3_rotated_centered_1000x.iv</geometryFile>
 </root>
 

@@ -13,7 +13,7 @@
     <graspableBody>
         <filename>models/objects/dexnet/bar_clamp.xml</filename>
         <transform>
-            <!-- bar_clamp dimension in y: 55.783 mm. Shift up 0.5 * dim_y to sit above floor -->
+            <!-- obj dimension in y: 56 mm. Shift up 0.5 * dim to sit above floor -->
             <!-- Rotate 90 degs wrt x, to offset the axis rotation in .obj -->
             <fullTransform>(0.70710678 0.70710678 0 0)[0 0 +28.1]</fullTransform>
         </transform>

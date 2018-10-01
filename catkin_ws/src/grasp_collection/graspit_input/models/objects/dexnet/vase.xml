@@ -9,11 +9,11 @@
 <root>
   <material>plastic</material>
   <mass>207.192</mass>
-  <cog>27.610 51.280 40.596</cog>
+  <cog>27.090 51.280 41.023</cog>
   <inertia_matrix>
 0.4037  -0.0071  0.0708
 -0.0071  0.2094  0.0395
 0.0708  0.0395  0.9914</inertia_matrix>
-  <geometryFile type="Inventor">vase_rotated_scale1000.iv</geometryFile>
+  <geometryFile type="Inventor">vase_rotated_centered_1000x.iv</geometryFile>
 </root>
 

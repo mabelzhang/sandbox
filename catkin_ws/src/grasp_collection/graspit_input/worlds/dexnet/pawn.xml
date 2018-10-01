@@ -1,0 +1,35 @@
+<?xml version="1.0" ?>
+
+<!-- Mabel Zhang
+     1 Oct 2018 -->
+
+<world>
+    <obstacle>
+        <filename>models/obstacles/simpleFloor.xml</filename>
+        <transform>
+            <fullTransform>(+1 0 0 0)[0 0 1303]</fullTransform>
+        </transform>
+    </obstacle>
+    <graspableBody>
+        <filename>models/objects/dexnet/pawn.xml</filename>
+        <transform>
+            <!-- obj dimension in z: 105 mm. Shift up 0.5 * dim to sit above floor -->
+            <!-- Rotate 90 degs wrt x, to offset the axis rotation in .obj.
+                 Rotate another 90 degs wrt x, to put flat part on floor -->
+            <fullTransform>(1 0 0 0)[0 0 +53]</fullTransform>
+        </transform>
+    </graspableBody>
+    <robot>
+        <filename>models/robots/RobotIQ/RobotIQ.xml</filename>
+        <dofValues>0 0 +0 +0 0 +0 +0 0 +0 +0</dofValues>
+        <transform>
+            <fullTransform>(+1 0 0 0)[+200 -200 +200]</fullTransform>
+        </transform>
+    </robot>
+    <!-- With sky in view -->
+    <camera>
+        <position>-271.194 +469.752 +334.05</position>
+        <orientation>-0.163684 +0.548015 +0.787843 -0.228451</orientation>
+        <focalDistance>+676.279</focalDistance>
+    </camera>
+</world>

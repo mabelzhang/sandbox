@@ -13,14 +13,14 @@
 obj_path = '/home/master/graspingRepo/train/dexnet/mini_dexnet'
 objects = [
   # Rotated in Blender manually to align to axis
-  'bar_clamp_rotated.obj',
-  'gearbox_rotated.obj',
-  'nozzle_rotated.obj',
-  'part1_rotated.obj',
-  'part3_rotated.obj',
-  'pawn_rotated.obj',
-  'turbine_housing_rotated.obj',
-  'vase_rotated.obj']
+  'bar_clamp_rotated_centered.obj',
+  'gearbox_rotated_centered.obj',
+  'nozzle_rotated_centered.obj',
+  'part1_rotated_centered.obj',
+  'part3_rotated_centered.obj',
+  'pawn_rotated_centered.obj',
+  'turbine_housing_rotated_centered.obj',
+  'vase_rotated_centered.obj']
   #'climbing_hold.obj',
   #'endstop_holder.obj',
   #'mount1.obj',

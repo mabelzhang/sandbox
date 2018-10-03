@@ -1,4 +1,4 @@
-#include "graspit_interface.h"
+#include "graspit_interface_custom/graspit_interface.h"
 
 extern "C" Plugin* createPlugin() {
     return new GraspitInterface::GraspitInterface();

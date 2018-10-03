@@ -44,9 +44,6 @@ SimAnnPlanner::SimAnnPlanner(Hand *h)
   mEnergyCalculator = SearchEnergy::getSearchEnergy("CONTACT_ENERGY");
   mSimAnn = new SimAnn();
   //mSimAnn->writeResults(true);
-
-  // Custom: Initialize to default constant
-  mNumBestGrasps = BEST_LIST_SIZE;
 }
 
 SimAnnPlanner::~SimAnnPlanner()

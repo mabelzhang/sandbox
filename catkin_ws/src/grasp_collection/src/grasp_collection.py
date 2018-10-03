@@ -9,14 +9,20 @@
 import os
 import re  # Regular expressions
 
+import numpy as np
+
 import rospy
 import rospkg
 from geometry_msgs.msg import Pose
+import tf
 
 from graspit_commander_custom.graspit_commander_custom import GraspitCommander
 
 from graspit_interface.srv import LoadWorld
 from graspit_interface.msg import SearchContact
+
+# Custom
+from util.ros_util import matrix_from_Pose
 
 # Local
 from config_consts import worlds
@@ -40,7 +46,8 @@ def main ():
 
   n_contacts_ttl = 0
 
-  skip_contact_bodies = []
+  # TODO: Use this
+  #save_every_n_grasps = 50
 
 
   #for w_i in range (len (worlds)):
@@ -127,6 +134,7 @@ def main ():
       #print (rres.robot.contacts)
 
       n_contacts = 0
+      contacts_W = np.zeros ((4, len (rres.robot.contacts)))
       for contact in rres.robot.contacts:
         # Skip self-contacts and contacts with floor
         if contact.body1 == 'Base' or contact.body2 == 'Base' or \
@@ -143,13 +151,42 @@ def main ():
 
         #print contact
         print ('Contact between %s and %s' % (contact.body1, contact.body2))
+
+        # Append to a matrix, so can multiply all at once at end of loop
+        # 4 x n, wrt GraspIt world frame
+        contacts_W [:, n_contacts] = np.dot (matrix_from_Pose (contact.ps.pose),
+          [0, 0, 0, 1])
+
+        # Increment AFTER index has been used in matrix
         n_contacts += 1
+
+      # Delete unused columns
+      contacts_W = contacts_W [:, 0:n_contacts]
+
+
+      # TODO: Convert contact points to be wrt object frame! They are now in
+      #   GraspIt world frame
+      body = GraspitCommander.getGraspableBody(0).graspable_body
+      #print ('Graspable body [0]:')
+      #print (body.header)
+
+      T_W_O = matrix_from_Pose (body.pose)
+
+      # 4 x n, wrt object frame
+      contacts_O = np.dot (np.linalg.inv (T_W_O), contacts_W)
+
+      print (contacts_O)
+
+      
+      # TODO: append contacts to a list, to be saved to disk.
+
+
       print ('%d contacts' % n_contacts)
 
       print ('')
 
       n_contacts_ttl += n_contacts
-     
+
 
       GraspitCommander.autoOpen ()
      
@@ -161,8 +198,10 @@ def main ():
     print ('Total %d contacts in %d grasps' % (n_contacts_ttl, n_best_grasps))
 
      
-    # Save grasps and contact locations to disk. Try to do this just ONCE,
-    #   `.` file I/O is expensive
+    # Save grasps and contact locations to disk. Try to do this just once per
+    #   world file, `.` file I/O is expensive. But don't wait till end of
+    #   program, `.` may leave it running for hours, don't want to lose all the
+    #   work!! Or better, specify a parameter to save_every_n_grasps.
 
 
 

@@ -10,8 +10,9 @@ import os
 
 import rospy
 import rospkg
+from geometry_msgs.msg import Pose
 
-from graspit_commander import GraspitCommander
+from graspit_commander_custom.graspit_commander_custom import GraspitCommander
 
 from graspit_interface.srv import LoadWorld
 
@@ -28,7 +29,7 @@ def main ():
 
 
   #for i in range (len (worlds)):
-  for i in range (1):
+  for i in range (1, 2):
 
     # graspit_interface loadWorld automatically looks in worlds/ path under
     #   GraspIt installation path.
@@ -40,6 +41,7 @@ def main ():
     print ('Loading world from %s' % world_fname)
 
     # Load world
+    GraspitCommander.clearWorld ()
     GraspitCommander.loadWorld (world_fname)
 
 
@@ -60,17 +62,33 @@ def main ():
     # Plan Eigengrasps
 
     # TODO Try different quality measures.
-    # TODO: Make planGrasps() return more than just the top 20 grasps. Need
-    #   low-quality ones as well.
 
-    res = GraspitCommander.planGrasps ()
+    # Returns graspit_interface_custom/action/PlanGrasps.action result.
+    # Request for more than the default top 20 grasps, to get low-quality ones
+    #   as well.
+    res = GraspitCommander.planGrasps (n_best_grasps=50)
     print (type (res))
-    print (res)
+    print ('Returned %d grasps. First one:' % (len (res.grasps)))
+    print (res.grasps [0])
+    print (res.energies)
+    print (res.search_energy)
 
+
+    # To view each grasp in GraspIt GUI, for debugging, move hand to the pose
+    #print ('Showing grasps in GraspIt GUI, one by one')
+    #for i in range (len (res.grasps)):
+    #print ('Grasp %d: energy %g' % (i, res.energies [i]))
+    #  setRobotPose (res.grasps [i])
+    #  uinput = raw_input ('Press enter to view next grasp, q to stop viewing')
+    #  if uinput.lower () == 'q':
+    #    break
 
 
 
     # Get contact locations wrt object frame
+    # /graspit/findInitialContact ?
+    # There is /graspit/moveDOFToContacts, but where are the contacts? They
+    #   seem to be at the blue lines in the GUI, but are they exposed?
 
 
 

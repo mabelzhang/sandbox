@@ -1,0 +1,30 @@
+# 2 Oct 2018
+# Modified from same file in graspit_interface, to allow passing in the number
+#   of grasps to return, as a parameter.
+
+# Goal
+int32 graspable_body_id
+
+graspit_interface/Planner planner
+string search_energy
+graspit_interface/SearchSpace search_space
+graspit_interface/SearchContact search_contact
+graspit_interface/SimAnnParams sim_ann_params
+
+int32 max_steps
+int32 feedback_num_steps
+
+# Custom parameter
+# Number of top grasps to return
+int32 n_best_grasps
+---
+# Result
+graspit_interface/Grasp[] grasps
+float64[] energies
+string search_energy
+---
+# Feedback 
+int32 current_step
+graspit_interface/Grasp[] grasps
+float64[] energies
+string search_energy

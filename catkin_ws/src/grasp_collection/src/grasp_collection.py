@@ -9,6 +9,7 @@
 import os
 import re  # Regular expressions
 import cPickle as pickle
+import csv
 
 import numpy as np
 
@@ -94,7 +95,10 @@ def main ():
     print (gres.search_energy)
 
     # Parallel list to gres.grasps. Make sure these are the same length!
-    contacts_l = []
+    #contacts_l = []
+    # 3 x (nContacts * nGrasps)
+    contacts_m = np.zeros ((3, 0))
+    cmeta = [0] * len (gres.grasps)
 
 
     # Loop through each result grasp
@@ -170,10 +174,12 @@ def main ():
 
       # One list item per grasp. List item is a matrix 4 x n of n contacts
       # Take top 3 rows, skip bottom homogeneous coordinate, all 1s
-      contacts_l.append (contacts_O [0:3, :])
+      #contacts_l.append (contacts_O [0:3, :])
+      contacts_m = np.hstack ((contacts_m, contacts_O [0:3, :]))
 
       print ('%d contacts' % n_contacts)
 
+      cmeta [g_i] = n_contacts
       n_contacts_ttl += n_contacts
 
 
@@ -192,12 +198,6 @@ def main ():
     #   program, `.` may leave it running for hours, don't want to lose all the
     #   work!
 
-    # Sanity check
-    if len (gres.grasps) != len (contacts_l):
-      print ('%sWARN: Length of grasps (%d) != length of contacts (%d), in parallel lists! You will not know which one goes with which when you load the file.%s' % (
-        ansi_colors.WARNING, len (gres.grasps), len (contacts_l),
-        ansi_colors.ENDC))
-
     # One file per world for now. It contains all grasps obtained in this world,
     #   possibly hundreds of grasps.
     # TODO: Why do some grasps have 0 contacts with object? Should I just not
@@ -212,16 +212,61 @@ def main ():
     print ('%sWritten grasps to file %s%s' % (ansi_colors.OKCYAN,
       grasps_fname, ansi_colors.ENDC))
 
+
+    '''
+    # Sanity check
+    if len (gres.grasps) != len (contacts_l):
+      print ('%sWARN: Length of grasps (%d) != length of contacts (%d), in parallel lists! You will not know which one goes with which when you load the file.%s' % (
+        ansi_colors.WARNING, len (gres.grasps), len (contacts_l),
+        ansi_colors.ENDC))
+
+    # pickle file, of a list of matrices, one list item per grasp
     contacts_fname = os.path.join (get_contacts_path (),
       os.path.basename (world_fname) + '.pkl')
     with open (contacts_fname, 'wb') as contacts_f:
       pickle.dump (contacts_l, contacts_f, pickle.HIGHEST_PROTOCOL)
+    '''
+
+
+    # csv file, of a large matrix of nContactsPerGrasp * nGrasps.
+    contacts_fname = os.path.join (get_contacts_path (),
+      os.path.basename (world_fname) + '.csv')
+    with open (contacts_fname, 'wb') as contacts_f:
+      contacts_writer = csv.writer (contacts_f)
+      contacts_writer.writerows (contacts_m)
     print ('%sWritten contacts to file %s%s' % (ansi_colors.OKCYAN,
       contacts_fname, ansi_colors.ENDC))
 
+    # Meta csv file, records how many contacts there are in each grasp. Used
+    #   for indexing the big contacts matrix by grasp.
+    cmeta_fname = os.path.join (get_contacts_path (),
+      os.path.basename (world_fname) + '_meta.csv')
+    with open (cmeta_fname, 'wb') as cmeta_f:
+      cmeta_writer = csv.writer (cmeta_f)
+      cmeta_writer.writerow (cmeta)
+    print ('%sWritten contacts meta to file %s%s' % (ansi_colors.OKCYAN,
+      cmeta_fname, ansi_colors.ENDC))
 
 
 
+
+
+
+    # TODO: This needs to be in C++, in tactile_occlusion_heatmaps... how is
+    #   C++ supposed to load pickle?? Maybe should use a data format standard
+    #   across languages. Does ROS have its own format?
+    # Grasps never need to be loaded in C++. They only need to be loaded when
+    #   need to reproduce the grasp in GraspIt, so only need to be in Python.
+    # Contacts however need to be loaded in C++, to do PCL raytracing.
+    # Contacts are just matrices... any matrix format works. Although, they are
+    #   lists of matrices...
+    # One easy way is to save all contacts to a big matrix, and then save an
+    #   indexing matrix to a separate file, saying how many contacts there are
+    #   per grasp. Then it is pretty easy to index the big matrix.
+    # Can either save as csv (large file size, possibly lower decimal precision)
+    # Or save as pickle, and use https://stackoverflow.com/questions/1296162/how-can-i-read-a-python-pickle-database-file-from-c
+    # Just use csv first, easy to read/write in both C++ and Python, reliable.
+    #   Read it into an Eigen::MatrixXf.
 
     # Load grasps saved
     #with open (path, 'rb') as f:

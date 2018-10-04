@@ -17,7 +17,7 @@ import rospkg
 from util.ansi_colors import ansi_colors
 
 # Local
-from config_paths import get_cam_config_path
+from tactile_occlusion_heatmaps.config_paths import get_cam_config_path
 
 
 class RawDepthScaling:

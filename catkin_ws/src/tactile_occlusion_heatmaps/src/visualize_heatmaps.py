@@ -28,7 +28,7 @@ from util.ansi_colors import ansi_colors
 from util.image_util import np_from_depth, show_image, matshow_image
 
 # Local
-from config_paths import get_heatmap_raw_fmt, get_heatmap_blob_fmt, get_vis_path
+from tactile_occlusion_heatmaps.config_paths import get_heatmap_raw_fmt, get_heatmap_blob_fmt, get_vis_path
 from depth_to_image import RawDepthScaling
 
 

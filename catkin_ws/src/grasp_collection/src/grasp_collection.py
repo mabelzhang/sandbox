@@ -8,6 +8,7 @@
 
 import os
 import re  # Regular expressions
+import cPickle as pickle
 
 import numpy as np
 
@@ -23,9 +24,12 @@ from graspit_interface.msg import SearchContact
 
 # Custom
 from util.ros_util import matrix_from_Pose
+#from tactile_occlusion_heatmaps import get_data_root
 
 # Local
 from config_consts import worlds
+from config_paths import get_grasps_path, get_contacts_path
+from util.ansi_colors import ansi_colors
 
 
 def main ():
@@ -66,19 +70,11 @@ def main ():
     GraspitCommander.clearWorld ()
     GraspitCommander.loadWorld (world_fname)
 
-
-    # Pros: This returns result directly to me. GraspitCommands returns nothing
-    '''
-    rospy.wait_for_service ('/graspit/loadWorld')
-    try:
-      load_world_srv = rospy.ServiceProxy ('/graspit/loadWorld', LoadWorld)
-      resp = load_world_srv (world_fname)
-      if result.result != LoadWorld._response_class.RESULT_SUCCESS:
-        print ('ERROR: Failed to load world file %s' % world_fname)
-
-    except rospy.ServiceException, e:
-      print ('ERROR: Exception while calling /graspit/loadWorld service.')
-    '''
+    # T^W_O. Used to transform contact points to be wrt object frame later
+    body = GraspitCommander.getGraspableBody(0).graspable_body
+    T_W_O = matrix_from_Pose (body.pose)
+    #print ('Graspable body [0]:')
+    #print (body.header)
 
 
     # Plan Eigengrasps
@@ -97,11 +93,14 @@ def main ():
     print (gres.energies)
     print (gres.search_energy)
 
+    # Parallel list to gres.grasps. Make sure these are the same length!
+    contacts_l = []
+
 
     # Loop through each result grasp
     for g_i in range (len (gres.grasps)):
 
-      print ('Grasp %d: energy %g' % (g_i, gres.energies [g_i]))
+      print ('Grasp %d: energy %g' % (g_i+1, gres.energies [g_i]))
       GraspitCommander.setRobotPose (gres.grasps [g_i].pose)
 
 
@@ -163,33 +162,23 @@ def main ():
       # Delete unused columns
       contacts_W = contacts_W [:, 0:n_contacts]
 
-
-      # TODO: Convert contact points to be wrt object frame! They are now in
-      #   GraspIt world frame
-      body = GraspitCommander.getGraspableBody(0).graspable_body
-      #print ('Graspable body [0]:')
-      #print (body.header)
-
-      T_W_O = matrix_from_Pose (body.pose)
-
       # 4 x n, wrt object frame
+      # Transform contact points to be wrt object frame. TODO: Test this
+      # T^O_C = T^O_W * T^W_C
       contacts_O = np.dot (np.linalg.inv (T_W_O), contacts_W)
-
       print (contacts_O)
 
-      
-      # TODO: append contacts to a list, to be saved to disk.
-
+      # One list item per grasp. List item is a matrix 4 x n of n contacts
+      # Take top 3 rows, skip bottom homogeneous coordinate, all 1s
+      contacts_l.append (contacts_O [0:3, :])
 
       print ('%d contacts' % n_contacts)
-
-      print ('')
 
       n_contacts_ttl += n_contacts
 
 
+      # Open gripper for next grasp
       GraspitCommander.autoOpen ()
-     
 
       #uinput = raw_input ('Press enter to view next grasp, q to stop viewing')
       #if uinput.lower () == 'q':
@@ -201,9 +190,42 @@ def main ():
     # Save grasps and contact locations to disk. Try to do this just once per
     #   world file, `.` file I/O is expensive. But don't wait till end of
     #   program, `.` may leave it running for hours, don't want to lose all the
-    #   work!! Or better, specify a parameter to save_every_n_grasps.
+    #   work!
+
+    # Sanity check
+    if len (gres.grasps) != len (contacts_l):
+      print ('%sWARN: Length of grasps (%d) != length of contacts (%d), in parallel lists! You will not know which one goes with which when you load the file.%s' % (
+        ansi_colors.WARNING, len (gres.grasps), len (contacts_l),
+        ansi_colors.ENDC))
+
+    # One file per world for now. It contains all grasps obtained in this world,
+    #   possibly hundreds of grasps.
+    # TODO: Why do some grasps have 0 contacts with object? Should I just not
+    #   save them? Or save them anyway because they're just bad grasps? What if
+    #   they also have high energy, and are just wrong because it's simulation?
+    #   Just save all of them for now, might see things that indicate they're
+    #   useful.
+    grasps_fname = os.path.join (get_grasps_path (),
+      os.path.basename (world_fname) + '.pkl')
+    with open (grasps_fname, 'wb') as grasps_f:
+      pickle.dump (gres.grasps, grasps_f, pickle.HIGHEST_PROTOCOL)
+    print ('%sWritten grasps to file %s%s' % (ansi_colors.OKCYAN,
+      grasps_fname, ansi_colors.ENDC))
+
+    contacts_fname = os.path.join (get_contacts_path (),
+      os.path.basename (world_fname) + '.pkl')
+    with open (contacts_fname, 'wb') as contacts_f:
+      pickle.dump (contacts_l, contacts_f, pickle.HIGHEST_PROTOCOL)
+    print ('%sWritten contacts to file %s%s' % (ansi_colors.OKCYAN,
+      contacts_fname, ansi_colors.ENDC))
 
 
+
+
+
+    # Load grasps saved
+    #with open (path, 'rb') as f:
+    #  data = pickle.load (path)
 
 
 if __name__ == '__main__':

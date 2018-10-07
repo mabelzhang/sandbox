@@ -308,6 +308,9 @@ int main (int argc, char ** argv)
     crop_image (occluded_img, occ_crop, p_obj_2d[0], p_obj_2d[1],
       RawDepthScaling::CROP_W, RawDepthScaling::CROP_H, false);
 
+    // TODO: Resize to 32 x 32, before adding blob. Then decrease blob size
+    //   to suit 32 x 32 images.
+
     // Save visible and occluded channels
     std::vector <std::string> exts;
     splitext (scene_path, exts);

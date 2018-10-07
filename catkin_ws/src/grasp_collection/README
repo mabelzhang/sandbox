@@ -1,0 +1,9 @@
+Mabel Zhang
+7 Oct 2018
+
+Launch GraspIt GUI with ROS interface:
+$ roslaunch graspit_interface_custom graspit_interface.launch
+
+Run grasp collection:
+$ rosrun grasp_collection grasp_collection.py
+

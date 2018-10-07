@@ -22,13 +22,13 @@ def get_heatmap_blob_fmt ():
   return ('%s_vis_blob.png', '%s_occ_blob.png')
 
 
-def get_data_root ():
+def get_root ():
 
   # Get directory of current file
   this_dir = os.path.dirname (os.path.realpath (__file__))
 
   # Set where you desire to place all output data
-  data_root = os.path.realpath (os.path.join (this_dir, '../../../../../train/visuotactile_grasping'))
+  data_root = os.path.realpath (os.path.join (this_dir, '../../../../../../train/visuotactile_grasping'))
 
   if not os.path.exists (data_root):
     os.makedirs (data_root)
@@ -36,9 +36,19 @@ def get_data_root ():
   return data_root
 
 
+def get_data_path ():
+
+  path = os.path.join (get_root (), 'data')
+
+  if not os.path.exists (path):
+    os.makedirs (path)
+
+  return path
+
+
 def get_vis_path ():
 
-  path = os.path.join (get_data_root (), 'vis')
+  path = os.path.join (get_root (), 'vis')
 
   if not os.path.exists (path):
     os.makedirs (path)

@@ -25,7 +25,6 @@ from graspit_interface.msg import SearchContact
 
 # Custom
 from util.ros_util import matrix_from_Pose
-#from tactile_occlusion_heatmaps import get_data_root
 
 # Local
 from config_consts import worlds
@@ -173,7 +172,7 @@ def main ():
       print (contacts_O)
 
       # One list item per grasp. List item is a matrix 4 x n of n contacts
-      # Take top 3 rows, skip bottom homogeneous coordinate, all 1s
+      # Take top 3 rows, skip bottom homogeneous coordinate row, all 1s
       #contacts_l.append (contacts_O [0:3, :])
       contacts_m = np.hstack ((contacts_m, contacts_O [0:3, :]))
 
@@ -233,7 +232,8 @@ def main ():
       os.path.basename (world_fname) + '.csv')
     with open (contacts_fname, 'wb') as contacts_f:
       contacts_writer = csv.writer (contacts_f)
-      contacts_writer.writerows (contacts_m)
+      # Write n x 3, for easier human reading
+      contacts_writer.writerows (contacts_m.T)
     print ('%sWritten contacts to file %s%s' % (ansi_colors.OKCYAN,
       contacts_fname, ansi_colors.ENDC))
 

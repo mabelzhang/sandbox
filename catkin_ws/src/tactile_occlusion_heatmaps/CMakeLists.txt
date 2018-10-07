@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 2.8.3)
 project(tactile_occlusion_heatmaps)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-#add_compile_options(-std=c++17)
+# For std::stod in util/include/eigen_util.h
+add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -10,6 +11,7 @@ project(tactile_occlusion_heatmaps)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
+  roslib
   std_msgs
   util
   depth_scene_rendering
@@ -116,7 +118,7 @@ catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES tactile_occlusion_heatmaps
 #  CATKIN_DEPENDS roscpp rospy std_msgs
-  CATKIN_DEPENDS roscpp util depth_scene_rendering
+  CATKIN_DEPENDS roscpp roslib util depth_scene_rendering
 #  DEPENDS system_lib
 )
 
@@ -147,6 +149,12 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(occlusion_test src/occlusion_test.cpp)
+target_link_libraries(occlusion_test ${catkin_LIBRARIES} ${Boost_LIBRARIES}
+  ${OpenCV_LIBRARIES})
+
+add_executable(contacts_io src/contacts_io.cpp)
+target_link_libraries(contacts_io ${catkin_LIBRARIES} ${Boost_LIBRARIES}
+  ${OpenCV_LIBRARIES} yaml-cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -159,8 +167,7 @@ add_executable(occlusion_test src/occlusion_test.cpp)
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(occlusion_test ${catkin_LIBRARIES} ${Boost_LIBRARIES}
-  ${OpenCV_LIBRARIES})
+
 
 #############
 ## Install ##

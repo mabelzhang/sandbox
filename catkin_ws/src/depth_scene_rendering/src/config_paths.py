@@ -5,6 +5,9 @@
 #
 # Paths that are not constants
 #
+# Script to be run in Blender. Do not uses packages like YAML that aren't in
+#   Blender Python.
+#
 
 import sys
 import os

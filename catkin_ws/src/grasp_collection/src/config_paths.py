@@ -9,12 +9,12 @@
 import os
 
 # Custom
-from tactile_occlusion_heatmaps.config_paths import get_data_root
+from tactile_occlusion_heatmaps.config_paths import get_data_path
 
 
 def get_grasps_path ():
 
-  path = os.path.join (get_data_root (), 'grasps')
+  path = os.path.join (get_data_path (), 'grasps')
 
   if not os.path.exists (path):
     os.makedirs (path)
@@ -24,7 +24,7 @@ def get_grasps_path ():
 
 def get_contacts_path ():
 
-  path = os.path.join (get_data_root (), 'contacts')
+  path = os.path.join (get_data_path (), 'contacts')
 
   if not os.path.exists (path):
     os.makedirs (path)

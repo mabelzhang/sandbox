@@ -1,0 +1,22 @@
+# Mabel Zhang
+# 7 Oct 2018
+#
+# Path constants, to be read by both Python and C++.
+#
+
+
+root: /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping
+
+# Subdirectories under root
+data: data
+# Text files under data
+intrinsics: intrinsics.txt
+depth_range: cam_depth_range.txt
+# Directories under root/data
+grasps: grasps
+contacts: contacts
+
+# Subdirectories under root
+renders: renders
+vis: vis
+

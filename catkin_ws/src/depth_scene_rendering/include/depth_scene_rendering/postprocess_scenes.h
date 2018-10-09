@@ -4,18 +4,16 @@
 // Mabel Zhang
 // 22 Sep 2018
 //
-//
+// Transform object pose into camera frame, using camera extrinsics matrix
 //
 
-// Load camera matrix wrt object center
-// extrinsics_path: path to .txt file containing matrix of camera pose wrt
-//   object
-// P: camera projection matrix
-// p_obj_2d: return value. 2D image coordinates of object in image.
+
+// Inverse matrix of extrinsics (extrinsics is saved wrt object frame).
 void calc_object_pose_wrt_cam (const std::string scene_path,
-  Eigen::MatrixXf & P, Eigen::VectorXf & p_obj_2d, int rows, int cols)
+  Eigen::MatrixXf & P, Eigen::MatrixXf & T_c_o, int rows, int cols)
 {
   // Path to camera transformation matrix wrt object.
+  // Extrinsics matrix is saved to same name as .pcd, but with .txt extension
   std::string extrinsics_path;
   replace_ext (scene_path, ".txt", extrinsics_path);
 
@@ -38,9 +36,17 @@ void calc_object_pose_wrt_cam (const std::string scene_path,
   */
 
   // Invert T^o_c to get object 3D pose wrt camera, T^c_o
-  Eigen::MatrixXf T_c_o = T_o_c.inverse ();
+  T_c_o = T_o_c.inverse ();
   //std::cerr << "T_c_o:\n" << T_c_o << std::endl << std::endl;
+}
 
+// Project a 3D point to 2D
+// T_c_o: 3D transform of object in camera frame
+// P: camera projection matrix
+// p_obj_2d: return value. 2D image coordinates of object in image.
+void project_3d_to_2d (Eigen::MatrixXf T_c_o,
+  Eigen::MatrixXf & P, Eigen::VectorXf & p_obj_2d, int rows, int cols)
+{
   // Last column is object 3D position wrt camera
   Eigen::VectorXf p_c_obj = T_c_o.col (3);
   //std::cerr << "obj_pos:\n" << p_c_obj << std::endl << std::endl;
@@ -58,6 +64,21 @@ void calc_object_pose_wrt_cam (const std::string scene_path,
 
   p_obj_2d [0] = cols - p_obj_2d [0];
   p_obj_2d [1] = rows - p_obj_2d [1];
+}
+
+// Load camera matrix wrt object center
+// extrinsics_path: path to .txt file containing matrix of camera pose wrt
+//   object
+// P: camera projection matrix
+// p_obj_2d: return value. 2D image coordinates of object in image.
+void calc_object_pose_in_img (const std::string scene_path,
+  Eigen::MatrixXf & P, Eigen::VectorXf & p_obj_2d, int rows, int cols)
+{
+  // Transform point from object frame to camera frame, using extrinsics matrix
+  Eigen::MatrixXf T_c_o;
+  calc_object_pose_wrt_cam (scene_path, P, T_c_o, rows, cols);
+
+  project_3d_to_2d (T_c_o, P, p_obj_2d, rows, cols);
 }
 
 #endif

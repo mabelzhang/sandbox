@@ -46,8 +46,8 @@
 // Local
 #include <depth_scene_rendering/depth_to_image.h>  // RawDepthScaling, crop_image_center()
 #include <depth_scene_rendering/camera_info.h>  // load_intrinsics(), load_nx4_matrix()
-#include <depth_scene_rendering/postprocess_scenes.h>  // calc_object_pose_wrt_cam()
-#include <depth_scene_rendering/scene_yaml.h>  // calc_object_pose_wrt_cam()
+#include <depth_scene_rendering/postprocess_scenes.h>  // calc_object_pose_in_img()
+#include <depth_scene_rendering/scene_yaml.h>
 
 
 // Parameters:
@@ -313,7 +313,7 @@ int main (int argc, char ** argv)
  
       // Find object center in image pixels
       Eigen::VectorXf p_obj_2d;
-      calc_object_pose_wrt_cam (scene_path, P, p_obj_2d, depth_img.rows,
+      calc_object_pose_in_img (scene_path, P, p_obj_2d, depth_img.rows,
         depth_img.cols);
  
       // Crop image, without changing image center, so that intrinsics matrix

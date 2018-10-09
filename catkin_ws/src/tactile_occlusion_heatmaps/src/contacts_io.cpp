@@ -76,7 +76,7 @@ int main (int argc, char ** argv)
 
     // Read contacts csv file into Eigen Matrix
     fprintf (stderr, "Loading object contacts %s\n", obj_path.c_str ());
-    Eigen::MatrixXd contacts_m = load_csv_to_Eigen <Eigen::MatrixXd> (
+    Eigen::MatrixXf contacts_m = load_csv_to_Eigen <Eigen::MatrixXf> (
       obj_path);
     std::cout << contacts_m << std::endl;
 

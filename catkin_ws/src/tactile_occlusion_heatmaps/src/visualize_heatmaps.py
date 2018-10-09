@@ -53,68 +53,73 @@ def main ():
   vis_path = get_vis_path ()
 
 
-  #scene_list_yaml = yaml.load (scene_list_f)
+  # scenes.txt
+  #for scene_path in scene_list_f:
 
-  #for scene_list_yaml.keys ():
+  # scenes.yaml
+  scene_list_yaml = yaml.load (scene_list_f)
+  for o_i in range (len (scene_list_yaml ['objects'])):
 
-  #  TODO make it work for the new scenes.yaml YAML format
+    obj = scene_list_yaml ['objects'] [o_i]
+    obj_name = obj ['object']
 
+    for s_i in range (len (obj ['scenes'])):
 
-  for scene_path in scene_list_f:
+      scene_path = obj ['scenes'] [s_i]
 
-    print ('Loading triplet files for %s' % scene_path)
-
-    depth_im = np_from_depth (os.path.splitext (scene_path) [0] + 'crop.png')
-    vis_im = np_from_depth (vis_fmt % os.path.splitext (scene_path) [0])
-    occ_im = np_from_depth (occ_fmt % os.path.splitext (scene_path) [0])
-
-    # Calculate raw depths from the integers in image
-    depth_im = scaler.scale_ints_to_depths (depth_im)
-    vis_im = scaler.scale_ints_to_depths (vis_im)
-    occ_im = scaler.scale_ints_to_depths (occ_im)
-
-    fig = plt.figure (figsize=(15,6))
-
-    ax = plt.subplot (1,3,1)
-    # gray_r
-    depth_obj = plt.imshow (depth_im [:, :, 0], cmap=plt.cm.jet)
-      #clim=[MIN_DEPTH, MAX_DEPTH])
-    plt.title ('Raw Depth')
-    plt.colorbar (depth_obj, fraction=0.046, pad=0.01)
-
-    ax = plt.subplot (1,3,2)
-    plt.imshow (depth_im [:, :, 0], cmap=plt.cm.jet, alpha=0.4)
-    vis_obj = plt.imshow (vis_im [:, :, 0], cmap=plt.cm.jet, alpha=0.6)
-      #clim=[MIN_DEPTH, MAX_DEPTH])
-    plt.title ('Visible')
-    plt.colorbar (vis_obj, fraction=0.046, pad=0.01)
-
-    ax = plt.subplot (1,3,3)
-    plt.imshow (depth_im [:, :, 0], cmap=plt.cm.jet, alpha=0.4)
-    occ_obj = plt.imshow (occ_im [:, :, 0], cmap=plt.cm.jet, alpha=0.6)
-      #clim=[MIN_DEPTH, MAX_DEPTH])
-    plt.title ('Occluded')
-    # Flush colorbar with image
-    fig.colorbar (occ_obj, fraction=0.046, pad=0.01)
-
-
-    fig.tight_layout ()
-
-    ax = plt.gca ()
-    ax.set_aspect (1)
-    dest = os.path.join (vis_path,
-      os.path.splitext (os.path.basename (scene_path)) [0] + '.png')
-    fig.savefig (dest)
-
-    # To save individual image cleanly
-    #extent = ax.get_window_extent ().transformed (fig.dpi_scale_trans.inverted ())
-    #fig.savefig (dest, bbox_inches=extent)
-
-    print ('%sWritten entire plot to %s%s' % (ansi_colors.OKCYAN, dest,
-      ansi_colors.ENDC))
-
-
-    plt.show ()
+      print ('Loading triplet files for %s' % scene_path)
+ 
+      depth_im = np_from_depth (os.path.splitext (scene_path) [0] + 'crop.png')
+      vis_im = np_from_depth (vis_fmt % os.path.splitext (scene_path) [0])
+      occ_im = np_from_depth (occ_fmt % os.path.splitext (scene_path) [0])
+ 
+      # Calculate raw depths from the integers in image
+      depth_im = scaler.scale_ints_to_depths (depth_im)
+      vis_im = scaler.scale_ints_to_depths (vis_im)
+      occ_im = scaler.scale_ints_to_depths (occ_im)
+ 
+      fig = plt.figure (figsize=(15,6))
+ 
+      ax = plt.subplot (1,3,1)
+      # gray_r
+      depth_obj = plt.imshow (depth_im [:, :, 0], cmap=plt.cm.jet)
+        #clim=[MIN_DEPTH, MAX_DEPTH])
+      plt.title ('Raw Depth')
+      plt.colorbar (depth_obj, fraction=0.046, pad=0.01)
+ 
+      ax = plt.subplot (1,3,2)
+      plt.imshow (depth_im [:, :, 0], cmap=plt.cm.jet, alpha=0.4)
+      vis_obj = plt.imshow (vis_im [:, :, 0], cmap=plt.cm.jet, alpha=0.6)
+        #clim=[MIN_DEPTH, MAX_DEPTH])
+      plt.title ('Visible')
+      plt.colorbar (vis_obj, fraction=0.046, pad=0.01)
+ 
+      ax = plt.subplot (1,3,3)
+      plt.imshow (depth_im [:, :, 0], cmap=plt.cm.jet, alpha=0.4)
+      occ_obj = plt.imshow (occ_im [:, :, 0], cmap=plt.cm.jet, alpha=0.6)
+        #clim=[MIN_DEPTH, MAX_DEPTH])
+      plt.title ('Occluded')
+      # Flush colorbar with image
+      fig.colorbar (occ_obj, fraction=0.046, pad=0.01)
+ 
+ 
+      fig.tight_layout ()
+ 
+      ax = plt.gca ()
+      ax.set_aspect (1)
+      dest = os.path.join (vis_path,
+        os.path.splitext (os.path.basename (scene_path)) [0] + '.png')
+      fig.savefig (dest)
+ 
+      # To save individual image cleanly
+      #extent = ax.get_window_extent ().transformed (fig.dpi_scale_trans.inverted ())
+      #fig.savefig (dest, bbox_inches=extent)
+ 
+      print ('%sWritten entire plot to %s%s' % (ansi_colors.OKCYAN, dest,
+        ansi_colors.ENDC))
+ 
+ 
+      plt.show ()
 
 
 

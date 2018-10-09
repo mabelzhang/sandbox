@@ -27,3 +27,6 @@ objects = [
   #'mount2.obj',
   #'pipe_connector.obj',
 
+# objects [i].replace(suffix, ''), to get bare object name
+obj_suffix = '_rotated_centered.obj'
+

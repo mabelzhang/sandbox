@@ -142,7 +142,7 @@ include_directories(
 
 add_executable (postprocess_scenes src/postprocess_scenes.cpp)
 target_link_libraries (postprocess_scenes ${catkin_LIBRARIES} ${PCL_LIBRARIES}
-  ${OpenCV_LIBRARIES} ${Boost_LIBRARIES})
+  ${OpenCV_LIBRARIES} ${Boost_LIBRARIES} yaml-cpp)
 
 add_executable (inspect_point_cloud src/inspect_point_cloud.cpp)
 target_link_libraries (inspect_point_cloud ${catkin_LIBRARIES} ${PCL_LIBRARIES})

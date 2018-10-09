@@ -47,6 +47,7 @@
 #include <depth_scene_rendering/depth_to_image.h>  // RawDepthScaling, crop_image_center()
 #include <depth_scene_rendering/camera_info.h>  // load_intrinsics(), load_nx4_matrix()
 #include <depth_scene_rendering/postprocess_scenes.h>  // calc_object_pose_wrt_cam()
+#include <depth_scene_rendering/scene_yaml.h>  // calc_object_pose_wrt_cam()
 
 
 // Parameters:
@@ -253,79 +254,94 @@ int main (int argc, char ** argv)
 
   // Text file with list of .pcd scene names, written by scene_generation.py
   std::string scene_list_path = "";
-  join_paths (pkg_path, "config/scenes_noisy.txt", scene_list_path);
-  //join_paths (pkg_path, "config/scenes_test.txt", scene_list_path);
-  std::ifstream scene_list_f (scene_list_path.c_str ());
+  join_paths (pkg_path, "config/scenes_noisy.yaml", scene_list_path);
 
   // Load 3 x 4 camera intrinsics matrix
   Eigen::MatrixXf P;
   load_intrinsics (P);
 
+  // scenes.txt file
+  //std::ifstream scene_list_f (scene_list_path.c_str ());
   // Read text file line by line. Each line is the path to one .pcd scene
-  std::string scene_path = "";
-  while (std::getline (scene_list_f, scene_path))
+  //std::string scene_path = "";
+  //while (std::getline (scene_list_f, scene_path))
+
+  // scenes.yaml file
+  ScenesYaml scene_list_yaml = ScenesYaml (scene_list_path);
+  std::vector <std::string> scene_paths;
+  // For each object
+  for (int o_i = 0; o_i < scene_list_yaml.get_n_objects (); o_i++)
   {
-    // Instantiate cloud
-    pcl::PointCloud <pcl::PointXYZ>::Ptr cloud_ptr =
-      pcl::PointCloud <pcl::PointXYZ>::Ptr (
-        new pcl::PointCloud <pcl::PointXYZ> ());
+    scene_list_yaml.get_scenes (o_i, scene_paths);
 
-    if (! boost::filesystem::exists (scene_path))
+    // For each rendered scene of this object
+    for (std::vector <std::string>::iterator s_it = scene_paths.begin ();
+      s_it != scene_paths.end (); s_it++)
     {
-      fprintf (stderr, "%sERROR: Scene file does not exist, "
-        "skipping this one: %s%s\n", FAIL, scene_path.c_str (), ENDC);
-      continue;
-    }
+      std::string scene_path = *s_it;
  
-    // Load scene cloud
-    load_cloud_file (scene_path, cloud_ptr);
-    // Account for Blender's camera frame in computer graphics convention, which
-    //   has z flipped to -z (pointing behind camera), y flipped to -y. It is
-    //   180 degrees off wrt x-axis from robotic perception convention.
-    flip_yz (cloud_ptr);
-    fprintf (stderr, "Cloud size: %ld points\n", cloud_ptr->size ());
-    fprintf (stderr, "Organized? %s\n",
-      cloud_ptr->isOrganized () ? "true" : "false");
-
-    std::vector <std::string> exts;
-    splitext (scene_path, exts);
-    // Path to output image
-    std::string depth_path = exts [0] + ".png";
-
-    cv::Mat depth_img;
-    convert_pcd_to_image (scaler, cloud_ptr, P, depth_path, depth_img);
-
-
-    // Find object center in image pixels
-    Eigen::VectorXf p_obj_2d;
-    calc_object_pose_wrt_cam (scene_path, P, p_obj_2d, depth_img.rows,
-      depth_img.cols);
-
-    // Crop image, without changing image center, so that intrinsics matrix
-    //   still works with the raw depths!
-    // NOTE after cropping, camera intrinsics / projection matrix will no
-    //   longer work, `.` center of cropped image is different! Crop must be
-    //   AFTER done using camera projection matrix.
-    // TODO: Figure out a size that works for all objects.
-    cv::Mat cropped;
-    crop_image (depth_img, cropped, p_obj_2d[0], p_obj_2d[1],
-      RawDepthScaling::CROP_W, RawDepthScaling::CROP_H, false);
-
-    // Write converted integers image to file
-    // API https://docs.opencv.org/2.4/modules/highgui/doc/reading_and_writing_images_and_video.html#imwrite
-    std::string crop_path = exts [0] + "crop.png";
-    cv::imwrite (crop_path, cropped);
-    fprintf (stderr, "%sWritten cropped depth image to %s%s\n", OKCYAN,
-      crop_path.c_str (), ENDC);
-
-    cv::imshow ("Converted depth image", depth_img);
-    cv::waitKey (0);
-
-    cv::imshow ("Cropped", cropped);
-    cv::waitKey (0);
+      // Instantiate cloud
+      pcl::PointCloud <pcl::PointXYZ>::Ptr cloud_ptr =
+        pcl::PointCloud <pcl::PointXYZ>::Ptr (
+          new pcl::PointCloud <pcl::PointXYZ> ());
+ 
+      if (! boost::filesystem::exists (scene_path))
+      {
+        fprintf (stderr, "%sERROR: Scene file does not exist, "
+          "skipping this one: %s%s\n", FAIL, scene_path.c_str (), ENDC);
+        continue;
+      }
+  
+      // Load scene cloud
+      load_cloud_file (scene_path, cloud_ptr);
+      // Account for Blender's camera frame in computer graphics convention, which
+      //   has z flipped to -z (pointing behind camera), y flipped to -y. It is
+      //   180 degrees off wrt x-axis from robotic perception convention.
+      flip_yz (cloud_ptr);
+      fprintf (stderr, "Cloud size: %ld points\n", cloud_ptr->size ());
+      fprintf (stderr, "Organized? %s\n",
+        cloud_ptr->isOrganized () ? "true" : "false");
+ 
+      std::vector <std::string> exts;
+      splitext (scene_path, exts);
+      // Path to output image
+      std::string depth_path = exts [0] + ".png";
+ 
+      cv::Mat depth_img;
+      convert_pcd_to_image (scaler, cloud_ptr, P, depth_path, depth_img);
+ 
+ 
+      // Find object center in image pixels
+      Eigen::VectorXf p_obj_2d;
+      calc_object_pose_wrt_cam (scene_path, P, p_obj_2d, depth_img.rows,
+        depth_img.cols);
+ 
+      // Crop image, without changing image center, so that intrinsics matrix
+      //   still works with the raw depths!
+      // NOTE after cropping, camera intrinsics / projection matrix will no
+      //   longer work, `.` center of cropped image is different! Crop must be
+      //   AFTER done using camera projection matrix.
+      // TODO: Figure out a size that works for all objects.
+      cv::Mat cropped;
+      crop_image (depth_img, cropped, p_obj_2d[0], p_obj_2d[1],
+        RawDepthScaling::CROP_W, RawDepthScaling::CROP_H, false);
+ 
+      // Write converted integers image to file
+      // API https://docs.opencv.org/2.4/modules/highgui/doc/reading_and_writing_images_and_video.html#imwrite
+      std::string crop_path = exts [0] + "crop.png";
+      cv::imwrite (crop_path, cropped);
+      fprintf (stderr, "%sWritten cropped depth image to %s%s\n", OKCYAN,
+        crop_path.c_str (), ENDC);
+ 
+      cv::imshow ("Converted depth image", depth_img);
+      cv::waitKey (0);
+ 
+      cv::imshow ("Cropped", cropped);
+      cv::waitKey (0);
+    }
   }
 
-  scene_list_f.close ();
+  //scene_list_f.close ();
 
   return 0;
 }

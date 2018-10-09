@@ -278,15 +278,16 @@ if __name__ == '__main__':
   config_path = os.path.realpath (os.path.join (this_dir, '..', 'config'))
   
   # Define file with list of scene .pcd names
-  scene_list_path = os.path.join (config_path, 'scenes.txt')
-  noisy_scene_list_path = os.path.join (config_path, 'scenes_noisy.txt')
+  scene_list_path = os.path.join (config_path, 'scenes.yaml')
+  scene_noisy_list_path = os.path.join (config_path, 'scenes_noisy.yaml')
   scene_list_f = open (scene_list_path, 'w')
-  noisy_scene_list_f = open (noisy_scene_list_path, 'w')
+  scene_noisy_list_f = open (scene_noisy_list_path, 'w')
   print ('%sPaths of output scenes .pcd files will be written to\n  %s\n  and noisy scenes to\n  %s%s' % (
-    ansi_colors.OKCYAN, scene_list_path, noisy_scene_list_path, ansi_colors.ENDC))
+    ansi_colors.OKCYAN, scene_list_path, scene_noisy_list_path, ansi_colors.ENDC))
   
   # Path with object .obj files
   obj_dir = config_consts.obj_path
+  obj_suffix = config_consts.obj_suffix
   
   
   
@@ -322,8 +323,12 @@ if __name__ == '__main__':
 
   start_time = time.time ()
   
+  scene_list_f.write ('objects:\n')
+  scene_noisy_list_f.write ('objects:\n')
+
   # Loop through each object file
-  for o_i in range (n_objs):
+  #for o_i in range (n_objs):
+  for o_i in [1]:
   
     print ('================')
     print ('%sLoading file %d out of %d%s' % (ansi_colors.OKCYAN, o_i+1,
@@ -335,6 +340,10 @@ if __name__ == '__main__':
     print ('%s  %s%s' % (ansi_colors.OKCYAN, obj_base, ansi_colors.ENDC))
     load_obj (obj_path)
     #create_cone ()
+
+    # Write object name
+    scene_list_f.write ('  - object: ' + obj_base.replace (obj_suffix, '') + '\n')
+    scene_noisy_list_f.write ('  - object: ' + obj_base.replace (obj_suffix, '') + '\n')
   
     # Set stationary camera pose. Do first shot using this, as reference
     cam_pos = (0.0, 0.0, 1.0)
@@ -342,6 +351,9 @@ if __name__ == '__main__':
     cam_euler = (0, 0, 0)
     cam_quat = (1, 0, 0, 0)
   
+
+    scene_list_f.write ('    scenes:\n')
+    scene_noisy_list_f.write ('    scenes:\n')
   
     for c_i in range (n_camera_poses):
   
@@ -358,8 +370,8 @@ if __name__ == '__main__':
    
       # Write scene output file names in a text file, for postprocessing script
       #   to read.
-      scene_list_f.write (scene_name + '\n')
-      noisy_scene_list_f.write (noisy_scene_name + '\n')
+      scene_list_f.write ('    - ' + scene_name + '\n')
+      scene_noisy_list_f.write ('    - ' + noisy_scene_name + '\n')
 
 
       # Render the RGB image for easy human inspection
@@ -381,7 +393,8 @@ if __name__ == '__main__':
       #   same as the mesh named loaded into Blender. If change any OBJ files,
       #   make sure this is still satisfied. Else won't be able to get object
       #   transformation.   
-      obj_mesh_name = os.path.splitext (obj_base) [0].replace ('_rotated', '')
+      obj_mesh_name = os.path.splitext (obj_base) [0].replace (
+        '_centered_rotated', '')
       obj_pos = bpy.data.objects [obj_mesh_name].location
       # (qw, qx, qy, qz)
       obj_quat = bpy.data.objects [obj_mesh_name].rotation_quaternion
@@ -442,7 +455,7 @@ if __name__ == '__main__':
   
   # Close text files
   scene_list_f.close ()
-  noisy_scene_list_f.close ()
+  scene_noisy_list_f.close ()
   
   
   # This doesn't quit Blender safely. It always prints mem err before quitting:

@@ -6,6 +6,7 @@
 //   positions to occlusion_test.cpp to generate heatmaps based on contacts.
 //
 
+// C++
 #include <iostream>
 #include <yaml-cpp/yaml.h>
 #include <boost/filesystem.hpp>
@@ -19,121 +20,9 @@
 #include <util/eigen_util.h>
 #include <util/ansi_colors.h>
 
-
-// Read paths defined in YAML file
-// Counterpart of config_paths.py
-class PathConfigYaml
-{
-private:
-
-  std::string root_;
-
-  std::string data_;
-  std::string intrinsics_;
-  std::string depth_range_;
-  std::string grasps_;
-  std::string contacts_;
-
-  std::string renders_;
-  std::string vis_;
-
-
-public:
-
-  PathConfigYaml (const std::string path)
-  {
-    if (! boost::filesystem::exists (path))
-    {
-      fprintf (stderr, "%sERROR: YAML file not found: %s%s\n", FAIL,
-        path.c_str (), ENDC);
-      return;
-    }
-
-    fprintf (stderr, "%sLoading paths YAML %s%s\n", OKCYAN, path.c_str (),
-      ENDC);
-    YAML::Node config = YAML::LoadFile (path);
-
-    root_ = config ["root"].as <std::string> ();
-
-    // Subdirectories under root
-    join_paths (root_, config ["data"].as <std::string> (), data_);
-    // Text files under data
-    join_paths (data_, config ["intrinsics"].as <std::string> (), intrinsics_);
-    join_paths (data_, config ["depth_range"].as <std::string> (),
-      depth_range_);
-    //Subdirectories under data
-    join_paths (data_, config ["grasps"].as <std::string> (), grasps_);
-    join_paths (data_, config ["contacts"].as <std::string> (), contacts_);
-
-    // Subdirectories under root
-    join_paths (root_, config ["renders"].as <std::string> (), renders_);
-    join_paths (root_, config ["vis"].as <std::string> (), vis_);
-  }
-
-  void get_root (std::string & path)
-  {
-    path = root_;
-  }
-
-  void get_data_path (std::string & path)
-  {
-    path = data_;
-  }
-
-  void get_vis_path (std::string & path)
-  {
-    path = vis_;
-  }
-
-  void get_grasps_path (std::string & path)
-  {
-    path = grasps_;
-  }
-
-  void get_contacts_path (std::string & path)
-  {
-    path = contacts_;
-  }
-};
-
-
-class ContactsYaml
-{
-private:
-
-  std::vector <std::string> objects_;
-
-
-public:
-
-  ContactsYaml (const std::string path)
-  {
-    if (! boost::filesystem::exists (path))
-    {
-      fprintf (stderr, "%sERROR: YAML file not found: %s%s\n", FAIL,
-        path.c_str (), ENDC);
-      return;
-    }
-
-    fprintf (stderr, "%sLoading contacts YAML %s%s\n", OKCYAN, path.c_str (),
-      ENDC);
-    YAML::Node config = YAML::LoadFile (path);
-    YAML::Node objects_node = config ["objects"];
-
-    objects_.resize (objects_node.size ());
-    for (std::size_t i = 0; i < objects_node.size (); i++)
-    {
-      objects_.push_back (objects_node [i].as <std::string> ());
-      std::cerr << objects_ [i].c_str () << std::endl;
-    }
-  }
-
-  void get_objects (std::vector <std::string> & rv)
-  {
-    rv = objects_;
-  }
-};
-
+// Local
+#include <tactile_graspit_collection/contacts_io.h>
+#include <tactile_graspit_collection/config_paths.h>  // PathConfigYaml
 
 
 int main (int argc, char ** argv)
@@ -159,9 +48,9 @@ int main (int argc, char ** argv)
   contacts_config.get_objects (contact_objs);
 
 
-  // Get contacts file path
-  std::string contacts_path;
-  config.get_contacts_path (contacts_path);
+  // Get contacts directory
+  std::string contacts_dir;
+  config.get_contacts_path (contacts_dir);
 
   // Load each objects' contacts
   // First one is empty string
@@ -169,7 +58,7 @@ int main (int argc, char ** argv)
   {
     // Read object contacts file
     std::string obj_path;
-    join_paths (contacts_path, contact_objs [i], obj_path);
+    join_paths (contacts_dir, contact_objs [i], obj_path);
 
     std::vector <std::string> exts;
     splitext (obj_path, exts);
@@ -192,13 +81,12 @@ int main (int argc, char ** argv)
     std::cout << contacts_m << std::endl;
 
 
+    // TODO
     // Pass contacts onto occlusion_test.cpp. They go into "endpoints" variable
     //   in occlusion_test.cpp. Refactor main() in occlusion_test.cpp so it can
     //   accept 3D point inputs!
 
   }
-
-
 
   return 0;
 }

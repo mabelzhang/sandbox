@@ -150,7 +150,7 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(occlusion_test src/occlusion_test.cpp)
 target_link_libraries(occlusion_test ${catkin_LIBRARIES} ${Boost_LIBRARIES}
-  ${OpenCV_LIBRARIES})
+  ${OpenCV_LIBRARIES} yaml-cpp)
 
 add_executable(contacts_io src/contacts_io.cpp)
 target_link_libraries(contacts_io ${catkin_LIBRARIES} ${Boost_LIBRARIES}

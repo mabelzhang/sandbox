@@ -11,6 +11,7 @@
 
 # Python
 import os
+import yaml
 
 # ROS
 import rospkg
@@ -36,7 +37,7 @@ from depth_to_image import RawDepthScaling
 def main ():
 
   pkg_path = rospkg.RosPack ().get_path ('depth_scene_rendering')
-  scene_list_path = os.path.join (pkg_path, "config/scenes_noisy.txt")
+  scene_list_path = os.path.join (pkg_path, "config/scenes_noisy.yaml")
   scene_list_f = open (scene_list_path, 'rb')
 
   vis_fmt, occ_fmt = get_heatmap_blob_fmt ()
@@ -50,6 +51,13 @@ def main ():
   MAX_DEPTH = depth_range [1]
 
   vis_path = get_vis_path ()
+
+
+  #scene_list_yaml = yaml.load (scene_list_f)
+
+  #for scene_list_yaml.keys ():
+
+  #  TODO make it work for the new scenes.yaml YAML format
 
 
   for scene_path in scene_list_f:

@@ -78,8 +78,8 @@ public:
   //   Green = in front (visible)
   //   Red = behind (occluded, goes through a pt in point cloud).
   // Parameters:
-  //   pts: 3 x n. Put points on columns, as opposed to rows, so that indexing
-  //     is faster, `.` Eigen is column-major by default.
+  //   pts: 3 x n. In camera frame. Put points on columns, as opposed to rows,
+  //     so that indexing is faster, `.` Eigen is column-major by default.
   //   visible, occluded: Indices of points, indicating whether the
   //     point is in front of or occluded by the point cloud.
   //   P: 3 x 4 camera projection / intrinsics matrix
@@ -108,7 +108,12 @@ public:
     // Multiplication result is (u, v, depth)
     // 2 x n
     Eigen::MatrixXi uv;
-    project_3d_to_2d_homo (pts, P, uv);
+    project_3d_pts_to_2d_homo (pts, P, uv);
+    // Flip x and y. postprocess_scenes.h project_3d_pose_to_2d() does this,
+    //   but cv_util.h project_3d_pts_to_2d() doesn't. TODO do something about
+    //   this. Make it cleaner and less ad-hoc.
+    uv.row (0) = width - uv.row (0).array ();
+    uv.row (1) = height - uv.row (1).array ();
     if (DEBUG_PROJECT)
       std::cerr << "Final image coordinates:" << std::endl << uv << std::endl;
 
@@ -143,6 +148,16 @@ public:
     // TODO visible points aren't in the image! Contacts saved from GraspIt
     //   are off the crop! They mustn't be in the right object frame. They are
     //   1 meter away!
+    //   > Actually 1 meter away is correct, they're in camera frame.
+    //     Crop is correct too, corresponds to postprocess_scenes.cpp.
+    //     The incorrect thing is the contact points projected to image (u, v),
+    //     the points are not in the crop!
+    //   > Maybe I'm forgetting to subtract widht and height by x and y resp?
+    //     That was needed to flip x and y axes manually.
+    //     Found culprit, project_3d_pts_to_2d_homo() in cv_util.h doesn't flip,
+    //     while project_3d_pose_to_2d() in postprocess_scenes.h does flip! If
+    //     flip here, then the contact blobs must appear right.
+    //     Should just use project_3d_pose_to_2d() here too instead.
 
 
     // Instantiate integer channels
@@ -317,7 +332,6 @@ int main (int argc, char ** argv)
     // For each grasp of this object
     int curr_contact_start_idx = 0;
     for (int g_i = 0; g_i < n_grasps; g_i++)
-    //for (int g_i = 7; g_i < n_grasps; g_i++)
     {
       fprintf (stderr, "%sGrasp %d out of %d%s\n", OKCYAN, g_i+1, n_grasps,
         ENDC);
@@ -419,13 +433,21 @@ int main (int argc, char ** argv)
             contacts_C = T_c_o * curr_grasp_contacts;
           }
           endpoints = contacts_C.topRows (3);
+
+          std::cerr << "Object center in camera frame: " << std::endl;
+          Eigen::Vector4f origin;
+          origin << 0, 0, 0, 1;
+          std::cerr << T_c_o * origin << std::endl;
         }
-       
+
         //if (DEBUG_RAYTRACE)
         //{
-          std::cerr << "endpoints: " << std::endl;
+          std::cerr << "endpoints in camera frame: " << std::endl;
           std::cerr << endpoints << std::endl;
         //}
+
+        // TODO: Up to this point, endpoints in camera frame printd is correct.
+        //   But the Final image coordinates printed next is incorrect.
      
         // Do ray-trace occlusion test for each endpoint
         std::vector <bool> occluded;
@@ -465,7 +487,7 @@ int main (int argc, char ** argv)
         // Find object center in image pixels, using camera extrinsics
         Eigen::VectorXf p_obj_2d;
         calc_object_pose_in_img (scene_path, P, p_obj_2d, visible_img.rows,
-          visible_img.cols);
+          visible_img.cols, true);
        
         // Crop the heatmaps
         // NOTE after cropping, camera intrinsics / projection matrix will no

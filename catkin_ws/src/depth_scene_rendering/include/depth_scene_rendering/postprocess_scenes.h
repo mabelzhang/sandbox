@@ -23,7 +23,8 @@ void calc_object_pose_wrt_cam (const std::string scene_path,
   //std::cerr << "T_o_c:\n" << T_o_c << std::endl << std::endl;
 
   // With this, pixel is flipped wrt y axis. Without this, pixel is flipped
-  //   wrt x axis. Instead, just flip both x and y at end of fn, that works.
+  //   wrt x axis. Instead, just flip both x and y at end of
+  //   project_3d_pose_to_2d(), that works.
   /*
   // Invert to compensate for the pi rotation wrt y-axis in
   //   scene_generation.py save_extrinsics_from_pose
@@ -41,11 +42,12 @@ void calc_object_pose_wrt_cam (const std::string scene_path,
 }
 
 // Project a 3D point to 2D
-// T_c_o: 3D transform of object in camera frame
-// P: camera projection matrix
+// T_c_o: 4 x 4 3D transform of object in camera frame
+// P: 3 x 4 camera projection matrix
 // p_obj_2d: return value. 2D image coordinates of object in image.
-void project_3d_to_2d (Eigen::MatrixXf T_c_o,
-  Eigen::MatrixXf & P, Eigen::VectorXf & p_obj_2d, int rows, int cols)
+void project_3d_pose_to_2d (Eigen::MatrixXf T_c_o,
+  Eigen::MatrixXf & P, Eigen::VectorXf & p_obj_2d, int rows, int cols,
+  bool flip=false)
 {
   // Last column is object 3D position wrt camera
   Eigen::VectorXf p_c_obj = T_c_o.col (3);
@@ -62,8 +64,14 @@ void project_3d_to_2d (Eigen::MatrixXf T_c_o,
   p_obj_2d = p_obj.topRows (2);
   //std::cerr << "obj_pos_2d:\n" << p_obj_2d << std::endl << std::endl;
 
-  p_obj_2d [0] = cols - p_obj_2d [0];
-  p_obj_2d [1] = rows - p_obj_2d [1];
+  // Need to flip x and y, `.` Blender camera faces -z, even though did
+  //   flip_yz() after loading point cloud, intrinsics matrix is based on orig
+  //   point cloud, so need to flip z manually, if I remember correctly.
+  if (flip)
+  {
+    p_obj_2d [0] = cols - p_obj_2d [0];
+    p_obj_2d [1] = rows - p_obj_2d [1];
+  }
 }
 
 // Load camera matrix wrt object center
@@ -72,13 +80,14 @@ void project_3d_to_2d (Eigen::MatrixXf T_c_o,
 // P: camera projection matrix
 // p_obj_2d: return value. 2D image coordinates of object in image.
 void calc_object_pose_in_img (const std::string scene_path,
-  Eigen::MatrixXf & P, Eigen::VectorXf & p_obj_2d, int rows, int cols)
+  Eigen::MatrixXf & P, Eigen::VectorXf & p_obj_2d, int rows, int cols,
+  bool flip=false)
 {
   // Transform point from object frame to camera frame, using extrinsics matrix
   Eigen::MatrixXf T_c_o;
   calc_object_pose_wrt_cam (scene_path, P, T_c_o, rows, cols);
 
-  project_3d_to_2d (T_c_o, P, p_obj_2d, rows, cols);
+  project_3d_pose_to_2d (T_c_o, P, p_obj_2d, rows, cols, flip);
 }
 
 #endif

@@ -41,7 +41,7 @@
 #include <util/ansi_colors.h>
 #include <util/io_util.h>  // join_paths(), dirname(), basename(), splitext()
 #include <util/pcd_util.h>  // load_cloud_file()
-#include <util/cv_util.h>  // project_3d_to_2d()
+#include <util/cv_util.h>  // project_3d_pts_to_2d()
 
 // Local
 #include <depth_scene_rendering/depth_to_image.h>  // RawDepthScaling, crop_image_center()
@@ -138,7 +138,7 @@ void convert_pcd_to_image (RawDepthScaling & scaler,
   Eigen::MatrixXf pts = cloud_ptr -> getMatrixXfMap ().block (0, 0, 3,
     cloud_ptr -> size ());
   Eigen::MatrixXi uv;
-  project_3d_to_2d_homo (pts, P, uv);
+  project_3d_pts_to_2d_homo (pts, P, uv);
 
   int n_nans = 0;
 
@@ -314,7 +314,7 @@ int main (int argc, char ** argv)
       // Find object center in image pixels
       Eigen::VectorXf p_obj_2d;
       calc_object_pose_in_img (scene_path, P, p_obj_2d, depth_img.rows,
-        depth_img.cols);
+        depth_img.cols, true);
  
       // Crop image, without changing image center, so that intrinsics matrix
       //   still works with the raw depths!

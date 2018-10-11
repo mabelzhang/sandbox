@@ -14,12 +14,12 @@ import rospkg
 
 def get_heatmap_raw_fmt ():
 
-  return ('%s_vis.png', '%s_occ.png')
+  return ('%s_g%d_vis.png', '%s_g%d_occ.png')
 
 
 def get_heatmap_blob_fmt ():
 
-  return ('%s_vis_blob.png', '%s_occ_blob.png')
+  return ('%s_g%d_vis_blob.png', '%s_g%d_occ_blob.png')
 
 
 def get_root ():

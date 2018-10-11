@@ -25,11 +25,11 @@ from graspit_interface.msg import SearchContact
 
 # Custom
 from util.ros_util import matrix_from_Pose
+from util.ansi_colors import ansi_colors
 
 # Local
 from config_consts import worlds
-from config_paths import get_grasps_path, get_contacts_path
-from util.ansi_colors import ansi_colors
+from grasp_collection.config_paths import get_grasps_path, get_contacts_path
 
 
 def main ():

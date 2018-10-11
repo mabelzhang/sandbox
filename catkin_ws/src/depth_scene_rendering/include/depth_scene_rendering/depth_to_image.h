@@ -172,8 +172,8 @@ void crop_image (cv::Mat & image, cv::Mat & cropped, int cx, int cy,
   int toplefty = (int) round (cy - height * 0.5);
   //std::cerr << topleftx << std::endl << toplefty << std::endl;
 
-  fprintf (stderr, "crop_image() pre : topleftx %d, width %d, toplefty %d, height %d\n", topleftx,
-    width, toplefty, height);
+  //fprintf (stderr, "crop_image() pre : topleftx %d, width %d, toplefty %d, height %d\n",
+  //  topleftx, width, toplefty, height);
 
   if (topleftx < 0)
   {
@@ -218,8 +218,8 @@ void crop_image (cv::Mat & image, cv::Mat & cropped, int cx, int cy,
     }
   }
 
-  fprintf (stderr, "crop_image() post: topleftx %d, width %d, toplefty %d, height %d\n", topleftx,
-    width, toplefty, height);
+  fprintf (stderr, "crop_image() post: topleftx %d, width %d, toplefty %d, height %d\n",
+    topleftx, width, toplefty, height);
 
   cv::Rect rect = cv::Rect (topleftx, toplefty, width, height);
 

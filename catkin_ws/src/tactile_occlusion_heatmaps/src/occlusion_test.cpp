@@ -53,6 +53,8 @@ private:
 
   RawDepthScaling scaler_;
 
+  const bool DEBUG_PROJECT = false;
+
 
 public:
 
@@ -107,7 +109,8 @@ public:
     // 2 x n
     Eigen::MatrixXi uv;
     project_3d_to_2d_homo (pts, P, uv);
-    std::cerr << "Final image coordinates:" << std::endl << uv << std::endl;
+    if (DEBUG_PROJECT)
+      std::cerr << "Final image coordinates:" << std::endl << uv << std::endl;
 
 
     // Instantiate empty heat maps
@@ -130,10 +133,16 @@ public:
         occluded_f.at <float> (uv (1, i), uv (0, i)) = pts (2, i); 
       }
 
-      fprintf (stderr, "%f (scaled to %d)\n", pts (2, i),
-        scaler_.scale_depth_to_int (pts (2, i)));
+      if (DEBUG_PROJECT)
+        fprintf (stderr, "Raw depth in meters: %f (scaled to %d integer)\n",
+          pts (2, i), scaler_.scale_depth_to_int (pts (2, i)));
     }
-    fprintf (stderr, "%d points visible, %d points occluded\n", n_vis, n_occ);
+    fprintf (stderr, "Visible: %d points. Occluded: %d points\n", n_vis, n_occ);
+    std::cerr << "Contact points in 2D pixels:" << std::endl;
+    std::cerr << uv << std::endl;
+    // TODO visible points aren't in the image! Contacts saved from GraspIt
+    //   are off the crop! They mustn't be in the right object frame. They are
+    //   1 meter away!
 
 
     // Instantiate integer channels
@@ -263,17 +272,13 @@ int main (int argc, char ** argv)
     // Load contact points for this object
     Eigen::MatrixXf contacts_O;
     Eigen::MatrixXf contacts_O4;
+    Eigen::MatrixXf contacts_meta;
+    int n_grasps = 0;
     if (! GEN_RAND_PTS)
     {
       std::string obj_cont_path;
       join_paths (contacts_dir, scene_list_yaml.get_object_name (o_i) + ".csv",
         obj_cont_path);
-
-      // TODO: This is contacts for ALL the grasps, not just 1! Need to load
-      //   contact _meta.csv file, to load contacts per individual grasp. The
-      //   _meta.csv tells how many elements to index the contacts_O matrix
-      //   for each individual grasp, i.e.
-      //   [0:meta[0]], [meta[0]:meta[0]+meta[1]], [meta[0]+meta[1]:meta[0]+meta[1]+meta[2]], etc.
      
       fprintf (stderr, "%sLoading object contacts %s%s\n", OKCYAN,
         obj_cont_path.c_str (), ENDC);
@@ -285,233 +290,303 @@ int main (int argc, char ** argv)
       append_homogeneous_col (contacts_O, temp);
       // 4 x n
       contacts_O4 = temp.transpose ();
+
+
+      // Load contacts per individual grasp.  _meta.csv tells how many elements
+      //   to index the contacts_O matrix for each individual grasp, i.e.
+      std::string obj_meta_path;
+      join_paths (contacts_dir,
+        scene_list_yaml.get_object_name (o_i) + "_meta.csv", obj_meta_path);
+
+      // 1 x nGrasps array
+      fprintf (stderr, "%sLoading object contacts meta %s%s\n", OKCYAN,
+        obj_meta_path.c_str (), ENDC);
+      contacts_meta = load_csv_to_Eigen <Eigen::MatrixXf> (
+        obj_meta_path);
+
+      // For each grasp, render all the scenes. At the end have
+      //   nGrasps x nScenes training samples
+      n_grasps = contacts_meta.cols ();
     }
+    // Else just generate one set of random points per scene. At the end have
+    //   1 x nScenes training samples.
+    else
+      n_grasps = 1;
 
 
-    // Get scenes of current object, rendered at different camera angles
-    scene_list_yaml.get_scenes (o_i, scene_paths);
-
-    // For each rendered scene of this object
-    for (std::vector <std::string>::iterator s_it = scene_paths.begin ();
-      s_it != scene_paths.end (); s_it++)
+    // For each grasp of this object
+    int curr_contact_start_idx = 0;
+    for (int g_i = 0; g_i < n_grasps; g_i++)
+    //for (int g_i = 7; g_i < n_grasps; g_i++)
     {
-      std::string scene_path = *s_it;
+      fprintf (stderr, "%sGrasp %d out of %d%s\n", OKCYAN, g_i+1, n_grasps,
+        ENDC);
 
-      // Instantiate cloud
-      pcl::PointCloud <pcl::PointXYZ>::Ptr cloud_ptr =
-        pcl::PointCloud <pcl::PointXYZ>::Ptr (
-          new pcl::PointCloud <pcl::PointXYZ> ());
-     
-      // Load scene cloud
-      load_cloud_file (scene_path, cloud_ptr);
-      // Multiply y and z by -1, to account for Blender camera facing -z.
-      flip_yz (cloud_ptr);
-      fprintf (stderr, "Cloud size: %ld points\n", cloud_ptr->size ());
-      fprintf (stderr, "Organized? %s\n",
-        cloud_ptr->isOrganized () ? "true" : "false");
-     
-      // Make octree to hold point cloud, for raytrace test
-      // Ref: http://pointclouds.org/documentation/tutorials/octree.php
-      RayTracer raytracer = RayTracer (cloud_ptr, octree_res, VIS_RAYTRACE, &nh);
-     
-     
-      fprintf (stderr, "Testing ray-tracing...\n");
-      // Origin of ray is always from camera center, 0 0 0.
-      Eigen::Vector3f origin (0, 0, 0);
-     
-     
-      // 1 m along z of camera frame, i.e. straight out of and normal to image
-      //   plane.
-      // Blender camera faces -z. So will shoot to -z.
-      //Eigen::Vector3f endpoint (0, 0, -1);
-     
-      // 3 x n, in camera frame
-      Eigen::MatrixXf endpoints;
+      Eigen::MatrixXf curr_grasp_contacts;
+      int n_contacts = 0;
+      if (! GEN_RAND_PTS)
+      {
+        // Number of contacts in this grasp
+        n_contacts = contacts_meta (g_i);
 
-      // Generate random endpoints to raytrace through
-      // These are in camera frame, `.` points are generated by raytracer, which
-      //   comes from pcd point cloud, captured in camera frame.
-      if (GEN_RAND_PTS)
-      {
-        generate_random_endpoints (10, raytracer, endpoints);
-      }
-      else
-      {
-        // Get object pose wrt camera frame. This is the inverse of extrinsics
-        //   matrix, which is saved as camera pose wrt object frame.
-        // 4 x 4
-        Eigen::MatrixXf T_c_o;
-        calc_object_pose_wrt_cam (scene_path, P, T_c_o,
-          cloud_ptr -> height, cloud_ptr -> width);
-
-        // Transform contacts from object frame to camera frame, using camera
-        //   extrinsics matrix wrt object frame, T^c_o.
-        // T^c = T^c_o * T^o
-        //     = (T^o_c)^-1 * T_o
-        // 4 x n = (4 x 4) * (4 x n)
-        Eigen::MatrixXf contacts_C = T_c_o * contacts_O4;
-        endpoints = contacts_C.topRows (3);
-      }
-     
-      if (DEBUG_RAYTRACE)
-      {
-        std::cerr << "endpoints: " << std::endl;
-        std::cerr << endpoints << std::endl;
+        // Index contacts for the current grasps.
+        // Syntax block(i, j, rows, cols).
+        // 4 x nContacts. 4 x 0 if no contacts
+        // [:, grasp_start : grasp_start + n_contacts_at_this_grasp]
+        curr_grasp_contacts = contacts_O4.block (0,
+          curr_contact_start_idx, contacts_O4.rows (), n_contacts);
       }
 
-      // Do ray-trace occlusion test for each endpoint
-      std::vector <bool> occluded;
-      for (int i = 0; i < endpoints.cols (); i ++)
-      {
-        if (DEBUG_RAYTRACE)
-          std::cerr << "Ray through " << endpoints.col (i).transpose () << std::endl;
-     
-        // Ray trace
-        // Occluded = red arrow drawn in RViz, unoccluded = green
-        // Must test endpoints one by one, not an n x 3 matrix, `.` octree
-        //   getIntersectedVoxelCenters() only takes one ray at a time.
-        bool curr_occluded = raytracer.raytrace_occlusion_test (origin,
-          endpoints.col (i));
-        occluded.push_back (curr_occluded);
-        if (DEBUG_RAYTRACE)
-          fprintf (stderr, "Occluded? %s\n", curr_occluded ? "true" : "false");
-     
-        // Debug
-        //char enter;
-        //std::cerr << "Press any character, then press enter: ";
-        //std::cin >> enter;
-      }
-     
-     
-      // Separate endpoints into visible and occluded, in pixel coordinates
-      Eigen::MatrixXf visible_uv, occluded_uv;
-     
-      // Create heatmaps of visible and occluded points, in image plane.
-      // In order to save images as images, esp convenient for debugging, images
-      //   must be integers, 3 channels.
-      cv::Mat visible_img, occluded_img;
+      std::cerr << "curr_contact_start_idx: " << curr_contact_start_idx << std::endl;
+      std::cerr << "n_contacts: " << n_contacts << std::endl;
+      std::cerr << "contacts: " << std::endl;
+      std::cerr << curr_grasp_contacts << std::endl;
 
-      separator.separate_and_project (endpoints, occluded, P,
-        cloud_ptr -> height, cloud_ptr -> width, visible_img, occluded_img);
+
+      // Get scenes of current object, rendered at different camera angles
+      scene_list_yaml.get_scenes (o_i, scene_paths);
      
-     
-      // Find object center in image pixels, using camera extrinsics
-      Eigen::VectorXf p_obj_2d;
-      calc_object_pose_in_img (scene_path, P, p_obj_2d, visible_img.rows,
-        visible_img.cols);
-     
-      // Crop the heatmaps
-      // NOTE after cropping, camera intrinsics / projection matrix will no
-      //   longer work, `.` center of cropped image is different! Crop must be
-      //   AFTER done using camera projection matrix.
-      cv::Mat vis_crop, occ_crop;
-      crop_image (visible_img, vis_crop, p_obj_2d[0], p_obj_2d[1],
-        RawDepthScaling::CROP_W, RawDepthScaling::CROP_H, false);
-      crop_image (occluded_img, occ_crop, p_obj_2d[0], p_obj_2d[1],
-        RawDepthScaling::CROP_W, RawDepthScaling::CROP_H, false);
-     
-      // TODO: Resize to 32 x 32, before adding blob. Then decrease blob size
-      //   to suit 32 x 32 images.
-     
-      // Save visible and occluded channels
-      std::vector <std::string> exts;
-      splitext (scene_path, exts);
-     
-      // Optional. Individual non-zero point. Saving because easier to test
-      //   different parameters of blob, than to regenerate contact points and
-      //   raytracing.
-      std::string visible_path = exts [0];
-      visible_path += "_vis.png";
-      cv::imwrite (visible_path, vis_crop);  //visible_img);
-      fprintf (stderr, "%sWritten visible heatmap to %s%s\n", OKCYAN,
-        visible_path.c_str (), ENDC);
-     
-      std::string occluded_path = exts [0];
-      occluded_path += "_occ.png";
-      cv::imwrite (occluded_path, occ_crop);  //occluded_img);
-      fprintf (stderr, "%sWritten occluded heatmap to %s%s\n", OKCYAN,
-        occluded_path.c_str (), ENDC);
-     
-     
-      // Blob the visible and occluded images, to create heatmaps. Save to file
-      // In my visualize_dataset.py on adv_synth of dexnet, used BLOB_EXPAND=2,
-      //   BLOB_GAUSS=0.5, for 32 x 32 images. Python gaussian function doesn't
-      //   have size, only sigma.
-      cv::Mat visible_blob, occluded_blob;
-      // Use 31 for uncropped 640x480. 15 or smaller for cropped 100x100.
-      int BLOB_EXPAND = 9;
-      int GAUSS_SZ = 9;
-      // Pass in 0 to let OpenCV calculating sigma from size
-      float GAUSS_SIGMA = 0;
-     
-      std::string vis_blob_path = exts [0];
-      vis_blob_path += "_vis_blob.png";
-      //blob_filter (visible_img, visible_blob, BLOB_EXPAND, GAUSS_SZ, GAUSS_SIGMA);
-      // Operate on the cropped img
-      blob_filter (vis_crop, visible_blob, BLOB_EXPAND, GAUSS_SZ, GAUSS_SIGMA);
-      cv::imwrite (vis_blob_path, visible_blob);
-      fprintf (stderr, "%sWritten visible blobbed heatmap to %s%s\n", OKCYAN,
-        vis_blob_path.c_str (), ENDC);
-     
-      std::string occ_blob_path = exts [0];
-      occ_blob_path += "_occ_blob.png";
-      //blob_filter (occluded_img, occluded_blob, BLOB_EXPAND, GAUSS_SZ, 
-      // Operate on the cropped img
-      blob_filter (occ_crop, occluded_blob, BLOB_EXPAND, GAUSS_SZ, 
-        GAUSS_SIGMA);
-      cv::imwrite (occ_blob_path, occluded_blob);
-      fprintf (stderr, "%sWritten occluded blobbed heatmap to %s%s\n", OKCYAN,
-        occ_blob_path.c_str (), ENDC);
-     
-      // Debug blob_filter()
-      // Convert cv::Mat to std::vector
-      // https://gist.github.com/mryssng/f43c9ae4cae13b204855e108a004c73a
-      std::vector <float> vis_blob_vec;
-      if (visible_blob.isContinuous())
+      // For each rendered scene of this object
+      for (std::vector <std::string>::iterator s_it = scene_paths.begin ();
+        s_it != scene_paths.end (); s_it++)
       {
-        vis_blob_vec.assign((uchar*)visible_blob.datastart, (uchar*)visible_blob.dataend);
-      }
-      else
-      {
-        for (int i = 0; i < visible_blob.rows; ++i)
+        fprintf (stderr, "%sScene %ld out of %ld%s\n", OKCYAN,
+          s_it - scene_paths.begin () + 1, scene_paths.size (), ENDC);
+
+        std::string scene_path = *s_it;
+     
+        // Instantiate cloud
+        pcl::PointCloud <pcl::PointXYZ>::Ptr cloud_ptr =
+          pcl::PointCloud <pcl::PointXYZ>::Ptr (
+            new pcl::PointCloud <pcl::PointXYZ> ());
+       
+        // Load scene cloud
+        load_cloud_file (scene_path, cloud_ptr);
+        // Multiply y and z by -1, to account for Blender camera facing -z.
+        flip_yz (cloud_ptr);
+        //fprintf (stderr, "Cloud size: %ld points\n", cloud_ptr->size ());
+        //fprintf (stderr, "Organized? %s\n",
+        //  cloud_ptr->isOrganized () ? "true" : "false");
+       
+        // Make octree to hold point cloud, for raytrace test
+        // Ref: http://pointclouds.org/documentation/tutorials/octree.php
+        RayTracer raytracer = RayTracer (cloud_ptr, octree_res, VIS_RAYTRACE, &nh);
+       
+       
+        fprintf (stderr, "Ray-tracing...\n");
+        // Origin of ray is always from camera center, 0 0 0.
+        Eigen::Vector3f origin (0, 0, 0);
+       
+       
+        // 1 m along z of camera frame, i.e. straight out of and normal to image
+        //   plane.
+        // Blender camera faces -z. So will shoot to -z.
+        //Eigen::Vector3f endpoint (0, 0, -1);
+       
+        // 3 x n, in camera frame
+        Eigen::MatrixXf endpoints;
+     
+        // Generate random endpoints to raytrace through
+        // These are in camera frame, `.` points are generated by raytracer, which
+        //   comes from pcd point cloud, captured in camera frame.
+        if (GEN_RAND_PTS)
         {
-          vis_blob_vec.insert(vis_blob_vec.end(), visible_blob.ptr<uchar>(i), visible_blob.ptr<uchar>(i)+visible_blob.cols);
+          generate_random_endpoints (10, raytracer, endpoints);
         }
+        else
+        {
+          // Get object pose wrt camera frame. This is the inverse of extrinsics
+          //   matrix, which is saved as camera pose wrt object frame.
+          // 4 x 4
+          Eigen::MatrixXf T_c_o;
+          calc_object_pose_wrt_cam (scene_path, P, T_c_o,
+            cloud_ptr -> height, cloud_ptr -> width);
+
+          // No contacts in a grasp means the grasp is terrible, didn't make any
+          //   contact with object. For now, keep them, because simply output
+          //   poor grasp quality. TODO Decide whether to keep for final run
+          Eigen::MatrixXf contacts_C;
+          if (n_contacts == 0)
+            // 4 x 0
+            contacts_C = curr_grasp_contacts;
+          else
+          { 
+            // Transform contacts from object frame to camera frame, using
+            //   camera extrinsics matrix wrt object frame, T^c_o.
+            // T^c = T^c_o * T^o
+            //     = (T^o_c)^-1 * T_o
+            // 4 x n = (4 x 4) * (4 x n)
+            contacts_C = T_c_o * curr_grasp_contacts;
+          }
+          endpoints = contacts_C.topRows (3);
+        }
+       
+        //if (DEBUG_RAYTRACE)
+        //{
+          std::cerr << "endpoints: " << std::endl;
+          std::cerr << endpoints << std::endl;
+        //}
+     
+        // Do ray-trace occlusion test for each endpoint
+        std::vector <bool> occluded;
+        for (int p_i = 0; p_i < endpoints.cols (); p_i++)
+        {
+          if (DEBUG_RAYTRACE)
+            std::cerr << "Ray through " << endpoints.col (p_i).transpose () << std::endl;
+
+          // Ray trace
+          // Occluded = red arrow drawn in RViz, unoccluded = green
+          // Must test endpoints one by one, not an n x 3 matrix, `.` octree
+          //   getIntersectedVoxelCenters() only takes one ray at a time.
+          bool curr_occluded = raytracer.raytrace_occlusion_test (origin,
+            endpoints.col (p_i));
+          occluded.push_back (curr_occluded);
+          if (DEBUG_RAYTRACE)
+            fprintf (stderr, "Occluded? %s\n", curr_occluded ? "true" : "false");
+       
+          // Debug
+          //char enter;
+          //std::cerr << "Press any character, then press enter: ";
+          //std::cin >> enter;
+        }
+       
+       
+        // Separate endpoints into visible and occluded, in pixel coordinates
+        Eigen::MatrixXf visible_uv, occluded_uv;
+       
+        // Create heatmaps of visible and occluded points, in image plane.
+        // In order to save images as images, esp convenient for debugging, images
+        //   must be integers, 3 channels.
+        cv::Mat visible_img, occluded_img;
+        separator.separate_and_project (endpoints, occluded, P,
+          cloud_ptr -> height, cloud_ptr -> width, visible_img, occluded_img);
+       
+       
+        // Find object center in image pixels, using camera extrinsics
+        Eigen::VectorXf p_obj_2d;
+        calc_object_pose_in_img (scene_path, P, p_obj_2d, visible_img.rows,
+          visible_img.cols);
+       
+        // Crop the heatmaps
+        // NOTE after cropping, camera intrinsics / projection matrix will no
+        //   longer work, `.` center of cropped image is different! Crop must be
+        //   AFTER done using camera projection matrix.
+        cv::Mat vis_crop, occ_crop;
+        crop_image (visible_img, vis_crop, p_obj_2d[0], p_obj_2d[1],
+          RawDepthScaling::CROP_W, RawDepthScaling::CROP_H, false);
+        crop_image (occluded_img, occ_crop, p_obj_2d[0], p_obj_2d[1],
+          RawDepthScaling::CROP_W, RawDepthScaling::CROP_H, false);
+       
+        // TODO: Resize to 32 x 32, before adding blob. Then decrease blob size
+        //   to suit 32 x 32 images.
+       
+        // Save visible and occluded channels
+        std::vector <std::string> exts;
+        splitext (scene_path, exts);
+       
+        // Optional. Individual non-zero point. Saving because easier to test
+        //   different parameters of blob, than to regenerate contact points and
+        //   raytracing.
+        /*
+        std::string visible_path = exts [0];
+        visible_path += "_g" + std::to_string (g_i) + "_vis.png";
+        cv::imwrite (visible_path, vis_crop);  //visible_img);
+        fprintf (stderr, "%sWritten visible heatmap to %s%s\n", OKCYAN,
+          visible_path.c_str (), ENDC);
+       
+        std::string occluded_path = exts [0];
+        occluded_path += "_g" + std::to_string (g_i) + "_occ.png";
+        cv::imwrite (occluded_path, occ_crop);  //occluded_img);
+        fprintf (stderr, "%sWritten occluded heatmap to %s%s\n", OKCYAN,
+          occluded_path.c_str (), ENDC);
+        */
+
+       
+        // Blob the visible and occluded images, to create heatmaps. Save to
+        //   file.
+        // In my visualize_dataset.py on adv_synth of dexnet, used
+        //   BLOB_EXPAND=2, BLOB_GAUSS=0.5, for 32 x 32 images. Python gaussian
+        //   function doesn't have size, only sigma.
+        cv::Mat visible_blob, occluded_blob;
+        // Use 31 for uncropped 640x480. 15 or smaller for cropped 100x100.
+        int BLOB_EXPAND = 9;
+        int GAUSS_SZ = 9;
+        // Pass in 0 to let OpenCV calculating sigma from size
+        float GAUSS_SIGMA = 0;
+       
+        std::string vis_blob_path = exts [0];
+        vis_blob_path += "_g" + std::to_string (g_i) + "_vis_blob.png";
+        //blob_filter (visible_img, visible_blob, BLOB_EXPAND, GAUSS_SZ, GAUSS_SIGMA);
+        // Operate on the cropped img
+        blob_filter (vis_crop, visible_blob, BLOB_EXPAND, GAUSS_SZ, GAUSS_SIGMA);
+        cv::imwrite (vis_blob_path, visible_blob);
+        fprintf (stderr, "%sWritten visible blobbed heatmap to %s%s\n", OKCYAN,
+          vis_blob_path.c_str (), ENDC);
+       
+        std::string occ_blob_path = exts [0];
+        occ_blob_path += "_g" + std::to_string (g_i) + "_occ_blob.png";
+        //blob_filter (occluded_img, occluded_blob, BLOB_EXPAND, GAUSS_SZ, 
+        // Operate on the cropped img
+        blob_filter (occ_crop, occluded_blob, BLOB_EXPAND, GAUSS_SZ, 
+          GAUSS_SIGMA);
+        cv::imwrite (occ_blob_path, occluded_blob);
+        fprintf (stderr, "%sWritten occluded blobbed heatmap to %s%s\n", OKCYAN,
+          occ_blob_path.c_str (), ENDC);
+       
+        // Debug blob_filter()
+        // Convert cv::Mat to std::vector
+        // https://gist.github.com/mryssng/f43c9ae4cae13b204855e108a004c73a
+        std::vector <float> vis_blob_vec;
+        if (visible_blob.isContinuous())
+        {
+          vis_blob_vec.assign((uchar*)visible_blob.datastart, (uchar*)visible_blob.dataend);
+        }
+        else
+        {
+          for (int i = 0; i < visible_blob.rows; ++i)
+          {
+            vis_blob_vec.insert(vis_blob_vec.end(), visible_blob.ptr<uchar>(i), visible_blob.ptr<uchar>(i)+visible_blob.cols);
+          }
+        }
+       
+        // Debug blob_filter()
+        // Find unique elts
+        // https://stackoverflow.com/questions/1041620/whats-the-most-efficient-way-to-erase-duplicates-and-sort-a-vector
+        //sort (vis_blob_vec.begin (), vis_blob_vec.end ());
+        //vis_blob_vec.erase (unique (vis_blob_vec.begin (), vis_blob_vec.end ()),
+        //  vis_blob_vec.end ());
+        //fprintf (stderr, "%ld unique values in visible image:\n",
+        //  vis_blob_vec.size ());
+        //for (int i = 0; i < vis_blob_vec.size (); i ++)
+        //{
+        //  std::cerr << vis_blob_vec.at (i) << std::endl;
+        //}
+       
+       
+        // Display heatmaps to debug
+        //cv::namedWindow ("Visible contacts", cv::WINDOW_AUTOSIZE);
+        cv::Mat dst;
+        //cv::normalize (visible_img, dst, 0, 1, cv::NORM_MINMAX);
+        //cv::imshow ("Visible contacts", visible_img);
+        //cv::normalize (visible_blob, dst, 0, 1, cv::NORM_MINMAX);
+        // These displayed versions have sharp edges for some reason. Actual image
+        //   does show Gaussian blurred. Use inspect_channels.py to inspect, and
+        //   visualize_heatmaps.py to visualize heatmap overlay on depth image.
+        std::cerr << "Displaying visible heatmap\n";
+        cv::imshow ("Visible contacts", visible_blob);
+        cv::waitKey (0);
+       
+        //cv::namedWindow ("Occluded contacts", cv::WINDOW_AUTOSIZE);
+        //cv::normalize (occluded_img, dst, 0, 1, cv::NORM_MINMAX);
+        //cv::imshow ("Occluded contacts", occluded_img);
+        //cv::normalize (occluded_blob, dst, 0, 1, cv::NORM_MINMAX);
+        std::cerr << "Displaying occluded heatmap\n";
+        cv::imshow ("Occluded contacts", occluded_blob);
+        // Press in the open window to close it
+        cv::waitKey (0);
       }
-     
-      // Debug blob_filter()
-      // Find unique elts
-      // https://stackoverflow.com/questions/1041620/whats-the-most-efficient-way-to-erase-duplicates-and-sort-a-vector
-      //sort (vis_blob_vec.begin (), vis_blob_vec.end ());
-      //vis_blob_vec.erase (unique (vis_blob_vec.begin (), vis_blob_vec.end ()),
-      //  vis_blob_vec.end ());
-      //fprintf (stderr, "%ld unique values in visible image:\n",
-      //  vis_blob_vec.size ());
-      //for (int i = 0; i < vis_blob_vec.size (); i ++)
-      //{
-      //  std::cerr << vis_blob_vec.at (i) << std::endl;
-      //}
-     
-     
-      // Display heatmaps to debug
-      //cv::namedWindow ("Visible contacts", cv::WINDOW_AUTOSIZE);
-      cv::Mat dst;
-      //cv::normalize (visible_img, dst, 0, 1, cv::NORM_MINMAX);
-      //cv::imshow ("Visible contacts", visible_img);
-      //cv::normalize (visible_blob, dst, 0, 1, cv::NORM_MINMAX);
-      // These displayed versions have sharp edges for some reason. Actual image
-      //   does show Gaussian blurred. Use inspect_channels.py to inspect, and
-      //   visualize_heatmaps.py to visualize heatmap overlay on depth image.
-      cv::imshow ("Visible contacts", visible_blob);
-      cv::waitKey (0);
-     
-      //cv::namedWindow ("Occluded contacts", cv::WINDOW_AUTOSIZE);
-      //cv::normalize (occluded_img, dst, 0, 1, cv::NORM_MINMAX);
-      //cv::imshow ("Occluded contacts", occluded_img);
-      //cv::normalize (occluded_blob, dst, 0, 1, cv::NORM_MINMAX);
-      cv::imshow ("Occluded contacts", occluded_blob);
-      // Press in the open window to close it
-      cv::waitKey (0);
+
+      curr_contact_start_idx += n_contacts;
     }
   }
 

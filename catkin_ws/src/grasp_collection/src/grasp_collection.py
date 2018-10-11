@@ -41,12 +41,12 @@ def main ():
 
   # TODO: Change this to a bigger number to get poor quality grasps as well
   # Temporary using small number for testing
-  n_best_grasps = 10
+  n_best_grasps = 20
 
   # Default 70000, takes 30 seconds. Set to small number for testing. Usually
   #   there are grasps ranking in top 20 from 30000s. Time is not linear wrt
   #   steps, so setting to 30000 will take a lot shorter time than 70000.
-  max_steps = 40000
+  max_steps = 70000
 
   n_contacts_ttl = 0
 

@@ -38,6 +38,8 @@ from depth_to_image import RawDepthScaling
 
 def main ():
 
+  DISPLAY_IMAGES = False
+
   pkg_path = rospkg.RosPack ().get_path ('depth_scene_rendering')
   scene_list_path = os.path.join (pkg_path, "config/scenes_noisy.yaml")
   scene_list_f = open (scene_list_path, 'rb')
@@ -134,7 +136,8 @@ def main ():
           ansi_colors.ENDC))
      
      
-        plt.show ()
+        if DISPLAY_IMAGES:
+          plt.show ()
 
 
 

@@ -1,5 +1,5 @@
 objects:
   - object: gearbox
     scenes:
-    #- /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-09-05-22-54_n.pcd
+    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-09-05-22-54_n.pcd
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-09-05-23-01_n.pcd

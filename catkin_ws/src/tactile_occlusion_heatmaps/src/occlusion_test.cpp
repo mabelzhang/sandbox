@@ -142,22 +142,10 @@ public:
         fprintf (stderr, "Raw depth in meters: %f (scaled to %d integer)\n",
           pts (2, i), scaler_.scale_depth_to_int (pts (2, i)));
     }
-    fprintf (stderr, "Visible: %d points. Occluded: %d points\n", n_vis, n_occ);
+    fprintf (stderr, "%sVisible: %d points. Occluded: %d points%s\n", OKCYAN,
+      n_vis, n_occ, ENDC);
     std::cerr << "Contact points in 2D pixels:" << std::endl;
     std::cerr << uv << std::endl;
-    // TODO visible points aren't in the image! Contacts saved from GraspIt
-    //   are off the crop! They mustn't be in the right object frame. They are
-    //   1 meter away!
-    //   > Actually 1 meter away is correct, they're in camera frame.
-    //     Crop is correct too, corresponds to postprocess_scenes.cpp.
-    //     The incorrect thing is the contact points projected to image (u, v),
-    //     the points are not in the crop!
-    //   > Maybe I'm forgetting to subtract widht and height by x and y resp?
-    //     That was needed to flip x and y axes manually.
-    //     Found culprit, project_3d_pts_to_2d_homo() in cv_util.h doesn't flip,
-    //     while project_3d_pose_to_2d() in postprocess_scenes.h does flip! If
-    //     flip here, then the contact blobs must appear right.
-    //     Should just use project_3d_pose_to_2d() here too instead.
 
 
     // Instantiate integer channels
@@ -227,6 +215,17 @@ int main (int argc, char ** argv)
   bool VIS_RAYTRACE = false;
 
   bool GEN_RAND_PTS = false;
+
+  bool DISPLAY_IMAGES = false;
+
+
+  // Parse cmd line args
+  for (int i = 0; i < argc; i++)
+  {
+    if (! strcmp (argv [i], "--display"))
+      DISPLAY_IMAGES = true;
+  }
+
 
   // Random seed
   srand (time (NULL));
@@ -434,20 +433,18 @@ int main (int argc, char ** argv)
           }
           endpoints = contacts_C.topRows (3);
 
-          std::cerr << "Object center in camera frame: " << std::endl;
+          //std::cerr << "Object center in camera frame: " << std::endl;
           Eigen::Vector4f origin;
           origin << 0, 0, 0, 1;
-          std::cerr << T_c_o * origin << std::endl;
+          //std::cerr << T_c_o * origin << std::endl;
         }
 
-        //if (DEBUG_RAYTRACE)
-        //{
+        if (DEBUG_RAYTRACE)
+        {
           std::cerr << "endpoints in camera frame: " << std::endl;
           std::cerr << endpoints << std::endl;
-        //}
+        }
 
-        // TODO: Up to this point, endpoints in camera frame printd is correct.
-        //   But the Final image coordinates printed next is incorrect.
      
         // Do ray-trace occlusion test for each endpoint
         std::vector <bool> occluded;
@@ -583,29 +580,32 @@ int main (int argc, char ** argv)
         //{
         //  std::cerr << vis_blob_vec.at (i) << std::endl;
         //}
-       
-       
-        // Display heatmaps to debug
-        //cv::namedWindow ("Visible contacts", cv::WINDOW_AUTOSIZE);
-        cv::Mat dst;
-        //cv::normalize (visible_img, dst, 0, 1, cv::NORM_MINMAX);
-        //cv::imshow ("Visible contacts", visible_img);
-        //cv::normalize (visible_blob, dst, 0, 1, cv::NORM_MINMAX);
-        // These displayed versions have sharp edges for some reason. Actual image
-        //   does show Gaussian blurred. Use inspect_channels.py to inspect, and
-        //   visualize_heatmaps.py to visualize heatmap overlay on depth image.
-        std::cerr << "Displaying visible heatmap\n";
-        cv::imshow ("Visible contacts", visible_blob);
-        cv::waitKey (0);
-       
-        //cv::namedWindow ("Occluded contacts", cv::WINDOW_AUTOSIZE);
-        //cv::normalize (occluded_img, dst, 0, 1, cv::NORM_MINMAX);
-        //cv::imshow ("Occluded contacts", occluded_img);
-        //cv::normalize (occluded_blob, dst, 0, 1, cv::NORM_MINMAX);
-        std::cerr << "Displaying occluded heatmap\n";
-        cv::imshow ("Occluded contacts", occluded_blob);
-        // Press in the open window to close it
-        cv::waitKey (0);
+
+
+        if (DISPLAY_IMAGES)
+        {
+          // Display heatmaps to debug
+          //cv::namedWindow ("Visible contacts", cv::WINDOW_AUTOSIZE);
+          cv::Mat dst;
+          //cv::normalize (visible_img, dst, 0, 1, cv::NORM_MINMAX);
+          //cv::imshow ("Visible contacts", visible_img);
+          //cv::normalize (visible_blob, dst, 0, 1, cv::NORM_MINMAX);
+          // These displayed versions have sharp edges for some reason. Actual image
+          //   does show Gaussian blurred. Use inspect_channels.py to inspect, and
+          //   visualize_heatmaps.py to visualize heatmap overlay on depth image.
+          std::cerr << "Displaying visible heatmap\n";
+          cv::imshow ("Visible contacts", visible_blob);
+          cv::waitKey (0);
+        
+          //cv::namedWindow ("Occluded contacts", cv::WINDOW_AUTOSIZE);
+          //cv::normalize (occluded_img, dst, 0, 1, cv::NORM_MINMAX);
+          //cv::imshow ("Occluded contacts", occluded_img);
+          //cv::normalize (occluded_blob, dst, 0, 1, cv::NORM_MINMAX);
+          std::cerr << "Displaying occluded heatmap\n";
+          cv::imshow ("Occluded contacts", occluded_blob);
+          // Press in the open window to close it
+          cv::waitKey (0);
+        }
       }
 
       curr_contact_start_idx += n_contacts;

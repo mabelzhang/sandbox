@@ -63,7 +63,8 @@ def main ():
 
   # scenes.yaml
   scene_list_yaml = yaml.load (scene_list_f)
-  for o_i in range (len (scene_list_yaml ['objects'])):
+  #for o_i in range (len (scene_list_yaml ['objects'])):
+  for o_i in [0, 1]:
 
     obj = scene_list_yaml ['objects'] [o_i]
     obj_name = obj ['object']
@@ -138,7 +139,8 @@ def main ():
      
         if DISPLAY_IMAGES:
           plt.show ()
-
+        else:
+          plt.close (fig)
 
 
 

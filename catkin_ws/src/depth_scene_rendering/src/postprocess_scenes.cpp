@@ -237,6 +237,16 @@ void convert_pcd_to_image (RawDepthScaling & scaler,
 
 int main (int argc, char ** argv)
 {
+  bool DISPLAY_IMAGES = false;
+
+  // Parse cmd line args
+  for (int i = 0; i < argc; i++)
+  {
+    if (! strcmp (argv [i], "--display"))
+      DISPLAY_IMAGES = true;
+  }
+
+
   // Get path of this package
   std::string pkg_path = ros::package::getPath ("depth_scene_rendering");
 
@@ -333,11 +343,14 @@ int main (int argc, char ** argv)
       fprintf (stderr, "%sWritten cropped depth image to %s%s\n", OKCYAN,
         crop_path.c_str (), ENDC);
  
-      cv::imshow ("Converted depth image", depth_img);
-      cv::waitKey (0);
- 
-      cv::imshow ("Cropped", cropped);
-      cv::waitKey (0);
+      if (DISPLAY_IMAGES)
+      {
+        cv::imshow ("Converted depth image", depth_img);
+        cv::waitKey (0);
+       
+        cv::imshow ("Cropped", cropped);
+        cv::waitKey (0);
+      }
     }
   }
 

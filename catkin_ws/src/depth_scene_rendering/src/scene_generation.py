@@ -327,8 +327,8 @@ if __name__ == '__main__':
   scene_noisy_list_f.write ('objects:\n')
 
   # Loop through each object file
-  #for o_i in range (n_objs):
-  for o_i in [1]:
+  for o_i in range (n_objs):
+  #for o_i in [1]:
   
     print ('================')
     print ('%sLoading file %d out of %d%s' % (ansi_colors.OKCYAN, o_i+1,

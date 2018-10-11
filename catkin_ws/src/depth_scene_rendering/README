@@ -16,9 +16,24 @@ config_paths.py
 ==============================================================================
 Pipeline summary
 
+Render scenes:
 $ blensor -b -P scene_generation.py
+Generate cropped object images from scenes:
 $ rosrun depth_scene_rendering postprocess_scenes
+
+[For debugging only] Run ray-trace occlusion test on random points:
+Set GEN_RAND_PTS = true, recompile, run (TODO: Make this into a cmd line arg):
 $ rosrun tactile_graspit_collection occlusion_test 
+
+[For real run] Run ray-trace occlusion on actual GraspIt contact points:
+Collect GraspIt contacts:
+$ roslaunch graspit_interface_custom graspit_interface.launch 
+$ rosrun grasp_collection grasp_collection.py
+Set GEN_RAND_PTS = false, recompile, run:
+$ rosrun tactile_graspit_collection occlusion_test 
+
+Visualize visible and occluded contact heat maps:
+$ rosrun tactile_graspit_collection visualize_heatmaps.py
 
 
 

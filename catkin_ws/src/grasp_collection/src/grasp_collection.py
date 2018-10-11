@@ -54,8 +54,8 @@ def main ():
   #save_every_n_grasps = 50
 
 
-  #for w_i in range (len (worlds)):
-  for w_i in range (1, 2):
+  for w_i in range (len (worlds)):
+  #for w_i in range (1, 2):  # gearbox only
 
     # graspit_interface loadWorld automatically looks in worlds/ path under
     #   GraspIt installation path.

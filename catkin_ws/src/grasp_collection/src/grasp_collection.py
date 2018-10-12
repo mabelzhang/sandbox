@@ -5,6 +5,16 @@
 #
 # Calls GraspIt to plan eigengrasps and save them to disk.
 #
+# Grasps are saved as original graspit_interface/msg/Grasp.msg format to pickle,
+#   because never needs to be loaded in C++. They only need to be loaded to be
+#   reproduced in GraspIt, so Python suffices.
+# Contacts need to be loaded in C++ by tactile_occlusion_heatmaps
+#   occlusion_test.cpp to do PCL raytracing, so they are saved as .csv files.
+#
+# Usage:
+#   $ roslaunch graspit_interface_custom graspit_interface.launch
+#   $ rosrun grasp_collection grasp_collection.py
+#
 
 import os
 import re  # Regular expressions
@@ -29,7 +39,7 @@ from util.ansi_colors import ansi_colors
 
 # Local
 from config_consts import worlds
-from grasp_collection.config_paths import get_grasps_path, get_contacts_path
+from grasp_io import GraspIO
 
 
 def main ():
@@ -60,6 +70,8 @@ def main ():
     # graspit_interface loadWorld automatically looks in worlds/ path under
     #   GraspIt installation path.
     # File name of world XML, one file per object
+    # These are the actual files in repo, $GRASPIT installation path should be
+    #   symlinks to these files.
     #world_fname = os.path.join (pkg_path, 'graspit_input/worlds/dexnet/',
     #  worlds [w_i])
     world_fname = worlds [w_i]
@@ -197,6 +209,14 @@ def main ():
     #   program, `.` may leave it running for hours, don't want to lose all the
     #   work!
 
+    '''
+    # Sanity check
+    if len (gres.grasps) != len (contacts_l):
+      print ('%sWARN: Length of grasps (%d) != length of contacts (%d), in parallel lists! You will not know which one goes with which when you load the file.%s' % (
+        ansi_colors.WARNING, len (gres.grasps), len (contacts_l),
+        ansi_colors.ENDC))
+    '''
+
     # One file per world for now. It contains all grasps obtained in this world,
     #   possibly hundreds of grasps.
     # TODO: Why do some grasps have 0 contacts with object? Should I just not
@@ -204,73 +224,9 @@ def main ():
     #   they also have high energy, and are just wrong because it's simulation?
     #   Just save all of them for now, might see things that indicate they're
     #   useful.
-    grasps_fname = os.path.join (get_grasps_path (),
-      os.path.basename (world_fname) + '.pkl')
-    with open (grasps_fname, 'wb') as grasps_f:
-      pickle.dump (gres.grasps, grasps_f, pickle.HIGHEST_PROTOCOL)
-    print ('%sWritten grasps to file %s%s' % (ansi_colors.OKCYAN,
-      grasps_fname, ansi_colors.ENDC))
+    GraspIO.write_grasps (os.path.basename (world_fname), gres.grasps)
 
-
-    '''
-    # Sanity check
-    if len (gres.grasps) != len (contacts_l):
-      print ('%sWARN: Length of grasps (%d) != length of contacts (%d), in parallel lists! You will not know which one goes with which when you load the file.%s' % (
-        ansi_colors.WARNING, len (gres.grasps), len (contacts_l),
-        ansi_colors.ENDC))
-
-    # pickle file, of a list of matrices, one list item per grasp
-    contacts_fname = os.path.join (get_contacts_path (),
-      os.path.basename (world_fname) + '.pkl')
-    with open (contacts_fname, 'wb') as contacts_f:
-      pickle.dump (contacts_l, contacts_f, pickle.HIGHEST_PROTOCOL)
-    '''
-
-
-    # csv file, of a large matrix of nContactsPerGrasp * nGrasps.
-    contacts_fname = os.path.join (get_contacts_path (),
-      os.path.basename (world_fname) + '.csv')
-    with open (contacts_fname, 'wb') as contacts_f:
-      contacts_writer = csv.writer (contacts_f)
-      # Write n x 3, for easier human reading
-      contacts_writer.writerows (contacts_m.T)
-    print ('%sWritten contacts to file %s%s' % (ansi_colors.OKCYAN,
-      contacts_fname, ansi_colors.ENDC))
-
-    # Meta csv file, records how many contacts there are in each grasp. Used
-    #   for indexing the big contacts matrix by grasp.
-    cmeta_fname = os.path.join (get_contacts_path (),
-      os.path.basename (world_fname) + '_meta.csv')
-    with open (cmeta_fname, 'wb') as cmeta_f:
-      cmeta_writer = csv.writer (cmeta_f)
-      cmeta_writer.writerow (cmeta)
-    print ('%sWritten contacts meta to file %s%s' % (ansi_colors.OKCYAN,
-      cmeta_fname, ansi_colors.ENDC))
-
-
-
-
-
-
-    # TODO: This needs to be in C++, in tactile_occlusion_heatmaps... how is
-    #   C++ supposed to load pickle?? Maybe should use a data format standard
-    #   across languages. Does ROS have its own format?
-    # Grasps never need to be loaded in C++. They only need to be loaded when
-    #   need to reproduce the grasp in GraspIt, so only need to be in Python.
-    # Contacts however need to be loaded in C++, to do PCL raytracing.
-    # Contacts are just matrices... any matrix format works. Although, they are
-    #   lists of matrices...
-    # One easy way is to save all contacts to a big matrix, and then save an
-    #   indexing matrix to a separate file, saying how many contacts there are
-    #   per grasp. Then it is pretty easy to index the big matrix.
-    # Can either save as csv (large file size, possibly lower decimal precision)
-    # Or save as pickle, and use https://stackoverflow.com/questions/1296162/how-can-i-read-a-python-pickle-database-file-from-c
-    # Just use csv first, easy to read/write in both C++ and Python, reliable.
-    #   Read it into an Eigen::MatrixXf.
-
-    # Load grasps saved
-    #with open (path, 'rb') as f:
-    #  data = pickle.load (path)
+    GraspIO.write_contacts (os.path.basename (world_fname), contacts_m, cmeta)
 
 
 if __name__ == '__main__':

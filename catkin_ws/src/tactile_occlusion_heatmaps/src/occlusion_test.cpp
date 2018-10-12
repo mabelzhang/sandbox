@@ -9,7 +9,7 @@
 //   (ray is in free space), it is unoccluded.
 //
 // Usage:
-//   $ rosrun tactile_occlusion_heatmaps occlusion_test
+//   $ rosrun tactile_occlusion_heatmaps occlusion_test [--display] [--vis]
 //
 
 // C++
@@ -34,7 +34,7 @@
 #include <util/pcl_raytrace_util.h>  // RayTracer
 #include <util/ansi_colors.h>
 #include <util/filter.h>  // blob_filter ()
-#include <util/cv_util.h>  // project_3d_to_2d()
+#include <util/cv_util.h>  // project_3d_pts_to_2d()
 #include <util/eigen_util.h>  // load_csv_to_Eigen(), append_homogeneous_row()
 
 // Local
@@ -224,6 +224,8 @@ int main (int argc, char ** argv)
   {
     if (! strcmp (argv [i], "--display"))
       DISPLAY_IMAGES = true;
+    else if (! strcmp (argv [i], "--vis"))
+      VIS_RAYTRACE = true;
   }
 
 
@@ -383,7 +385,8 @@ int main (int argc, char ** argv)
        
         // Make octree to hold point cloud, for raytrace test
         // Ref: http://pointclouds.org/documentation/tutorials/octree.php
-        RayTracer raytracer = RayTracer (cloud_ptr, octree_res, VIS_RAYTRACE, &nh);
+        RayTracer raytracer = RayTracer (cloud_ptr, octree_res, VIS_RAYTRACE,
+          &nh);
        
        
         fprintf (stderr, "Ray-tracing...\n");

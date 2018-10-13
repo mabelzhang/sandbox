@@ -190,6 +190,45 @@ def create_cone ():
   bpy.data.objects ['Cone'].dimensions = (0.1, 0.05, 0.1)
 
 
+def generate_random_camera_pose (tx_range, ty_range):
+ 
+  # Generate camera pose for NEXT loop iteration.
+  # Blender quaternion has (w, x, y, z), w first.
+
+  # Use spherical coordinates (long, lat) to calculate rot and pos.
+  # Normally, latitude range (-90, 90). Truncate to (0, 90), so it is always
+  #   above horizon, `.` tabletop
+  #cam_pos, cam_quat = get_rand_pose (lat_range=(0, 0.5*np.pi), qwFirst=True)
+
+  tz = 1
+
+  tx = tx_range [0] + np.random.rand () * (tx_range[1] - tx_range[0])
+  ty = ty_range [0] + np.random.rand () * (ty_range[1] - ty_range[0])
+  cam_pos = [tx, ty, tz]
+
+  # T^W_c
+  # Use Euler XYZ, easier to find range
+  # (qw, qx, qy, qz)
+  cam_euler, cam_quat = get_rand_rot (rx_range, ry_range, rz_range,
+    axes=euler_convention, qwFirst=True)
+
+  #print (euler_matrix (cam_euler[0], cam_euler[1], cam_euler[2],
+  #  euler_convention))
+  #print (quaternion_matrix ((cam_quat[0], cam_quat[1], cam_quat[2],
+  #  cam_quat[3])))
+
+
+  # Don't need noise for random poses. Only need noise for fixed grid
+  # Add uniformly random noise
+  #t_noise = np.random.rand (3) * T_NOISE_RANGE
+  #cam_pos += t_noise
+  #r_noise = np.random.rand (3) * R_NOISE_RANGE
+  #cam_euler += r_noise
+
+  return cam_pos, cam_euler, cam_quat
+
+
+
 # Convert a 7-tuple pose to a 4 x 4 matrix, and save to file.
 # Parameters:
 #   cam_pos: 3-elt list or numpy array
@@ -303,7 +342,9 @@ if __name__ == '__main__':
   #n_objs = len (config_consts.objects)
   n_objs = 1
   
-  n_camera_poses = 1 #2
+  n_camera_poses = 2
+  # For testing. Set to False for real run
+  SKIP_CAM_IDENTITY = True
 
   # Not good to randomize on spherical coordinates, `.` when convert to
   #   Quaternion, only 2 degrees of freedom. Would need to combine with
@@ -323,7 +364,6 @@ if __name__ == '__main__':
 
   tx_range = np.array ([-0.08, 0.11])
   ty_range = np.array ([-0.08, 0.11])
-  tz = 1
 
   # Don't need noise for random poses. Only need noise for fixed grid
   # Noise for camera position (meters) and orientation (radians)
@@ -336,8 +376,8 @@ if __name__ == '__main__':
   scene_noisy_list_f.write ('objects:\n')
 
   # Loop through each object file
-  #for o_i in range (n_objs):
-  for o_i in [1]:
+  for o_i in range (n_objs):
+  #for o_i in [1]:
   
     print ('================')
     print ('%sLoading file %d out of %d%s' % (ansi_colors.OKCYAN, o_i+1,
@@ -365,6 +405,12 @@ if __name__ == '__main__':
     scene_noisy_list_f.write ('    scenes:\n')
   
     for c_i in range (n_camera_poses):
+
+      # Skip top-down pose
+      if SKIP_CAM_IDENTITY and c_i == 0:
+        cam_pos, cam_euler, cam_quat = generate_random_camera_pose (tx_range,
+          ty_range)
+        continue
   
       # Scan scene
       out_name, orig_scene_name, orig_noisy_scene_name = kinect_obj.scan (
@@ -420,37 +466,8 @@ if __name__ == '__main__':
       #   prefix as scene just captured.
       save_extrinsics_from_pose (cam_pos, cam_quat, T_W_obj, noisy_scene_name)
    
-   
-      # Generate camera pose for NEXT loop iteration.
-      # Blender quaternion has (w, x, y, z), w first.
-
-      # Use spherical coordinates (long, lat) to calculate rot and pos.
-      # Normally, latitude range (-90, 90). Truncate to (0, 90), so it is always
-      #   above horizon, `.` tabletop
-      #cam_pos, cam_quat = get_rand_pose (lat_range=(0, 0.5*np.pi), qwFirst=True)
-
-      tx = tx_range [0] + np.random.rand () * (tx_range[1] - tx_range[0])
-      ty = ty_range [0] + np.random.rand () * (ty_range[1] - ty_range[0])
-      cam_pos = [tx, ty, tz]
-
-      # T^W_c
-      # Use Euler XYZ, easier to find range
-      # (qw, qx, qy, qz)
-      cam_euler, cam_quat = get_rand_rot (rx_range, ry_range, rz_range,
-        axes=euler_convention, qwFirst=True)
-  
-      #print (euler_matrix (cam_euler[0], cam_euler[1], cam_euler[2],
-      #  euler_convention))
-      #print (quaternion_matrix ((cam_quat[0], cam_quat[1], cam_quat[2],
-      #  cam_quat[3])))
-
-
-      # Don't need noise for random poses. Only need noise for fixed grid
-      # Add uniformly random noise
-      #t_noise = np.random.rand (3) * T_NOISE_RANGE
-      #cam_pos += t_noise
-      #r_noise = np.random.rand (3) * R_NOISE_RANGE
-      #cam_euler += r_noise
+      cam_pos, cam_euler, cam_quat = generate_random_camera_pose (tx_range,
+        ty_range)
 
 
     # Delete loaded object

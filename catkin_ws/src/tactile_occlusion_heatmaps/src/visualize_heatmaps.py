@@ -38,7 +38,7 @@ from depth_to_image import RawDepthScaling
 
 def main ():
 
-  DISPLAY_IMAGES = False
+  DISPLAY_IMAGES = True
 
   pkg_path = rospkg.RosPack ().get_path ('depth_scene_rendering')
   scene_list_path = os.path.join (pkg_path, "config/scenes_noisy.yaml")
@@ -63,8 +63,8 @@ def main ():
 
   # scenes.yaml
   scene_list_yaml = yaml.load (scene_list_f)
-  #for o_i in range (len (scene_list_yaml ['objects'])):
-  for o_i in [0, 1]:
+  for o_i in range (len (scene_list_yaml ['objects'])):
+  #for o_i in [0, 1]:
 
     obj = scene_list_yaml ['objects'] [o_i]
     obj_name = obj ['object']
@@ -86,11 +86,15 @@ def main ():
         scene_path = obj ['scenes'] [s_i]
      
         print ('Loading triplet files for %s' % scene_path)
-     
+
         depth_im = np_from_depth (os.path.splitext (scene_path) [0] + 'crop.png')
         vis_im = np_from_depth (vis_fmt % (os.path.splitext (scene_path) [0], g_i))
         occ_im = np_from_depth (occ_fmt % (os.path.splitext (scene_path) [0], g_i))
-     
+ 
+        if depth_im is None:
+          print ('ERROR: Cropped depth image does not exist. Did you forget to run rosrun depth_scene_generation postprocess_scenes.cpp? Run it to generate the cropped images. Terminating...')
+          return
+
         # Calculate raw depths from the integers in image
         depth_im = scaler.scale_ints_to_depths (depth_im)
         vis_im = scaler.scale_ints_to_depths (vis_im)

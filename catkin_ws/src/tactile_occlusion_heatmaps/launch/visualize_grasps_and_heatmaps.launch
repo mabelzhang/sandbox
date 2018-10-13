@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+
+<!-- Mabel Zhang
+     12 Oct 2018
+
+     Visualize 3D grasps in GraspIt GUI, and 2D heatmaps in matplotlib, at
+       the same time, so can check that the contact points in GraspIt object
+       frame are transformed correctly to the camera frame and image plane
+       (via camera extrinsics matrix wrt object saved from Blender).
+  -->
+
+<launch>
+
+  <!-- Visualize visible and occluded contact heat maps -->
+  <node pkg="tactile_occlusion_heatmaps" type="visualize_heatmaps.py"
+    name="visualize_heatmaps" output="screen" />
+
+  <!-- At the same time, visualize GraspIt saved grasps -->
+  <node pkg="grasp_collection" type="grasp_replay.py" name="grasp_replay"
+    output="screen" />
+
+</launch>
+

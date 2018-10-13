@@ -9,6 +9,7 @@
 
 import os
 import cPickle as pickle
+import csv
 
 # Custom
 from util.ansi_colors import ansi_colors
@@ -45,10 +46,11 @@ class GraspIO:
   def read_grasps (world_name):
 
     grasps_fname = os.path.join (get_grasps_path (), world_name + '.pkl')
+    print ('%sLoading grasps from file %s%s' % (ansi_colors.OKCYAN,
+      grasps_fname, ansi_colors.ENDC))
+
     with open (grasps_fname, 'rb') as grasps_f:
       grasps = pickle.load (grasps_f)
-    print ('%sLoaded grasps from file %s%s' % (ansi_colors.OKCYAN,
-      grasps_fname, ansi_colors.ENDC))
 
     return grasps
 
@@ -94,4 +96,19 @@ class GraspIO:
       cmeta_fname, ansi_colors.ENDC))
 
 
+  @staticmethod
+  def read_contact_meta (world_name):
+
+    cmeta_fname = os.path.join (get_contacts_path (), world_name + '_meta.csv')
+    print ('%sLoading contacts meta from file %s%s' % (ansi_colors.OKCYAN,
+      cmeta_fname, ansi_colors.ENDC))
+
+    with open (cmeta_fname, 'rb') as cmeta_f:
+      cmeta_reader = csv.reader (cmeta_f)
+      # Only one row in file
+      for row in cmeta_reader:
+        # Convert strings to ints
+        cmeta = [int (s) for s in row]
+
+    return cmeta
 

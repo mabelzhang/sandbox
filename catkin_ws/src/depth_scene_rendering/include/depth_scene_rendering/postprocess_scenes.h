@@ -27,7 +27,13 @@ void calc_object_pose_wrt_cam (const std::string scene_path,
   //   project_3d_pose_to_2d(), that works.
   /*
   // Invert to compensate for the pi rotation wrt y-axis in
-  //   scene_generation.py save_extrinsics_from_pose
+  //   scene_generation.py save_extrinsics_from_pose(), to make identity
+  //   camera pose actually identity in extrinsics, wasn't sure why needed.
+  // scene_generation.py writes to file:
+  //   T_o_cam = T_W_obj^-1 * (T_W_cam * R_flipY)
+  //   To recover T_W_cam, camera pose wrt world (or object, equivalent in my
+  //     setup which places object at world origin):
+  //   T_W_obj * T_o_cam * R_flipY^-1 = T_W_cam
   Eigen::Matrix4f R_flipY;
   R_flipY << cos(M_PI), 0, sin(M_PI), 0,
              0, 1, 0, 0,
@@ -39,6 +45,10 @@ void calc_object_pose_wrt_cam (const std::string scene_path,
   // Invert T^o_c to get object 3D pose wrt camera, T^c_o
   T_c_o = T_o_c.inverse ();
   //std::cerr << "T_c_o:\n" << T_c_o << std::endl << std::endl;
+
+  // Can I just flip in camera frame in 3D here, and not flip in 2D image plane in project_3d_pose_to_2d()?
+  //T_c_o [0, 3] = -T_c_o [0, 3];
+  //T_c_o [1, 3] = -T_c_o [1, 3];
 }
 
 // Project a 3D point to 2D

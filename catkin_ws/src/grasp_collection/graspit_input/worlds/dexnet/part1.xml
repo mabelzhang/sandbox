@@ -16,7 +16,8 @@
             <!-- obj dimension in x: 25 mm. Shift up 0.5 * dim to sit above floor -->
             <!-- Rotate 90 degs wrt x, to offset the axis rotation in .obj.
                  Rotate 90 degs wrt z, to put flat side on floor -->
-            <fullTransform>(0.5 0.5 -0.5 0.5)[0 0 +13]</fullTransform>
+            <!--fullTransform>(0.5 0.5 -0.5 0.5)[0 0 +13.5]</fullTransform-->
+            <fullTransform>(1 0 0 0)[0 0 +13.5]</fullTransform>
         </transform>
     </graspableBody>
     <robot>

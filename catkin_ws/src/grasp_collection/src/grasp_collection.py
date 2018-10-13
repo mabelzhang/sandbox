@@ -20,6 +20,7 @@ import os
 import re  # Regular expressions
 import cPickle as pickle
 import csv
+import yaml
 
 import numpy as np
 
@@ -36,9 +37,10 @@ from graspit_interface.msg import SearchContact
 # Custom
 from util.ros_util import matrix_from_Pose
 from util.ansi_colors import ansi_colors
+from depth_scene_rendering.config_read_yaml import ConfigReadYAML
 
 # Local
-from config_consts import worlds
+from grasp_collection.config_paths import world_subdir
 from grasp_io import GraspIO
 
 
@@ -63,8 +65,10 @@ def main ():
   # TODO: Use this
   #save_every_n_grasps = 50
 
+  obj_names = ConfigReadYAML.read_object_names ()
 
-  for w_i in range (len (worlds)):
+
+  for w_i in range (len (obj_names)):
   #for w_i in range (1, 2):  # gearbox only
 
     # graspit_interface loadWorld automatically looks in worlds/ path under
@@ -74,7 +78,7 @@ def main ():
     #   symlinks to these files.
     #world_fname = os.path.join (pkg_path, 'graspit_input/worlds/dexnet/',
     #  worlds [w_i])
-    world_fname = worlds [w_i]
+    world_fname = os.path.join (world_subdir, obj_names [w_i])
 
     print ('Loading world from %s' % world_fname)
 
@@ -115,7 +119,7 @@ def main ():
     # Loop through each result grasp
     for g_i in range (len (gres.grasps)):
 
-      print ('Grasp %d: energy %g' % (g_i+1, gres.energies [g_i]))
+      print ('Grasp %d: energy %g' % (g_i, gres.energies [g_i]))
       GraspitCommander.setRobotPose (gres.grasps [g_i].pose)
 
 

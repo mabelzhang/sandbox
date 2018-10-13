@@ -40,7 +40,7 @@
 // Local
 #include <depth_scene_rendering/camera_info.h>  // load_intrinsics ()
 #include <depth_scene_rendering/depth_to_image.h>  // RawDepthScaling, crop_image_center()
-#include <depth_scene_rendering/postprocess_scenes.h>  // calc_object_pose_in_img()
+#include <depth_scene_rendering/postprocess_scenes.h>  // calc_object_pose_in_img(), calc_object_pose_wrt_cam()
 #include <depth_scene_rendering/scene_yaml.h>  // ScenesYaml
 #include <tactile_graspit_collection/contacts_io.h>
 #include <tactile_graspit_collection/config_paths.h>  // PathConfigYaml
@@ -123,7 +123,7 @@ public:
     cv::Mat occluded_f = cv::Mat::zeros (height, width, CV_32F);
     int n_vis = 0, n_occ = 0;
 
-    // Set image coordinates corresponding to 3D points to raw depths
+    // Set image coordinates, corresponding to 3D points, to raw depths
     for (int i = 0; i < occluded.size (); i ++)
     {
       // I(v, u) = depth z
@@ -334,7 +334,7 @@ int main (int argc, char ** argv)
     int curr_contact_start_idx = 0;
     for (int g_i = 0; g_i < n_grasps; g_i++)
     {
-      fprintf (stderr, "%sGrasp %d out of %d%s\n", OKCYAN, g_i+1, n_grasps,
+      fprintf (stderr, "%sGrasp [%d] out of %d%s\n", OKCYAN, g_i, n_grasps,
         ENDC);
 
       Eigen::MatrixXf curr_grasp_contacts;
@@ -348,11 +348,15 @@ int main (int argc, char ** argv)
         // Syntax block(i, j, rows, cols).
         // 4 x nContacts. 4 x 0 if no contacts
         // [:, grasp_start : grasp_start + n_contacts_at_this_grasp]
+        // Coordinates are in object frame. Same points in object frame for
+        //   all camera scenes. Only coordinates in camera frame are different
+        //   across scenes.
         curr_grasp_contacts = contacts_O4.block (0,
           curr_contact_start_idx, contacts_O4.rows (), n_contacts);
       }
 
-      std::cerr << "curr_contact_start_idx: " << curr_contact_start_idx << std::endl;
+      std::cerr << "curr_contact_start_idx: " << curr_contact_start_idx
+        << std::endl;
       std::cerr << "n_contacts: " << n_contacts << std::endl;
       std::cerr << "contacts: " << std::endl;
       std::cerr << curr_grasp_contacts << std::endl;
@@ -409,6 +413,8 @@ int main (int argc, char ** argv)
         {
           generate_random_endpoints (10, raytracer, endpoints);
         }
+        // Transform grasp contacts that are in object frame to be in camera
+        //   frame
         else
         {
           // Get object pose wrt camera frame. This is the inverse of extrinsics
@@ -417,6 +423,26 @@ int main (int argc, char ** argv)
           Eigen::MatrixXf T_c_o;
           calc_object_pose_wrt_cam (scene_path, P, T_c_o,
             cloud_ptr -> height, cloud_ptr -> width);
+//TODO: Do I need to flip x and y here? The 2D version would flip them here.
+// This doesn't work, because T_c_o translation is just 0 0 1! Flipping 0 gives 0
+// Actually the problem might be that, object frame != world frame. Object frame
+//   has z pointing sideways, while world has z pointing up. I thought I saved
+//   the camera extrinsics wrt object frame in scene_generation.py though.
+//   0 0 1 is only position, look at the 3 x 3 R part of T_c_o, is it correct?
+//   Can convert to Quaternion and check.
+// Maybe that is why when camera points down, the matrix is not identity!!!???
+//   because the matrix of camera orientation wrt object orientation is simply
+//   not identity!!!! So my "correction" of pi wrt y-axis in scene_generation.py
+//   might have been spurious!!!
+// > Problem is that Blender rotates OBJ files by 90 degs wrt x by default!!!
+//   So T^W_o was identity, when in fact it isn't!!! That threw off my camera
+//   extrinsics matrix wrt object frame, obtained in Blender. So the camera
+//   extrinsics applied to the contact coordinates in GraspIt, to transform
+//   them from object frame to camera frame, was incorrect.
+//   Now changed the loading to Y Forward, Z up, in scene_generation.py, and
+//   reran everything. now correct!!!
+  //T_c_o (0, 3) = -T_c_o (0, 3);
+  //T_c_o (1, 3) = -T_c_o (1, 3);
 
           // No contacts in a grasp means the grasp is terrible, didn't make any
           //   contact with object. For now, keep them, because simply output
@@ -436,10 +462,10 @@ int main (int argc, char ** argv)
           }
           endpoints = contacts_C.topRows (3);
 
-          //std::cerr << "Object center in camera frame: " << std::endl;
+          std::cerr << "Object center in camera frame: " << std::endl;
           Eigen::Vector4f origin;
           origin << 0, 0, 0, 1;
-          //std::cerr << T_c_o * origin << std::endl;
+          std::cerr << T_c_o * origin << std::endl;
         }
 
         if (DEBUG_RAYTRACE)

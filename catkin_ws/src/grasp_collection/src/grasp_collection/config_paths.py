@@ -12,6 +12,9 @@ import os
 from tactile_occlusion_heatmaps.config_paths import get_data_path
 
 
+# Input directory in $GRASPIT installation directory worlds/
+world_subdir = 'dexnet'
+
 def get_grasps_path ():
 
   path = os.path.join (get_data_path (), 'grasps')

@@ -1,33 +1,4 @@
 objects:
-  - object: bar_clamp
-    scenes:
-    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-11-04-26-04.pcd
-    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-11-04-26-11.pcd
   - object: gearbox
     scenes:
-    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-11-04-26-18.pcd
-    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-11-04-26-25.pcd
-  - object: nozzle
-    scenes:
-    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-11-04-26-33.pcd
-    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-11-04-26-41.pcd
-  - object: part1
-    scenes:
-    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-11-04-26-49.pcd
-    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-11-04-26-56.pcd
-  - object: part3
-    scenes:
-    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-11-04-27-03.pcd
-    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-11-04-27-09.pcd
-  - object: pawn
-    scenes:
-    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-11-04-27-16.pcd
-    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-11-04-27-22.pcd
-  - object: turbine_housing
-    scenes:
-    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-11-04-27-29.pcd
-    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-11-04-27-36.pcd
-  - object: vase
-    scenes:
-    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-11-04-27-43.pcd
-    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-11-04-27-49.pcd
+    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-12-23-06-41.pcd

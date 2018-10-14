@@ -34,7 +34,7 @@ import bpy
 
 # Custom
 from util.ansi_colors import ansi_colors
-#from util.spherical_pose_generation import get_rand_pose
+from util.spherical_pose_generation import get_rand_pose
 from util.euler_pose_generation import get_rand_rot
 # NOTE that this has quaternions ordered (w, x, y, z), same as Blender, unlike
 #   the ROS tf.transformations version, which has (x, y, z, w)!
@@ -190,20 +190,22 @@ def create_cone ():
   bpy.data.objects ['Cone'].dimensions = (0.1, 0.05, 0.1)
 
 
-def generate_random_camera_pose (tx_range, ty_range):
+def generate_random_camera_pose (rx_range, ry_range, rz_range,
+  tx_range, ty_range):
  
-  # Generate camera pose for NEXT loop iteration.
-  # Blender quaternion has (w, x, y, z), w first.
-
   # Use spherical coordinates (long, lat) to calculate rot and pos.
   # Normally, latitude range (-90, 90). Truncate to (0, 90), so it is always
   #   above horizon, `.` tabletop
-  #cam_pos, cam_quat = get_rand_pose (lat_range=(0, 0.5*np.pi), qwFirst=True)
+  cam_pos, cam_quat, cam_euler = get_rand_pose (lat_range=(0, 0.5*np.pi),
+    from_vec=[0,0,1], qwFirst=True)
 
-  tz = 1
 
+  # Camera around north pole only, with perturbation range that has object
+  #   still visible in image plane.
+  '''
   tx = tx_range [0] + np.random.rand () * (tx_range[1] - tx_range[0])
   ty = ty_range [0] + np.random.rand () * (ty_range[1] - ty_range[0])
+  tz = 1
   cam_pos = [tx, ty, tz]
 
   # T^W_c
@@ -216,6 +218,7 @@ def generate_random_camera_pose (tx_range, ty_range):
   #  euler_convention))
   #print (quaternion_matrix ((cam_quat[0], cam_quat[1], cam_quat[2],
   #  cam_quat[3])))
+  '''
 
 
   # Don't need noise for random poses. Only need noise for fixed grid
@@ -342,9 +345,10 @@ if __name__ == '__main__':
   #n_objs = len (config_consts.objects)
   n_objs = 1
   
-  n_camera_poses = 2
+  n_camera_poses = 5
   # For testing. Set to False for real run
   SKIP_CAM_IDENTITY = True
+
 
   # Not good to randomize on spherical coordinates, `.` when convert to
   #   Quaternion, only 2 degrees of freedom. Would need to combine with
@@ -362,6 +366,10 @@ if __name__ == '__main__':
   #   render_at_euler_poses().
   euler_convention = 'sxyz'
 
+  # TODO: Add generation of a position on the unit sphere. Use util
+  #   spherical_pose_generation get_rand_pose() to generate a grid point on
+  #   upper hemisphere, then use existing euler code to generate perturbations
+  #   on top of it.
   tx_range = np.array ([-0.08, 0.11])
   ty_range = np.array ([-0.08, 0.11])
 
@@ -369,6 +377,7 @@ if __name__ == '__main__':
   # Noise for camera position (meters) and orientation (radians)
   #T_NOISE_RANGE = 0.01
   #R_NOISE_RANGE = 
+
 
   start_time = time.time ()
   
@@ -408,8 +417,8 @@ if __name__ == '__main__':
 
       # Skip top-down pose
       if SKIP_CAM_IDENTITY and c_i == 0:
-        cam_pos, cam_euler, cam_quat = generate_random_camera_pose (tx_range,
-          ty_range)
+        cam_pos, cam_euler, cam_quat = generate_random_camera_pose (rx_range,
+          ry_range, rz_range, tx_range, ty_range)
         continue
   
       # Scan scene
@@ -466,8 +475,10 @@ if __name__ == '__main__':
       #   prefix as scene just captured.
       save_extrinsics_from_pose (cam_pos, cam_quat, T_W_obj, noisy_scene_name)
    
-      cam_pos, cam_euler, cam_quat = generate_random_camera_pose (tx_range,
-        ty_range)
+      # Generate camera pose for NEXT loop iteration.
+      # Blender quaternion has (w, x, y, z), w first.
+      cam_pos, cam_euler, cam_quat = generate_random_camera_pose (rx_range,
+        ry_range, rz_range, tx_range, ty_range)
 
 
     # Delete loaded object

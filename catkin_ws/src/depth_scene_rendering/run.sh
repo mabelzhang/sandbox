@@ -21,3 +21,12 @@ rosrun grasp_collection grasp_collection.py
 # Set GEN_RAND_PTS = false, recompile, run
 rosrun tactile_occlusion_heatmaps occlusion_test 
 
+
+
+# Visualize visible and occluded contact heat maps:
+# $ rosrun tactile_occlusion_heatmaps visualize_heatmaps.py
+
+# At the same time, visualize GraspIt saved grasps:
+# $ rosrun grasp_collection grasp_replay.py
+
+

@@ -491,9 +491,9 @@ int main (int argc, char ** argv)
             fprintf (stderr, "Occluded? %s\n", curr_occluded ? "true" : "false");
        
           // Debug
-          char enter;
-          std::cerr << "Press any character, then press enter: ";
-          std::cin >> enter;
+          //char enter;
+          //std::cerr << "Press any character, then press enter: ";
+          //std::cin >> enter;
         }
        
        

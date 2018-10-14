@@ -40,6 +40,7 @@ from util.ansi_colors import ansi_colors
 from depth_scene_rendering.config_read_yaml import ConfigReadYAML
 
 # Local
+from grasp_collection.config_consts import worlds
 from grasp_collection.config_paths import world_subdir
 from grasp_io import GraspIO
 
@@ -53,27 +54,32 @@ def main ():
 
   # TODO: Change this to a bigger number to get poor quality grasps as well
   # Temporary using small number for testing
-  #n_best_grasps = 20
+  n_best_grasps = 20
   # Using just 1 grasp, for many camera views, to check if there are more
   #   occluded contacts in different camera views.
   #n_best_grasps = 1
-  n_best_grasps = 10
+  #n_best_grasps = 10
 
   # Default 70000, takes 30 seconds. Set to small number for testing. Usually
   #   there are grasps ranking in top 20 from 30000s. Time is not linear wrt
   #   steps, so setting to 30000 will take a lot shorter time than 70000.
-  #max_steps = 70000
-  max_steps = 40000
+  max_steps = 70000
+  #max_steps = 40000
 
   n_contacts_ttl = 0
 
   # TODO: Use this
   #save_every_n_grasps = 50
 
-  obj_names = ConfigReadYAML.read_object_names ()
+  # Replaced this with config_consts, because grasps don't need to be
+  #   regenerated all the time! It's always about the same for the same object.
+  #   Just generate a bunch, and then you never need to generate them again!
+  # Read object from YAML file
+  #obj_names = ConfigReadYAML.read_object_names ()
 
 
-  for w_i in range (len (obj_names)):
+  #for w_i in range (len (obj_names)):
+  for w_i in range (len (worlds)):
 
     # graspit_interface loadWorld automatically looks in worlds/ path under
     #   GraspIt installation path.
@@ -82,7 +88,8 @@ def main ():
     #   symlinks to these files.
     #world_fname = os.path.join (pkg_path, 'graspit_input/worlds/dexnet/',
     #  worlds [w_i])
-    world_fname = os.path.join (world_subdir, obj_names [w_i])
+    #world_fname = os.path.join (world_subdir, obj_names [w_i])
+    world_fname = worlds [w_i]
 
     print ('Loading world from %s' % world_fname)
 
@@ -123,7 +130,7 @@ def main ():
     # Loop through each result grasp
     for g_i in range (len (gres.grasps)):
 
-      print ('Grasp %d: energy %g' % (g_i, gres.energies [g_i]))
+      print ('\nGrasp %d: energy %g' % (g_i, gres.energies [g_i]))
       GraspitCommander.setRobotPose (gres.grasps [g_i].pose)
 
 
@@ -189,6 +196,7 @@ def main ():
       # Transform contact points to be wrt object frame
       # T^O_C = T^O_W * T^W_C
       contacts_O = np.dot (np.linalg.inv (T_W_O), contacts_W)
+      print ('contacts_O:')
       print (contacts_O)
 
       # One list item per grasp. List item is a matrix 4 x n of n contacts
@@ -202,9 +210,9 @@ def main ():
       n_contacts_ttl += n_contacts
 
 
-      uinput = raw_input ('Press enter to view next grasp, q to stop viewing')
-      if uinput.lower () == 'q':
-        break
+      #uinput = raw_input ('Press enter to view next grasp, q to stop viewing (note skipped contacts will NOT be saved!): ')
+      #if uinput.lower () == 'q':
+      #  break
  
       # Open gripper for next grasp
       GraspitCommander.autoOpen ()

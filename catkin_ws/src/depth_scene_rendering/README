@@ -24,7 +24,7 @@ $ rosrun depth_scene_rendering postprocess_scenes
 
 3.
 [For real run] Run ray-trace occlusion on actual GraspIt contact points:
-Collect GraspIt contacts:
+Collect GraspIt contacts (NOTE: only need to run ONCE for all objects):
 $ roslaunch graspit_interface_custom graspit_interface.launch 
 $ rosrun grasp_collection grasp_collection.py
 Set GEN_RAND_PTS = false, recompile, run:

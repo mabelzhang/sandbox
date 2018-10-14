@@ -109,7 +109,7 @@ public:
     // 2 x n
     Eigen::MatrixXi uv;
     project_3d_pts_to_2d_homo (pts, P, uv);
-    // Flip x and y. postprocess_scenes.h project_3d_pose_to_2d() does this,
+    // flip x and y. postprocess_scenes.h project_3d_pose_to_2d() does this,
     //   but cv_util.h project_3d_pts_to_2d() doesn't. TODO do something about
     //   this. Make it cleaner and less ad-hoc.
     uv.row (0) = width - uv.row (0).array ();
@@ -422,27 +422,14 @@ int main (int argc, char ** argv)
           // 4 x 4
           Eigen::MatrixXf T_c_o;
           calc_object_pose_wrt_cam (scene_path, P, T_c_o,
-            cloud_ptr -> height, cloud_ptr -> width);
-//TODO: Do I need to flip x and y here? The 2D version would flip them here.
-// This doesn't work, because T_c_o translation is just 0 0 1! Flipping 0 gives 0
-// Actually the problem might be that, object frame != world frame. Object frame
-//   has z pointing sideways, while world has z pointing up. I thought I saved
-//   the camera extrinsics wrt object frame in scene_generation.py though.
-//   0 0 1 is only position, look at the 3 x 3 R part of T_c_o, is it correct?
-//   Can convert to Quaternion and check.
-// Maybe that is why when camera points down, the matrix is not identity!!!???
-//   because the matrix of camera orientation wrt object orientation is simply
-//   not identity!!!! So my "correction" of pi wrt y-axis in scene_generation.py
-//   might have been spurious!!!
-// > Problem is that Blender rotates OBJ files by 90 degs wrt x by default!!!
-//   So T^W_o was identity, when in fact it isn't!!! That threw off my camera
-//   extrinsics matrix wrt object frame, obtained in Blender. So the camera
-//   extrinsics applied to the contact coordinates in GraspIt, to transform
-//   them from object frame to camera frame, was incorrect.
-//   Now changed the loading to Y Forward, Z up, in scene_generation.py, and
-//   reran everything. now correct!!!
-  //T_c_o (0, 3) = -T_c_o (0, 3);
-  //T_c_o (1, 3) = -T_c_o (1, 3);
+            cloud_ptr -> height, cloud_ptr -> width); //, true);
+          // TODO: Bug. Uncomment this, 3D is correct - object center in +x +y
+          //   quadrant, but 2D hot spots are wrong! Comment this out, 2D hot
+          //   spots are correct, but 3D is wrong, so visible/occluded is
+          //   wrongly determined!!!
+          // flip
+          //T_c_o (0, 3) = -T_c_o (0, 3);
+          //T_c_o (1, 3) = -T_c_o (1, 3);
 
           // No contacts in a grasp means the grasp is terrible, didn't make any
           //   contact with object. For now, keep them, because simply output
@@ -475,36 +462,48 @@ int main (int argc, char ** argv)
         }
 
      
-        // Do ray-trace occlusion test for each endpoint
+        // Do ray-trace occlusion test for each endpoint, in 3D
         std::vector <bool> occluded;
         for (int p_i = 0; p_i < endpoints.cols (); p_i++)
         {
           if (DEBUG_RAYTRACE)
-            std::cerr << "Ray through " << endpoints.col (p_i).transpose () << std::endl;
+            std::cerr << "Ray through " << endpoints.col (p_i).transpose ()
+              << std::endl;
 
           // Ray trace
           // Occluded = red arrow drawn in RViz, unoccluded = green
           // Must test endpoints one by one, not an n x 3 matrix, `.` octree
           //   getIntersectedVoxelCenters() only takes one ray at a time.
+          // Manually flip x and y of endpoint, because I've tried every other
+          //   combination of flipping and not flipping in project_3d_*() and
+          //   calc_object_*(), and none of them work. Best I got is 2D hot
+          //   spots are correct, but 3D xy are flipped negative, if T_c_o
+          //   above is not manually flipped. If it is flipped, then 3D
+          //   endpoints are in the right quadrant, but 2D hot spots are wrong.
+          //   So best flip on top of flip I found, is to manually flip 3D
+          //   endpoints' x and y here. I don't even know why anymore.
           bool curr_occluded = raytracer.raytrace_occlusion_test (origin,
-            endpoints.col (p_i));
+            //endpoints.col (p_i));
+            Eigen::Vector3f (-endpoints (0, p_i), -endpoints (1, p_i),
+              endpoints (2, p_i)));
           occluded.push_back (curr_occluded);
           if (DEBUG_RAYTRACE)
             fprintf (stderr, "Occluded? %s\n", curr_occluded ? "true" : "false");
        
           // Debug
-          //char enter;
-          //std::cerr << "Press any character, then press enter: ";
-          //std::cin >> enter;
+          char enter;
+          std::cerr << "Press any character, then press enter: ";
+          std::cin >> enter;
         }
        
        
         // Separate endpoints into visible and occluded, in pixel coordinates
         Eigen::MatrixXf visible_uv, occluded_uv;
        
-        // Create heatmaps of visible and occluded points, in image plane.
-        // In order to save images as images, esp convenient for debugging, images
-        //   must be integers, 3 channels.
+        // Project 3D points to 2D image plane, create heatmaps of visible
+        //   and occluded points.
+        // In order to save images as images, esp convenient for debugging,
+        //   images must be integers, 3 channels.
         cv::Mat visible_img, occluded_img;
         separator.separate_and_project (endpoints, occluded, P,
           cloud_ptr -> height, cloud_ptr -> width, visible_img, occluded_img);
@@ -512,6 +511,7 @@ int main (int argc, char ** argv)
        
         // Find object center in image pixels, using camera extrinsics
         Eigen::VectorXf p_obj_2d;
+        // flip
         calc_object_pose_in_img (scene_path, P, p_obj_2d, visible_img.rows,
           visible_img.cols, true);
        

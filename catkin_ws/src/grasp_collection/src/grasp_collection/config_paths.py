@@ -35,3 +35,13 @@ def get_contacts_path ():
   return path
 
 
+def get_quals_path ():
+
+  path = os.path.join (get_data_path (), 'qualities')
+
+  if not os.path.exists (path):
+    os.makedirs (path)
+
+  return path
+
+

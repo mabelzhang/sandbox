@@ -323,6 +323,7 @@ int main (int argc, char ** argv)
  
       // Find object center in image pixels
       Eigen::VectorXf p_obj_2d;
+      // flip
       calc_object_pose_in_img (scene_path, P, p_obj_2d, depth_img.rows,
         depth_img.cols, true);
  

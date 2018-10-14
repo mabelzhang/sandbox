@@ -56,12 +56,14 @@ def main ():
   #n_best_grasps = 20
   # Using just 1 grasp, for many camera views, to check if there are more
   #   occluded contacts in different camera views.
-  n_best_grasps = 1
+  #n_best_grasps = 1
+  n_best_grasps = 10
 
   # Default 70000, takes 30 seconds. Set to small number for testing. Usually
   #   there are grasps ranking in top 20 from 30000s. Time is not linear wrt
   #   steps, so setting to 30000 will take a lot shorter time than 70000.
-  max_steps = 70000
+  #max_steps = 70000
+  max_steps = 40000
 
   n_contacts_ttl = 0
 
@@ -72,7 +74,6 @@ def main ():
 
 
   for w_i in range (len (obj_names)):
-  #for w_i in range (1, 2):  # gearbox only
 
     # graspit_interface loadWorld automatically looks in worlds/ path under
     #   GraspIt installation path.
@@ -185,7 +186,7 @@ def main ():
       contacts_W = contacts_W [:, 0:n_contacts]
 
       # 4 x n, wrt object frame
-      # Transform contact points to be wrt object frame. TODO: Test this
+      # Transform contact points to be wrt object frame
       # T^O_C = T^O_W * T^W_C
       contacts_O = np.dot (np.linalg.inv (T_W_O), contacts_W)
       print (contacts_O)
@@ -201,13 +202,13 @@ def main ():
       n_contacts_ttl += n_contacts
 
 
+      uinput = raw_input ('Press enter to view next grasp, q to stop viewing')
+      if uinput.lower () == 'q':
+        break
+ 
       # Open gripper for next grasp
       GraspitCommander.autoOpen ()
 
-      #uinput = raw_input ('Press enter to view next grasp, q to stop viewing')
-      #if uinput.lower () == 'q':
-      #  break
- 
     print ('Total %d contacts in %d grasps' % (n_contacts_ttl, n_best_grasps))
 
      
@@ -234,6 +235,10 @@ def main ():
     GraspIO.write_grasps (os.path.basename (world_fname), gres.grasps)
 
     GraspIO.write_contacts (os.path.basename (world_fname), contacts_m, cmeta)
+
+    # Write grasp qualities to a separate csv file, for easy loading and
+    #   inspection.
+    GraspIO.write_energies (os.path.basename (world_fname), gres.energies)
 
 
 if __name__ == '__main__':

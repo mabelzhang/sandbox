@@ -15,7 +15,8 @@ import csv
 from util.ansi_colors import ansi_colors
 
 # Local
-from grasp_collection.config_paths import get_grasps_path, get_contacts_path
+from grasp_collection.config_paths import get_grasps_path, get_contacts_path, \
+  get_quals_path
 
 
 # One file per object. A file may contain many grasps.
@@ -111,4 +112,19 @@ class GraspIO:
         cmeta = [int (s) for s in row]
 
     return cmeta
+
+
+  # Write grasp energies, or qualities, to csv file
+  @staticmethod
+  def write_energies (world_name, energies):
+
+    # csv file, of a row of nGrasps elements
+    quals_fname = os.path.join (get_quals_path (), world_name + '.csv')
+    with open (quals_fname, 'wb') as quals_f:
+      quals_writer = csv.writer (quals_f)
+      # Write n x 3, for easier human reading
+      quals_writer.writerow (energies)
+    print ('%sWritten quals to file %s%s' % (ansi_colors.OKCYAN,
+      quals_fname, ansi_colors.ENDC))
+
 

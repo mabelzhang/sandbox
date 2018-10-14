@@ -11,6 +11,7 @@
 // Inverse matrix of extrinsics (extrinsics is saved wrt object frame).
 void calc_object_pose_wrt_cam (const std::string scene_path,
   Eigen::MatrixXf & P, Eigen::MatrixXf & T_c_o, int rows, int cols)
+  //bool flip=false)
 {
   // Path to camera transformation matrix wrt object.
   // Extrinsics matrix is saved to same name as .pcd, but with .txt extension
@@ -23,8 +24,7 @@ void calc_object_pose_wrt_cam (const std::string scene_path,
   //std::cerr << "T_o_c:\n" << T_o_c << std::endl << std::endl;
 
   // With this, pixel is flipped wrt y axis. Without this, pixel is flipped
-  //   wrt x axis. Instead, just flip both x and y at end of
-  //   project_3d_pose_to_2d(), that works.
+  //   wrt x axis. Instead, just flip both x and y at end of fn. That works.
   /*
   // Invert to compensate for the pi rotation wrt y-axis in
   //   scene_generation.py save_extrinsics_from_pose(), to make identity
@@ -46,14 +46,20 @@ void calc_object_pose_wrt_cam (const std::string scene_path,
   T_c_o = T_o_c.inverse ();
   //std::cerr << "T_c_o:\n" << T_c_o << std::endl << std::endl;
 
-  // Can I just flip in camera frame in 3D here, and not flip in 2D image plane in project_3d_pose_to_2d()?
-  //T_c_o [0, 3] = -T_c_o [0, 3];
-  //T_c_o [1, 3] = -T_c_o [1, 3];
+  /*
+  // Flip in camera frame in 3D here, instead of flipping in 2D image plane
+  //   project_3d_pose_to_2d().
+  if (flip)
+  {
+    T_c_o (0, 3) = -T_c_o (0, 3);
+    T_c_o (1, 3) = -T_c_o (1, 3);
+  }
+  */
 }
 
 // Project a 3D point to 2D
 // T_c_o: 4 x 4 3D transform of object in camera frame
-// P: 3 x 4 camera projection matrix
+// P: 3 x 4 camera projection matrix (intrinsics)
 // p_obj_2d: return value. 2D image coordinates of object in image.
 void project_3d_pose_to_2d (Eigen::MatrixXf T_c_o,
   Eigen::MatrixXf & P, Eigen::VectorXf & p_obj_2d, int rows, int cols,
@@ -95,7 +101,7 @@ void calc_object_pose_in_img (const std::string scene_path,
 {
   // Transform point from object frame to camera frame, using extrinsics matrix
   Eigen::MatrixXf T_c_o;
-  calc_object_pose_wrt_cam (scene_path, P, T_c_o, rows, cols);
+  calc_object_pose_wrt_cam (scene_path, P, T_c_o, rows, cols); //, flip);
 
   project_3d_pose_to_2d (T_c_o, P, p_obj_2d, rows, cols, flip);
 }

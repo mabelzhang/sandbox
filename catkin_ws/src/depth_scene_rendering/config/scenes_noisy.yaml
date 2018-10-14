@@ -1,7 +1,4 @@
 objects:
   - object: bar_clamp
     scenes:
-    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-13-20-03-46_n.pcd
-    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-13-20-03-54_n.pcd
-    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-13-20-04-02_n.pcd
-    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-13-20-04-10_n.pcd
+    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-13-21-37-22_n.pcd

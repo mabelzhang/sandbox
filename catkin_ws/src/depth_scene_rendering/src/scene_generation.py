@@ -38,7 +38,8 @@ from util.spherical_pose_generation import get_rand_pose
 from util.euler_pose_generation import get_rand_rot
 # NOTE that this has quaternions ordered (w, x, y, z), same as Blender, unlike
 #   the ROS tf.transformations version, which has (x, y, z, w)!
-from util.tf_transformations import quaternion_matrix, euler_matrix
+from util.tf_transformations import quaternion_matrix, euler_matrix, \
+  quaternion_from_matrix, euler_from_matrix
 
 # Local, from paths added above
 from scan_kinect import ScanKinect
@@ -190,22 +191,100 @@ def create_cone ():
   bpy.data.objects ['Cone'].dimensions = (0.1, 0.05, 0.1)
 
 
-def generate_random_camera_pose (rx_range, ry_range, rz_range,
-  tx_range, ty_range):
+def generate_random_camera_pose ():
  
+  # Generate a location on the unit sphere, with position and orientation.
   # Use spherical coordinates (long, lat) to calculate rot and pos.
   # Normally, latitude range (-90, 90). Truncate to (0, 90), so it is always
   #   above horizon, `.` tabletop
   cam_pos, cam_quat, cam_euler = get_rand_pose (lat_range=(0, 0.5*np.pi),
     from_vec=[0,0,1], qwFirst=True)
 
+  # Combine pos and rot into a 4 x 4 matrix
+  center_m = quaternion_matrix (cam_quat)
+  center_m [0:3, 3] = cam_pos
+
+
+  # Add perturbation, so that object appears anywhere in image, not just at
+  #   image center. This is to generalize for lens distortion.
+
+  # Meters. Object still stays in image frame within this range from the
+  #   dead-center pose that points at object in middle of unit sphere,
+  #   resulting in object at image center.
+  tx_range = np.array ([-0.08, 0.11])
+  ty_range = np.array ([-0.08, 0.11])
+  tz_range = np.array ([-0.08, 0.11])
+
+  # Generate random small perturbation for translation
+  tx = tx_range [0] + np.random.rand () * (tx_range[1] - tx_range[0])
+  ty = ty_range [0] + np.random.rand () * (ty_range[1] - ty_range[0])
+  tz = tz_range [0] + np.random.rand () * (tz_range[1] - tz_range[0])
+  perturb_pos = [tx, ty, tz]
+  
+
+  # Blender rotation is set by Euler or Quaternion. Quaternion is not easy
+  #   to quantify a range per parameter. So will define range using Euler
+  #   XYZ.
+  # Range in Euler XYZ is empirically chosen using render_camera_poses.py.
+  rx_range = np.array ([-20, 21]) * np.pi / 180.0
+  ry_range = np.array ([-20, 21]) * np.pi / 180.0
+  rz_range = np.array ([-20, 21]) * np.pi / 180.0
+  # This convention produces results that match Blender "Euler XYZ" convention,
+  #   tested in Euler-to-Quaternion conversion in render_camera_poses.py
+  #   render_at_euler_poses().
+  euler_convention = 'sxyz'
+
+  # Generate random small perturbation for rotation
+  rx = rx_range[0] + np.random.rand () * (rx_range[1] - rx_range[0])
+  ry = ry_range[0] + np.random.rand () * (ry_range[1] - ry_range[0])
+  rz = rz_range[0] + np.random.rand () * (rz_range[1] - rz_range[0])
+  perturb_m = euler_matrix (rx, ry, rz, axes=euler_convention)
+
+
+  # Combine perturbation translation and rotation into a 4 x 4 matrix
+  perturb_m [0:3, 3] = perturb_pos
+
+  # Apply perturbation to dead-center camera pose
+  result_m = np.dot (center_m, perturb_m)
+
+  # Extract return values
+  cam_quat = quaternion_from_matrix (result_m)
+  cam_euler = euler_from_matrix (result_m)
+  cam_pos = result_m [0:3, 3]
+
+
 
   # Camera around north pole only, with perturbation range that has object
   #   still visible in image plane.
   '''
+  # Not good to randomize on spherical coordinates, `.` when convert to
+  #   Quaternion, only 2 degrees of freedom. Would need to combine with
+  #   position to achieve 3DOF. But position is also only 2DOF, x and y, so
+  #   better to randomize on Euler angles.
+  # Blender rotation is set by Euler or Quaternion. Quaternion is not easy
+  #   to quantify a range per parameter. So will define range using Euler
+  #   XYZ.
+  # Range in Euler XYZ is empirically chosen using render_camera_poses.py.
+  rx_range = np.array ([-20, 21]) * np.pi / 180.0
+  ry_range = np.array ([-20, 21]) * np.pi / 180.0
+  rz_range = np.array ([-180, 180]) * np.pi / 180.0
+  # This convention produces results that match Blender "Euler XYZ" convention,
+  #   tested in Euler-to-Quaternion conversion in render_camera_poses.py
+  #   render_at_euler_poses().
+  euler_convention = 'sxyz'
+
+  tx_range = np.array ([-0.08, 0.11])
+  ty_range = np.array ([-0.08, 0.11])
+  tz = 1
+
+  # Don't need noise for random poses. Only need noise for fixed grid
+  # Noise for camera position (meters) and orientation (radians)
+  #T_NOISE_RANGE = 0.01
+  #R_NOISE_RANGE = 
+
+
   tx = tx_range [0] + np.random.rand () * (tx_range[1] - tx_range[0])
   ty = ty_range [0] + np.random.rand () * (ty_range[1] - ty_range[0])
-  tz = 1
   cam_pos = [tx, ty, tz]
 
   # T^W_c
@@ -220,13 +299,6 @@ def generate_random_camera_pose (rx_range, ry_range, rz_range,
   #  cam_quat[3])))
   '''
 
-
-  # Don't need noise for random poses. Only need noise for fixed grid
-  # Add uniformly random noise
-  #t_noise = np.random.rand (3) * T_NOISE_RANGE
-  #cam_pos += t_noise
-  #r_noise = np.random.rand (3) * R_NOISE_RANGE
-  #cam_euler += r_noise
 
   return cam_pos, cam_euler, cam_quat
 
@@ -288,10 +360,6 @@ def save_extrinsics_from_pose (cam_pos, cam_quat, T_W_obj, noisy_scene_name):
   # T_o_cam = T_W_obj^-1 * (T_W_cam * R_flipY)
   T_o_cam = np.dot (np.linalg.inv (T_W_obj), T_W_cam)
 
-  # TODO: This is wrong. Camera pose wrt object prints exactly the same as
-  #   T_W_cam. That means T_W_obj is identity. But that is not true in GUI!
-  #   GUI shows object orientation RGB axes are not the same as Blender world
-  #   orientation RGB axes!!!
   print ('camera pose wrt object, T_o_cam:')
   print (T_o_cam)
 
@@ -345,38 +413,9 @@ if __name__ == '__main__':
   #n_objs = len (config_consts.objects)
   n_objs = 1
   
-  n_camera_poses = 5
+  n_camera_poses = 2
   # For testing. Set to False for real run
   SKIP_CAM_IDENTITY = True
-
-
-  # Not good to randomize on spherical coordinates, `.` when convert to
-  #   Quaternion, only 2 degrees of freedom. Would need to combine with
-  #   position to achieve 3DOF. But position is also only 2DOF, x and y, so
-  #   better to randomize on Euler angles.
-  # Blender rotation is set by Euler or Quaternion. Quaternion is not easy
-  #   to quantify a range per parameter. So will define range using Euler
-  #   XYZ.
-  # Range in Euler XYZ is empirically chosen using render_camera_poses.py.
-  rx_range = np.array ([-20, 21]) * np.pi / 180.0
-  ry_range = np.array ([-20, 21]) * np.pi / 180.0
-  rz_range = np.array ([-180, 180]) * np.pi / 180.0
-  # This convention produces results that match Blender "Euler XYZ" convention,
-  #   tested in Euler-to-Quaternion conversion in render_camera_poses.py
-  #   render_at_euler_poses().
-  euler_convention = 'sxyz'
-
-  # TODO: Add generation of a position on the unit sphere. Use util
-  #   spherical_pose_generation get_rand_pose() to generate a grid point on
-  #   upper hemisphere, then use existing euler code to generate perturbations
-  #   on top of it.
-  tx_range = np.array ([-0.08, 0.11])
-  ty_range = np.array ([-0.08, 0.11])
-
-  # Don't need noise for random poses. Only need noise for fixed grid
-  # Noise for camera position (meters) and orientation (radians)
-  #T_NOISE_RANGE = 0.01
-  #R_NOISE_RANGE = 
 
 
   start_time = time.time ()
@@ -417,8 +456,7 @@ if __name__ == '__main__':
 
       # Skip top-down pose
       if SKIP_CAM_IDENTITY and c_i == 0:
-        cam_pos, cam_euler, cam_quat = generate_random_camera_pose (rx_range,
-          ry_range, rz_range, tx_range, ty_range)
+        cam_pos, cam_euler, cam_quat = generate_random_camera_pose ()
         continue
   
       # Scan scene
@@ -477,8 +515,7 @@ if __name__ == '__main__':
    
       # Generate camera pose for NEXT loop iteration.
       # Blender quaternion has (w, x, y, z), w first.
-      cam_pos, cam_euler, cam_quat = generate_random_camera_pose (rx_range,
-        ry_range, rz_range, tx_range, ty_range)
+      cam_pos, cam_euler, cam_quat = generate_random_camera_pose ()
 
 
     # Delete loaded object

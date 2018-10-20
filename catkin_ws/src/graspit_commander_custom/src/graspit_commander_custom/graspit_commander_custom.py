@@ -52,6 +52,8 @@ from graspit_interface.srv import (
     MoveDOFToContacts
 )
 
+from graspit_interface_custom.srv import SetCameraPose
+
 from graspit_commander.graspit_exceptions import (
     GraspitTimeoutException,
     InvalidRobotIDException,
@@ -75,7 +77,8 @@ from graspit_commander.graspit_exceptions import (
     SaveImageException,
     SaveWorldException,
     InvalidDynamicsModeException,
-    InvalidEnergyTypeException
+    InvalidEnergyTypeException,
+    InvalidPoseException  # Custom, for SetCameraPose
 )
 
 
@@ -504,6 +507,21 @@ class GraspitCommander(object):
             return
         elif result.result is SaveWorld._response_class.RESULT_FAILURE:
             raise SaveWorldException()
+
+    # Custom: Expose interface to let user set custom camera viewpoint pose
+    # pose: geometry_msgs/Pose
+    @staticmethod
+    def setCameraPose(pose, focal_distance):
+        # graspit_interface_custom/srv/SetCameraPose.srv
+        _wait_for_service(GraspitCommander.GRASPIT_NODE_NAME + 'setCameraPose')
+
+        serviceProxy = rospy.ServiceProxy(GraspitCommander.GRASPIT_NODE_NAME + 'setCameraPose', SetCameraPose)
+        result = serviceProxy(pose, focal_distance)
+
+        if result.result is SetCameraPose._response_class.RESULT_SUCCESS:
+            return
+        elif result.result is SetCameraPose._response_class.RESULT_INVALID_POSE:
+            raise InvalidPoseException()
 
     @staticmethod
     def toggleAllCollisions(enableCollisions):

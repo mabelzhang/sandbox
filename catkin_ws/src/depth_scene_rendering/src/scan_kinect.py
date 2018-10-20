@@ -62,6 +62,9 @@ class ScanKinect:
     self.min_dist = 0
     self.max_dist = 0
 
+    # Focal length in world units, mm
+    self.flength = 0
+
 
   # Call this before calling scan()
   # Parameters:
@@ -140,6 +143,7 @@ class ScanKinect:
     self.P = P
     self.min_dist = scanner.kinect_min_dist
     self.max_dist = scanner.kinect_max_dist
+    self.flength = scanner.kinect_flength
  
     return (P,
       scanner.kinect_min_dist,  # Default 0.70

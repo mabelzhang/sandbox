@@ -15,15 +15,22 @@
 #
 
 
+# Python
 import os
+import csv
+
+import numpy as np
 
 # GraspIt
 from graspit_commander_custom.graspit_commander_custom import GraspitCommander
 
 # Custom
 from util.ansi_colors import ansi_colors as ansi
-from util.ros_util import matrix_from_Pose
+from util.ros_util import matrix_from_Pose, Pose_from_matrix
 from depth_scene_rendering.config_read_yaml import ConfigReadYAML
+from depth_scene_rendering.load_extrinsics import load_extrinsics, \
+  compensate_blender_to_graspit
+from tactile_occlusion_heatmaps.config_paths import get_vis_path
 
 # Local
 from grasp_collection.config_paths import world_subdir
@@ -35,7 +42,14 @@ def main ():
 
   terminate = False
 
-  obj_names = ConfigReadYAML.read_object_names ()
+  objs = ConfigReadYAML.read_object_names ()
+  # String
+  obj_names = objs [0]
+  # List of list of strings, paths to .pcd scene files
+  scene_paths = objs [1]
+
+  # Output path of screenshots of GraspIt
+  vis_path = get_vis_path ()
 
 
   for w_i in range (len (obj_names)):
@@ -54,45 +68,131 @@ def main ():
     # T^W_O. Used to transform contact points to be wrt object frame later
     body = GraspitCommander.getGraspableBody(0).graspable_body
     T_W_O = matrix_from_Pose (body.pose)
+    # In meters
+    print ('T_W_O:')
+    print (T_W_O)
 
     grasps = GraspIO.read_grasps (os.path.basename (world_fname))
     cmeta = GraspIO.read_contact_meta (os.path.basename (world_fname))
 
 
-    # Loop through each result grasp
-    g_i = 0
-    while g_i < len (grasps):
+    # Each object has many scenes. Each grasp is occluded differently in
+    #   each scene.
+    for s_i in range (len (scene_paths [w_i])):
 
-      print ('Grasp %d, %d contacts' % (g_i, cmeta [g_i]))
-      GraspitCommander.setRobotPose (grasps [g_i].pose)
-      # Must set dofs to loaded ones, otherwise fingers won't close half of the
-      #   time, and won't reproduce the recorded contacts!!
-      GraspitCommander.forceRobotDof (grasps [g_i].dofs)
-      print (grasps [g_i].pose)
-      print (grasps [g_i].dofs)
-      GraspitCommander.autoGrasp ()
+      scene_path = scene_paths [w_i] [s_i]
 
-      contacts = find_contacts (T_W_O)
-      if contacts [0] != cmeta [g_i]:
-        print ('%sWARN: Number of contacts loaded in replay (%d) != number of contacts in original grasp collection (%d)!%s' % (
-          ansi.WARNING, contacts[0], cmeta[g_i], ansi.ENDC))
+      # TODO: This doesn't account for the cropping! So camera is too far to
+      #   see object. Have to zoom out. But then object is too small. Need to
+      #   save crop. Maybe can just pan camera?
 
-      uinput = raw_input ('Press enter to go to next grasp, b to go back to previous, r to repeat current, or q to quit: ')
-      if uinput.lower () == 'b':
-        g_i -= 2
-      if uinput.lower () == 'r':
-        g_i -= 1
-      elif uinput.lower () == 'q':
-        terminate = True
+      # Load camera extrinsics for current scene. Camera pose wrt object.
+      extrinsics_path = os.path.splitext (scene_path) [0] + '.txt'
+      print ('Loading camera extrinsics (for GraspIt visualization) from %s' % (
+        extrinsics_path))
+      T_O_cam = load_extrinsics (extrinsics_path)
+
+      # Graphics camera frame convention to robotics convention flip, pi wrt x.
+      #   Flips z from out of frame to into frame
+      T_O_cam = compensate_blender_to_graspit (T_O_cam)
+
+
+      # This works for a few objects but not all of them
+      '''
+      # TODO: Try to put object at center of GraspIt view
+      print ('T_O_cam:')
+      print (T_O_cam)
+      # Set position to directly at the object, to simulate the closeup crop?
+      T_cam_O = np.linalg.inv (T_O_cam)
+      print ('T_cam_O:')
+      print (T_cam_O)
+      # Pan in x and y, in camera frame, to center object in rendered view plane
+      # This doesn't work, object still not in view frame
+      # When camera is in north pole pose,
+      #   +x moves object to the left, contrary to expected
+      #   +y moves object to the bottom, as expected
+      #   +z moves object behind camera, contrary to expected. -1 is right
+      # When camera is in random pose, this change is not axis-aligned! Perhaps camera frame is not the displayed frame?
+      T_cam_O [0, 3] = 0
+      T_cam_O [1, 3] = 0
+      T_cam_O [2, 3] = -1
+      T_O_cam = np.linalg.inv (T_cam_O)
+      print ('T_O_cam:')
+      print (T_O_cam)
+      '''
+
+
+      # Calculate camera pose wrt world
+      # T_W_cam = T_W_O * T_O_cam
+      T_W_cam = np.dot (T_W_O, T_O_cam)
+
+      # Extrinsics matrix is saved in meters. GraspIt is in mm. Convert to mm.
+      T_W_cam [0:3, 3] *= 1000.0
+
+      #print ('T_O_cam:')
+      #print (T_O_cam)
+
+      print ('T_W_cam:')
+      print (T_W_cam)
+
+      # Matrix is set from depth_scene_rendering scan_kinect.py
+      #       [fx'  0  cx' Tx]
+      #   P = [ 0  fy' cy' Ty]
+      #       [ 0   0   1   0]
+      cam_pose = Pose_from_matrix (T_W_cam)
+
+      # I don't think this has any effect on the viewport displayed. But it
+      #   affects the zoom. If set to 0, then can't zoom!
+      # mm. copied from <focalDistance> of my bar_clamp.xml world file
+      #focal_distance = 4.73  # Blensor Kinect focal length is actually 4.73 mm
+      focal_distance = 700  # BlenSor Kinect min and max depths are 0.6 to 0.7
+      GraspitCommander.setCameraPose (cam_pose, focal_distance)
+
+
+      # Loop through each grasp for the object
+      g_i = 0
+      while g_i < len (grasps):
+ 
+        print ('Grasp %d, %d contacts' % (g_i, cmeta [g_i]))
+        GraspitCommander.setRobotPose (grasps [g_i].pose)
+        # Must set dofs to loaded ones, otherwise fingers won't close half of the
+        #   time, and won't reproduce the recorded contacts!!
+        GraspitCommander.forceRobotDof (grasps [g_i].dofs)
+        print (grasps [g_i].pose)
+        print (grasps [g_i].dofs)
+        GraspitCommander.autoGrasp ()
+ 
+        contacts = find_contacts (T_W_O)
+        if contacts [0] != cmeta [g_i]:
+          print ('%sWARN: Number of contacts loaded in replay (%d) != number of contacts in original grasp collection (%d)!%s' % (
+            ansi.WARNING, contacts[0], cmeta[g_i], ansi.ENDC))
+
+        # Same file naming convention as tactile_occlusion_heatmaps
+        #   visualize_heatmaps.py
+        #img_path = os.path.join (vis_path,
+        #  get_vis_3d_fmt () % (
+        #    os.path.splitext (os.path.basename (scene_path)) [0], g_i))
+        #GraspitCommander.saveImage (img_path)
+
+        uinput = raw_input ('Press enter to go to next grasp, b to go back to previous, r to repeat current, or q to quit: ')
+        if uinput.lower () == 'b':
+          g_i -= 2
+        if uinput.lower () == 'r':
+          g_i -= 1
+        elif uinput.lower () == 'q':
+          terminate = True
+          break
+ 
+        # Open gripper for next grasp
+        GraspitCommander.autoOpen ()
+        g_i += 1
+ 
+        if g_i < 0:
+          g_i = 0
+ 
+ 
+      if terminate:
         break
-
-      # Open gripper for next grasp
-      GraspitCommander.autoOpen ()
-      g_i += 1
-
-      if g_i < 0:
-        g_i = 0
-
 
     if terminate:
       break

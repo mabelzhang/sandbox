@@ -423,10 +423,12 @@ int main (int argc, char ** argv)
           Eigen::MatrixXf T_c_o;
           calc_object_pose_wrt_cam (scene_path, P, T_c_o,
             cloud_ptr -> height, cloud_ptr -> width); //, true);
-          // TODO: Bug. Uncomment this, 3D is correct - object center in +x +y
-          //   quadrant, but 2D hot spots are wrong! Comment this out, 2D hot
-          //   spots are correct, but 3D is wrong, so visible/occluded is
+          // TODO: If uncomment this, 3D is correct - object center in +x +y
+          //   quadrant, but 2D hot spots are wrong! If comment this out, 2D
+          //   hot spots are correct, but 3D is wrong, so visible/occluded is
           //   wrongly determined!!!
+          // > 14 Oct 2018 Workaround: Comment this out, then negate endpoints
+          //   x and y coords before passing to raytracing. That fixes the 3D.
           // flip
           //T_c_o (0, 3) = -T_c_o (0, 3);
           //T_c_o (1, 3) = -T_c_o (1, 3);

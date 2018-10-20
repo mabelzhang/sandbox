@@ -13,6 +13,7 @@
 import os
 import yaml
 import csv
+import argparse
 
 # ROS
 import rospkg
@@ -31,14 +32,25 @@ from util.image_util import np_from_depth, show_image, matshow_image
 from grasp_collection.config_paths import get_contacts_path
 
 # Local
-from tactile_occlusion_heatmaps.config_paths import get_heatmap_raw_fmt, get_heatmap_blob_fmt, get_vis_path
+from tactile_occlusion_heatmaps.config_paths import \
+  get_heatmap_raw_fmt, get_heatmap_blob_fmt, \
+  get_vis_path, get_vis_heatmap_fmt
 from depth_to_image import RawDepthScaling
 
 
 
 def main ():
 
-  DISPLAY_IMAGES = True
+  arg_parser = argparse.ArgumentParser ()
+
+  # Variable number of args http://stackoverflow.com/questions/13219910/argparse-get-undefined-number-of-arguments
+  arg_parser.add_argument ('--display', action="store_true",
+    help='Specify for debugging one by one. Displays matplotlib plots. This will block program flow and require user interaction to close window to move on to next data sample.')
+
+  args = arg_parser.parse_args ()
+
+
+  DISPLAY_IMAGES = args.display
 
   pkg_path = rospkg.RosPack ().get_path ('depth_scene_rendering')
   scene_list_path = os.path.join (pkg_path, "config/scenes_noisy.yaml")
@@ -130,10 +142,11 @@ def main ():
         ax = plt.gca ()
         ax.set_aspect (1)
         dest = os.path.join (vis_path,
-          os.path.splitext (os.path.basename (scene_path)) [0] + '_g%d.png' % g_i)
+          get_vis_heatmap_fmt () % (
+            os.path.splitext (os.path.basename (scene_path)) [0], g_i))
         fig.savefig (dest)
      
-        # To save individual image cleanly
+        # To save individual axis cleanly
         #extent = ax.get_window_extent ().transformed (fig.dpi_scale_trans.inverted ())
         #fig.savefig (dest, bbox_inches=extent)
      
@@ -143,8 +156,8 @@ def main ():
      
         if DISPLAY_IMAGES:
           plt.show ()
-        else:
-          plt.close (fig)
+
+        plt.close (fig)
 
 
 

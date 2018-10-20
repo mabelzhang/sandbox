@@ -20,7 +20,10 @@ class ConfigReadYAML:
   @staticmethod
   def read_object_names ():
 
+    # List of strings
     obj_names = []
+    # List of list of strings
+    scene_paths = []
 
     pkg_path = rospkg.RosPack ().get_path ('depth_scene_rendering')
     scene_list_path = os.path.join (pkg_path, "config/scenes_noisy.yaml")
@@ -31,8 +34,12 @@ class ConfigReadYAML:
       for o_i in range (len (scene_list_yaml ['objects'])):
      
         obj = scene_list_yaml ['objects'] [o_i]
+        # String
         obj_names.append (obj ['object'])
 
-    return obj_names
+        # List of strings
+        scene_paths.append (obj ['scenes'])
+
+    return obj_names, scene_paths
 
 

@@ -74,6 +74,8 @@ int GraspitInterface::init(int argc, char** argv)
     saveWorld_srv = nh->advertiseService("saveWorld", &GraspitInterface::saveWorldCB, this);
 
     saveImage_srv = nh->advertiseService("saveImage", &GraspitInterface::saveImageCB, this);
+    // Custom: Expose interface to let user set camera viewpoint pose
+    setCameraPose_srv = nh->advertiseService("setCameraPose", &GraspitInterface::setCameraPoseCB, this);
     toggleAllCollisions_srv = nh->advertiseService("toggleAllCollisions", &GraspitInterface::toggleAllCollisionsCB, this);
 
     computeQuality_srv = nh->advertiseService("computeQuality", &GraspitInterface::computeQualityCB, this);
@@ -621,6 +623,24 @@ bool GraspitInterface::saveImageCB(graspit_interface::SaveImage::Request &reques
 
     ROS_INFO("Saving Image: %s",filename.toStdString().c_str());
     graspitCore->getIVmgr()->saveImage(filename);
+    return true;
+}
+
+bool GraspitInterface::setCameraPoseCB(graspit_interface_custom::SetCameraPose::Request &request,
+                     graspit_interface_custom::SetCameraPose::Response &response)
+{
+    ROS_INFO("Setting camera pose");
+
+    graspitCore->getIVmgr()->setCamera(request.pose.position.x,
+      request.pose.position.y,
+      request.pose.position.z,
+      request.pose.orientation.w,
+      request.pose.orientation.x,
+      request.pose.orientation.y,
+      request.pose.orientation.z,
+      request.focal_distance);
+
+    response.result = response.RESULT_SUCCESS;
     return true;
 }
 

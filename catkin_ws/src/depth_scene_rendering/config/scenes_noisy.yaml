@@ -1,4 +1,25 @@
 objects:
   - object: bar_clamp
     scenes:
-    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-13-21-37-22_n.pcd
+    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-19-17-40-00_n.pcd
+  - object: gearbox
+    scenes:
+    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-19-17-40-13_n.pcd
+  - object: nozzle
+    scenes:
+    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-19-17-40-25_n.pcd
+  - object: part1
+    scenes:
+    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-19-17-40-41_n.pcd
+  - object: part3
+    scenes:
+    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-19-17-40-56_n.pcd
+  - object: pawn
+    scenes:
+    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-19-17-41-13_n.pcd
+  - object: turbine_housing
+    scenes:
+    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-19-17-41-31_n.pcd
+  - object: vase
+    scenes:
+    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/2018-10-19-17-41-45_n.pcd

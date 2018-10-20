@@ -9,25 +9,40 @@
 #
 
 
+MAGENTA="\e[95m"
+ENDC="\e[0m"
+
+
 # Render scenes
-blensor -b -P `rospack find depth_scene_rendering`/src/scene_generation.py
+cmd="blensor -b -P `rospack find depth_scene_rendering`/src/scene_generation.py"
+echo -e "$MAGENTA$cmd$ENDC"
+$cmd
 
 # Generate cropped object images from scenes
-rosrun depth_scene_rendering postprocess_scenes
+cmd="rosrun depth_scene_rendering postprocess_scenes"
+echo -e "$MAGENTA$cmd$ENDC"
+$cmd
 
-# NOTE: only need to run ONCE for all objects
+# NOTE: Only need to run ONCE for all objects
 #   This doesn't need to be rerun all the time. It only needs to be run once,
 #   then used for all rendered scenes thereafter.
 # Collect GraspIt contacts
-#rosrun grasp_collection grasp_collect.py
+#cmd="rosrun grasp_collection grasp_collect.py"
+#echo -e "$MAGENTA$cmd$ENDC"
+#$cmd
 
 # Set GEN_RAND_PTS = false, recompile, run
-rosrun tactile_occlusion_heatmaps occlusion_test 
+cmd="rosrun tactile_occlusion_heatmaps occlusion_test"
+echo -e "$MAGENTA$cmd$ENDC"
+$cmd
 
 
 
 # Visualize visible and occluded contact heat maps:
-# $ rosrun tactile_occlusion_heatmaps visualize_heatmaps.py
+cmd="rosrun tactile_occlusion_heatmaps visualize_heatmaps.py --display"
+#cmd="rosrun tactile_occlusion_heatmaps visualize_heatmaps.py"
+echo -e "$MAGENTA$cmd$ENDC"
+$cmd
 
 # At the same time, visualize GraspIt saved grasps:
 # $ rosrun grasp_collection grasp_replay.py

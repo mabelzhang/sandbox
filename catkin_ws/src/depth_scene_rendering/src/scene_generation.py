@@ -124,7 +124,9 @@ def setup_camera (kinect_obj):
   depth_range_path = get_depth_range_path ()
   with open (depth_range_path, 'w') as depth_range_f:
     depth_range_f.write (str (kinect_min_dist) + '\n')
-    depth_range_f.write (str (kinect_max_dist))
+    depth_range_f.write (str (kinect_max_dist) + '\n')
+    # Focal length in mm
+    #depth_range_f.write (str (kinect_obj.flength))
   print ('%sCamera depth range written to %s%s' % (ansi_colors.OKCYAN,
     depth_range_path, ansi_colors.ENDC))
 
@@ -367,10 +369,11 @@ def save_extrinsics_from_pose (cam_pos, cam_quat, T_W_obj, noisy_scene_name):
   # Write the camera extrinsics used to capture the scene, to file with same
   #   prefix as scene just captured.
   extrinsics_path = os.path.splitext (noisy_scene_name) [0] + '.txt'
-  #np.savetxt (extrinsics_path, T_o_cam, '%f')
-  np.savetxt (extrinsics_path, T_W_cam, '%f')
+  np.savetxt (extrinsics_path, T_o_cam, '%f')
+  #np.savetxt (extrinsics_path, T_W_cam, '%f')
   print ('%sCamera extrinsics matrix wrt object written to %s%s' % (
     ansi_colors.OKCYAN, extrinsics_path, ansi_colors.ENDC))
+
 
 
 if __name__ == '__main__':
@@ -410,12 +413,14 @@ if __name__ == '__main__':
   
   
   
-  #n_objs = len (config_consts.objects)
-  n_objs = 1
+  n_objs = len (config_consts.objects)
+  #n_objs = 1
   
-  n_camera_poses = 2
-  # For testing. Set to False for real run
-  SKIP_CAM_IDENTITY = True
+  #n_camera_poses = 2
+  n_camera_poses = 1
+  # For testing. Set to False for real run.
+  # Skips the 1st canonical pose pointing straight down from north pole.
+  SKIP_CAM_IDENTITY = False #True
 
 
   start_time = time.time ()
@@ -425,7 +430,7 @@ if __name__ == '__main__':
 
   # Loop through each object file
   for o_i in range (n_objs):
-  #for o_i in [1]:
+  #for o_i in [0]:
   
     print ('================')
     print ('%sLoading file %d out of %d%s' % (ansi_colors.OKCYAN, o_i+1,
@@ -524,7 +529,7 @@ if __name__ == '__main__':
     #   object's name - because there is no way to know.
     print ('%sDeleting loaded object%s' % (ansi_colors.OKCYAN, ansi_colors.ENDC))
     bpy.ops.object.select_all (action='SELECT')
-    #bpy.ops.object.delete ()
+    bpy.ops.object.delete ()
 
   
   # Close text files

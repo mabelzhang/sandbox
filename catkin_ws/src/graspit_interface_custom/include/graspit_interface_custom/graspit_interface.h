@@ -40,6 +40,7 @@
 #include <graspit_interface/ClearWorld.h>
 #include <graspit_interface/SaveWorld.h>
 #include <graspit_interface/SaveImage.h>
+#include <graspit_interface_custom/SetCameraPose.h>
 #include <graspit_interface/ToggleAllCollisions.h>
 #include <graspit_interface/ComputeQuality.h>
 #include <graspit_interface/ComputeEnergy.h>
@@ -92,6 +93,7 @@ private:
   ros::ServiceServer saveWorld_srv;
 
   ros::ServiceServer saveImage_srv;
+  ros::ServiceServer setCameraPose_srv;
   ros::ServiceServer toggleAllCollisions_srv;
 
   ros::ServiceServer computeQuality_srv;
@@ -179,6 +181,10 @@ private:
 
   bool clearWorldCB(graspit_interface::ClearWorld::Request &request,
                      graspit_interface::ClearWorld::Response &response);
+
+  // Custom
+  bool setCameraPoseCB(graspit_interface_custom::SetCameraPose::Request &request,
+                       graspit_interface_custom::SetCameraPose::Response &response);
 
   bool saveImageCB(graspit_interface::SaveImage::Request &request,
                      graspit_interface::SaveImage::Response &response);

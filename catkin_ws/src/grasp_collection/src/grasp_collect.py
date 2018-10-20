@@ -21,6 +21,7 @@ import re  # Regular expressions
 import cPickle as pickle
 import csv
 import yaml
+import argparse
 
 import numpy as np
 
@@ -112,6 +113,17 @@ def main ():
   pkg_path = rospack.get_path ('grasp_collection')
 
 
+  arg_parser = argparse.ArgumentParser ()
+
+  # Variable number of args http://stackoverflow.com/questions/13219910/argparse-get-undefined-number-of-arguments
+  arg_parser.add_argument ('--debug', type=str,
+    help='Specify for debugging one by one. Waits for user input to move onto displaying next grasp. Note that if you skip grasps, the contacts will NOT be saved!!')
+
+  args = arg_parser.parse_args ()
+
+
+  UINPUT = args.debug
+
   # Set to False if debugging and don't want to overwrite previously saved data!
   SAVE_GRASPS = True #False
   print ('%sSAVE_GRASPS is set to %s, make sure this is what you want!%s' % (
@@ -134,20 +146,19 @@ def main ():
 
   n_contacts_ttl = 0
 
-  # TODO: Use this
-  #save_every_n_grasps = 50
-
   # Replaced this with config_consts, because grasps don't need to be
   #   regenerated all the time! It's always about the same for the same object.
   #   Just generate a bunch, and then you never need to generate them again!
   # Read object from YAML file
-  #obj_names = ConfigReadYAML.read_object_names ()
+  #objs = ConfigReadYAML.read_object_names ()
+  #obj_names = objs [0]
 
 
+  for w_i in range (len (worlds)):
   #for w_i in range (len (obj_names)):
-  #for w_i in range (len (worlds)):
   # TODO TEMPORARY debugging mismatch of contacts btw grasp_collection and grasp_replay
-  for w_i in [0]:
+  #for w_i in [0]:
+  #for w_i in range (3, len (worlds)):
 
     # graspit_interface loadWorld automatically looks in worlds/ path under
     #   GraspIt installation path.
@@ -159,7 +170,8 @@ def main ():
     #world_fname = os.path.join (world_subdir, obj_names [w_i])
     world_fname = worlds [w_i]
 
-    print ('Loading world from %s' % world_fname)
+    print ('Loading world %d out of %d from %s' % (w_i+1, len (worlds),
+      world_fname))
 
     # Load world
     GraspitCommander.clearWorld ()
@@ -199,7 +211,6 @@ def main ():
     # Loop through each result grasp
     g_i = 0
     while g_i < len (gres.grasps):
-    #for g_i in range (len (gres.grasps)):
 
       print ('\nGrasp %d: energy %g' % (g_i, gres.energies [g_i]))
       GraspitCommander.setRobotPose (gres.grasps [g_i].pose)
@@ -219,19 +230,19 @@ def main ():
       # This gives contacts!
       GraspitCommander.autoGrasp ()
 
-
       n_contacts, contacts_O = find_contacts (T_W_O)
 
 
       # Let user replay current grasp, before accumulating contact count and
       #   matrices, so that if user replays current grasp many times, contacts
       #   from this iteration don't get accumulated more than once!
-      uinput = raw_input ('Press enter to view next grasp, r to replay current grasp, q to stop viewing (note skipped contacts will NOT be saved!): ')
-      if uinput.lower () == 'r':
-        GraspitCommander.autoOpen ()
-        continue
-      elif uinput.lower () == 'q':
-        break
+      if UINPUT:
+        uinput = raw_input ('Press enter to view next grasp, r to replay current grasp, q to stop viewing (note skipped contacts will NOT be saved!): ')
+        if uinput.lower () == 'r':
+          GraspitCommander.autoOpen ()
+          continue
+        elif uinput.lower () == 'q':
+          break
  
 
       cmeta [g_i] = n_contacts

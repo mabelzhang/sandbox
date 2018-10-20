@@ -7,6 +7,9 @@
 // Transform object pose into camera frame, using camera extrinsics matrix
 //
 
+// Local
+#include <depth_scene_rendering/camera_info.h>
+
 
 // Inverse matrix of extrinsics (extrinsics is saved wrt object frame).
 void calc_object_pose_wrt_cam (const std::string scene_path,
@@ -20,7 +23,7 @@ void calc_object_pose_wrt_cam (const std::string scene_path,
 
   // 4 x 4
   Eigen::MatrixXf T_o_c;
-  load_nx4_matrix (extrinsics_path, 4, T_o_c);
+  load_extrinsics (extrinsics_path, 4, T_o_c);
   //std::cerr << "T_o_c:\n" << T_o_c << std::endl << std::endl;
 
   // With this, pixel is flipped wrt y axis. Without this, pixel is flipped

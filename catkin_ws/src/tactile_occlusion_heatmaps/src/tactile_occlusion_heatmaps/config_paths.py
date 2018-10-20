@@ -56,6 +56,22 @@ def get_vis_path ():
   return path
 
 
+def get_vis_heatmap_fmt ():
+
+  # String is scene_path of the .pcd rendered scene, i.e.
+  #   os.path.splitext (os.path.basename (scene_path)) [0]
+  # Integer is grasp number from grasp_collect.py, g_i
+  return ('%s_g%d.png')
+
+
+def get_vis_3d_fmt ():
+
+  # String is scene_path of the .pcd rendered scene, i.e.
+  #   os.path.splitext (os.path.basename (scene_path)) [0]
+  # Integer is grasp number from grasp_collect.py, g_i
+  return ('%s_g%d_3d.png')
+
+
 # NOTE: Called by scene_generation.py, which runs in Blender Python.
 #   Do not use libraries not in Blender Python, e.g. PyYAML.
 def get_cam_config_path ():

@@ -14,6 +14,8 @@ import rospkg
 
 def get_heatmap_raw_fmt ():
 
+  # %s is timestamp from depth_scene_rendering scene_generation.py
+  # g%d is grasp number from grasp_collection grasp_collect.py
   return ('%s_g%d_vis.png', '%s_g%d_occ.png')
 
 

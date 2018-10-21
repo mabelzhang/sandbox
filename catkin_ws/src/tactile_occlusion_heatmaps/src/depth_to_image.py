@@ -4,7 +4,7 @@
 # 18 Sep 2018
 #
 # Python counterpart of ../../depth_scene_rendering/include/depth_scene_rendering/depth_to_image.h
-# Used by visualize_heatmaps.py
+# Used by visualize_heatmaps.py and png_to_npz.py
 #
 
 # Python

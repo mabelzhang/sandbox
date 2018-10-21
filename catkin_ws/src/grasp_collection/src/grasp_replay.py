@@ -85,6 +85,7 @@ def main ():
       # TODO: This doesn't account for the cropping! So camera is too far to
       #   see object. Have to zoom out. But then object is too small. Need to
       #   save crop. Maybe can just pan camera?
+      # Occasionally the pose isn't correct, e.g. 2018-10-19-17-40-25 way off
 
       # Load camera extrinsics for current scene. Camera pose wrt object.
       extrinsics_path = os.path.splitext (scene_path) [0] + '.txt'
@@ -112,7 +113,6 @@ def main ():
       #   +x moves object to the left, contrary to expected
       #   +y moves object to the bottom, as expected
       #   +z moves object behind camera, contrary to expected. -1 is right
-      # When camera is in random pose, this change is not axis-aligned! Perhaps camera frame is not the displayed frame?
       T_cam_O [0, 3] = 0
       T_cam_O [1, 3] = 0
       T_cam_O [2, 3] = -1

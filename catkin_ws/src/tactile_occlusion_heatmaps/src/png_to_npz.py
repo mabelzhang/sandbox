@@ -69,19 +69,28 @@ def main ():
 
 
   # Get all input file paths
+
+  # Depth images
+  depth_fmt = '*crop.png'
+  depth_png_list = glob.glob (os.path.join (in_dir, depth_fmt))
+
   heatmap_fmts = get_heatmap_blob_fmt ()
 
+  # Visible heatmaps
+  # Create wildcards
   vis_heatmap_fmt = heatmap_fmts [0].replace ('%s', '*')
   vis_heatmap_fmt = vis_heatmap_fmt.replace ('%d', '*')
   vis_png_list = glob.glob (os.path.join (in_dir, vis_heatmap_fmt))
 
+  # Occluded heatmaps
+  # Create wildcards
   occ_heatmap_fmt = heatmap_fmts [1].replace ('%s', '*')
   occ_heatmap_fmt = occ_heatmap_fmt.replace ('%d', '*')
   occ_png_list = glob.glob (os.path.join (in_dir, occ_heatmap_fmt))
 
-  in_png_lists = [vis_png_list, occ_png_list]
+  in_png_lists = [depth_png_list, vis_png_list, occ_png_list]
 
-  npz_prefix = ['vis', 'occ']
+  npz_prefix = ['depth', 'vis', 'occ']
 
 
   # To scale RGB integers back to raw depths
@@ -164,7 +173,11 @@ def main ():
         out_path = os.path.join (out_dir,
           npz_prefix [l_i] + ('_%05d.npz' % batches_filled))
  
-        # Write npz. Load it with m = np.load(path), m['arr_0'], m.close()
+        # Write npz. Inspect it with
+        #   m = np.load(path);
+        #   m['arr_0'].shape;
+        #   np.unique (m['arr_0']);
+        #   m.close()  # Must close, else can have leakage, per load() API
         np.savez_compressed (out_path, npz_arr)
  
         print ('%sWritten %d x %d matrix to %s%s' % (ansi.OKCYAN,

@@ -51,9 +51,10 @@ class OcclusionSeparation
 {
 private:
 
-  RawDepthScaling scaler_;
-
+  // Debug 3D to 2D projection
   const bool DEBUG_PROJECT = false;
+
+  RawDepthScaling scaler_;
 
 
 public:
@@ -80,18 +81,16 @@ public:
   // Parameters:
   //   pts: 3 x n. In camera frame. Put points on columns, as opposed to rows,
   //     so that indexing is faster, `.` Eigen is column-major by default.
-  //   visible, occluded: Indices of points, indicating whether the
-  //     point is in front of or occluded by the point cloud.
   //   P: 3 x 4 camera projection / intrinsics matrix
   //          [fx'  0  cx' Tx]
   //      P = [ 0  fy' cy' Ty]
   //          [ 0   0   1   0]
   //      http://docs.ros.org/melodic/api/sensor_msgs/html/msg/CameraInfo.html
-  //   visible_uv, occluded_uv: Return values. Image coordinates (u, v) of
-  //     3D points in pts parameter, projected onto image plane by P.
-  void separate_and_project (Eigen::MatrixXf & pts,
-    std::vector <bool> occluded, Eigen::MatrixXf & P, int height, int width,
-    cv::Mat & visible_img, cv::Mat & occluded_img)
+  //   height, width: Dimensions of the 2D image to project onto
+  //   uv: Return value. Image coordinates (u, v) of 3D points in pts
+  //     parameter, projected onto image plane by P.
+  void project_to_2d (Eigen::MatrixXf & pts,
+    Eigen::MatrixXf & P, int height, int width, Eigen::MatrixXi & uv)
   {
     // Pseudocode, this function simply does this, but is a lot of code because
     //   there isn't slice-indexing with Eigen:
@@ -107,8 +106,9 @@ public:
     // Extract intrinsics matrix K from projection matrix P.
     // Multiplication result is (u, v, depth)
     // 2 x n
-    Eigen::MatrixXi uv;
+    //Eigen::MatrixXi uv;
     project_3d_pts_to_2d_homo (pts, P, uv);
+    // Compensate for axis flip
     // flip x and y. postprocess_scenes.h project_3d_pose_to_2d() does this,
     //   but cv_util.h project_3d_pts_to_2d() doesn't. TODO do something about
     //   this. Make it cleaner and less ad-hoc.
@@ -116,16 +116,39 @@ public:
     uv.row (1) = height - uv.row (1).array ();
     if (DEBUG_PROJECT)
       std::cerr << "Final image coordinates:" << std::endl << uv << std::endl;
+  }
 
-
+  // Binary masks, white at the few points in uv, black everywhere else.
+  // Parameters:
+  //   pts: 3D points
+  //   occluded: Booleans indicating whether the corresponding point is in
+  //     front of or occluded by the point cloud.
+  //   valid_idx: If valid_idx[i]==false, ignore the ith point in pts, occluded.
+  //     and uv.
+  //   height, width: Dimensions of the 2D mask to create
+  //   uv: 2D coordinates that the 3D points pts projected to in image plane,
+  //     of the image with (height, width) dimensions
+  //   visible_img, occluded_img: Return values. Masks with white at uv, black
+  //     everywhere else.
+  void create_masks (Eigen::MatrixXf & pts, std::vector <bool> occluded,
+    std::vector <bool> valid_idx,
+    int height, int width, Eigen::MatrixXi & uv,
+    cv::Mat & visible_img, cv::Mat & occluded_img)
+  {
     // Instantiate empty heat maps
     cv::Mat visible_f = cv::Mat::zeros (height, width, CV_32F);
     cv::Mat occluded_f = cv::Mat::zeros (height, width, CV_32F);
     int n_vis = 0, n_occ = 0;
 
+    std::cerr << "Contact points in 2D pixels:" << std::endl;
+    std::cerr << uv << std::endl;
+
     // Set image coordinates, corresponding to 3D points, to raw depths
     for (int i = 0; i < occluded.size (); i ++)
     {
+      if (! valid_idx.at (i))
+        continue;
+
       // I(v, u) = depth z
       if (occluded.at (i) == false)
       {
@@ -144,8 +167,6 @@ public:
     }
     fprintf (stderr, "%sVisible: %d points. Occluded: %d points%s\n", OKCYAN,
       n_vis, n_occ, ENDC);
-    std::cerr << "Contact points in 2D pixels:" << std::endl;
-    std::cerr << uv << std::endl;
 
 
     // Instantiate integer channels
@@ -451,10 +472,10 @@ int main (int argc, char ** argv)
           }
           endpoints = contacts_C.topRows (3);
 
-          std::cerr << "Object center in camera frame: " << std::endl;
+          //std::cerr << "Object center in camera frame: " << std::endl;
           Eigen::Vector4f origin;
           origin << 0, 0, 0, 1;
-          std::cerr << T_c_o * origin << std::endl;
+          //std::cerr << T_c_o * origin << std::endl;
         }
 
         if (DEBUG_RAYTRACE)
@@ -506,34 +527,121 @@ int main (int argc, char ** argv)
         //   and occluded points.
         // In order to save images as images, esp convenient for debugging,
         //   images must be integers, 3 channels.
-        cv::Mat visible_img, occluded_img;
-        separator.separate_and_project (endpoints, occluded, P,
-          cloud_ptr -> height, cloud_ptr -> width, visible_img, occluded_img);
+        Eigen::MatrixXi uv;
+        separator.project_to_2d (endpoints, P,
+          cloud_ptr -> height, cloud_ptr -> width, uv);
+
        
-       
+        // Crop the image, centered at object
         // Find object center in image pixels, using camera extrinsics
         Eigen::VectorXf p_obj_2d;
         // flip
-        calc_object_pose_in_img (scene_path, P, p_obj_2d, visible_img.rows,
-          visible_img.cols, true);
+        calc_object_pose_in_img (scene_path, P, p_obj_2d, cloud_ptr -> height,
+          cloud_ptr -> width, true);
+
+        // Now instead of cropping the physical heatmaps, just apply the crop
+        //   calculation on the uv's! Then, calculate the uv's for scaling!
+        //   Generate the heatmaps at the end. Not only is this faster and
+        //   saves memory, this is the necessary procedure if you need to
+        //   rescale the image - the mask must be created after the scaling,
+        //   else there is blurring when you scale, and the peaks in the mask
+        //   disappear (I tried).
        
         // Crop the heatmaps
         // NOTE after cropping, camera intrinsics / projection matrix will no
         //   longer work, `.` center of cropped image is different! Crop must be
         //   AFTER done using camera projection matrix.
+        //cv::Mat vis_crop, occ_crop;
+        //crop_image (visible_img, vis_crop, p_obj_2d[0], p_obj_2d[1],
+        //  RawDepthScaling::CROP_W, RawDepthScaling::CROP_H, false);
+        //crop_image (occluded_img, occ_crop, p_obj_2d[0], p_obj_2d[1],
+        //  RawDepthScaling::CROP_W, RawDepthScaling::CROP_H, false);
+
+        // Calculate topleft corner (x, y) coordinates of crop
+        int topleftx = -1, toplefty = -1;
+        calc_crop_coords (cloud_ptr -> width, cloud_ptr -> height,
+          p_obj_2d[0], p_obj_2d[1], topleftx, toplefty,
+          RawDepthScaling::CROP_W, RawDepthScaling::CROP_H, false);
+
+        // Apply the crop to the projected 2D coordinates
+        // To account for the crop in (u, v) of projected 3D points, simply
+        //   subtract by upperleft coordinates (x, y) of crop.
+        uv.row (0) = uv.row (0).array () - topleftx;
+        uv.row (1) = uv.row (1).array () - toplefty;
+
+
+        // Apply the scaling to the projected 2D coordinates
+
+        // Rescale (u, v) to target size that image will be scaled
+        // 3 x 3
+        Eigen::Matrix3f scale = Eigen::Matrix3f::Identity ();
+        // x, y
+        scale (0, 0) = RawDepthScaling::SCALE_W /
+          (float) RawDepthScaling::CROP_W;
+        scale (1, 1) = RawDepthScaling::SCALE_H /
+          (float) RawDepthScaling::CROP_H;
+        //std::cerr << "scale matrix:" << std::endl << scale << std::endl;
+  
+        // Make uv into homogenous coordinates
+        // 3 x n
+        Eigen::MatrixXf one_row = Eigen::MatrixXf::Ones (1, uv.cols ());
+        Eigen::MatrixXf uv_homo (3, uv.cols ());
+        uv_homo << uv.cast <float> (),
+          one_row;
+  
+        // Apply scaling onto uv
+        Eigen::MatrixXf uv_scaled_homo = scale * uv_homo;
+  
+        // Convert scaled (u, v) to integers, for indexing image pixels
+        uv = uv_scaled_homo.topRows (2).cast <int> ();
+        //std::cerr << "scaled uv:" << std::endl << uv << std::endl;
+
+
+        // Mark (u, v) coords that are out of bounds. Sometimes they are in
+        //   region cropped out of view. OpenCV wraps them around and they will
+        //   still appear in mask, in the wrong places!
+
+        // Non-consts. For some reason, Eigen <= doesn't like the consts
+        int SCALE_W = RawDepthScaling::SCALE_W;
+        int SCALE_H = RawDepthScaling::SCALE_H;
+
+        std::cerr << "u out of bounds: " << 
+          (uv.row (0).array () >= SCALE_W) << std::endl;
+        std::cerr << "v out of bounds: " <<
+          (uv.row (1).array () >= SCALE_H) << std::endl;
+
+        // Indices of (u, v) list that are out of bounds
+        Eigen::Matrix <bool, 1, Eigen::Dynamic> u_obod =
+          (uv.row (0).array () >= SCALE_W);
+        Eigen::Matrix <bool, 1, Eigen::Dynamic> v_obod =
+          (uv.row (1).array () >= SCALE_H);
+
+        // Set default value to true, for valid
+        std::vector <bool> valid_idx (endpoints.cols (), true);
+        // If any of u or v are invalid
+        if (u_obod.any () || v_obod.any ())
+        {
+          for (int obod_i = 0; obod_i < u_obod.cols (); obod_i ++)
+          {
+            // If either u and v is invalid
+            if (u_obod (obod_i) || v_obod (obod_i))
+              valid_idx.at (obod_i) = false;
+          }
+        }
+
+
+        // Create heatmaps, or masks with white dots at projected 2D points,
+        //   black everywhere else.
         cv::Mat vis_crop, occ_crop;
-        crop_image (visible_img, vis_crop, p_obj_2d[0], p_obj_2d[1],
-          RawDepthScaling::CROP_W, RawDepthScaling::CROP_H, false);
-        crop_image (occluded_img, occ_crop, p_obj_2d[0], p_obj_2d[1],
-          RawDepthScaling::CROP_W, RawDepthScaling::CROP_H, false);
-       
-        // TODO: Resize to 32 x 32, before adding blob. Then decrease blob size
-        //   to suit 32 x 32 images.
-       
+        separator.create_masks (endpoints, occluded, valid_idx,
+          RawDepthScaling::SCALE_H, RawDepthScaling::SCALE_W, uv,
+          vis_crop, occ_crop);
+
+
         // Save visible and occluded channels
         std::vector <std::string> exts;
         splitext (scene_path, exts);
-       
+ 
         // Optional. Individual non-zero point. Saving because easier to test
         //   different parameters of blob, than to regenerate contact points and
         //   raytracing.
@@ -558,15 +666,17 @@ int main (int argc, char ** argv)
         //   BLOB_EXPAND=2, BLOB_GAUSS=0.5, for 32 x 32 images. Python gaussian
         //   function doesn't have size, only sigma.
         cv::Mat visible_blob, occluded_blob;
-        // Use 31 for uncropped 640x480. 15 or smaller for cropped 100x100.
-        int BLOB_EXPAND = 9;
-        int GAUSS_SZ = 9;
+        // Use 31 for uncropped 640x480, 9 for cropped 100x100 (
+        //   definitely <=15), 7 for cropped 64x64.
+        //int BLOB_EXPAND = 9;
+        //int GAUSS_SZ = 9;
+        int BLOB_EXPAND = 7;
+        int GAUSS_SZ = 7;
         // Pass in 0 to let OpenCV calculating sigma from size
         float GAUSS_SIGMA = 0;
        
         std::string vis_blob_path = exts [0];
         vis_blob_path += "_g" + std::to_string (g_i) + "_vis_blob.png";
-        //blob_filter (visible_img, visible_blob, BLOB_EXPAND, GAUSS_SZ, GAUSS_SIGMA);
         // Operate on the cropped img
         blob_filter (vis_crop, visible_blob, BLOB_EXPAND, GAUSS_SZ, GAUSS_SIGMA);
         cv::imwrite (vis_blob_path, visible_blob);
@@ -575,7 +685,6 @@ int main (int argc, char ** argv)
        
         std::string occ_blob_path = exts [0];
         occ_blob_path += "_g" + std::to_string (g_i) + "_occ_blob.png";
-        //blob_filter (occluded_img, occluded_blob, BLOB_EXPAND, GAUSS_SZ, 
         // Operate on the cropped img
         blob_filter (occ_crop, occluded_blob, BLOB_EXPAND, GAUSS_SZ, 
           GAUSS_SIGMA);
@@ -583,13 +692,15 @@ int main (int argc, char ** argv)
         fprintf (stderr, "%sWritten occluded blobbed heatmap to %s%s\n", OKCYAN,
           occ_blob_path.c_str (), ENDC);
        
+        /*
         // Debug blob_filter()
         // Convert cv::Mat to std::vector
         // https://gist.github.com/mryssng/f43c9ae4cae13b204855e108a004c73a
         std::vector <float> vis_blob_vec;
         if (visible_blob.isContinuous())
         {
-          vis_blob_vec.assign((uchar*)visible_blob.datastart, (uchar*)visible_blob.dataend);
+          vis_blob_vec.assign((uchar*)visible_blob.datastart,
+            (uchar*)visible_blob.dataend);
         }
         else
         {
@@ -598,6 +709,7 @@ int main (int argc, char ** argv)
             vis_blob_vec.insert(vis_blob_vec.end(), visible_blob.ptr<uchar>(i), visible_blob.ptr<uchar>(i)+visible_blob.cols);
           }
         }
+        */
        
         // Debug blob_filter()
         // Find unique elts

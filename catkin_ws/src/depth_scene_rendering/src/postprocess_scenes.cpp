@@ -336,12 +336,19 @@ int main (int argc, char ** argv)
       cv::Mat cropped;
       crop_image (depth_img, cropped, p_obj_2d[0], p_obj_2d[1],
         RawDepthScaling::CROP_W, RawDepthScaling::CROP_H, false);
+
+      // Scale image
+      // Use INTER_NEAREST to use actual values from image, no invented
+      //   values from interpolation.
+      cv::Mat scaled;
+      cv::resize (cropped, scaled, cv::Size (RawDepthScaling::SCALE_H,
+        RawDepthScaling::SCALE_W), 0, 0, cv::INTER_NEAREST);
  
       // Write converted integers image to file
       // API https://docs.opencv.org/2.4/modules/highgui/doc/reading_and_writing_images_and_video.html#imwrite
       std::string crop_path = exts [0] + "crop.png";
-      cv::imwrite (crop_path, cropped);
-      fprintf (stderr, "%sWritten cropped depth image to %s%s\n", OKCYAN,
+      cv::imwrite (crop_path, scaled);
+      fprintf (stderr, "%sWritten cropped and scaled depth image to %s%s\n", OKCYAN,
         crop_path.c_str (), ENDC);
  
       if (DISPLAY_IMAGES)
@@ -349,7 +356,7 @@ int main (int argc, char ** argv)
         cv::imshow ("Converted depth image", depth_img);
         cv::waitKey (0);
        
-        cv::imshow ("Cropped", cropped);
+        cv::imshow ("Cropped and scaled", scaled);
         cv::waitKey (0);
       }
     }

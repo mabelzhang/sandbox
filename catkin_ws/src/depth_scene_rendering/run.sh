@@ -14,9 +14,9 @@ ENDC="\e[0m"
 
 
 # Render scenes
-#cmd="blensor -b -P `rospack find depth_scene_rendering`/src/scene_generation.py"
-#echo -e "$MAGENTA$cmd$ENDC"
-#$cmd
+cmd="blensor -b -P `rospack find depth_scene_rendering`/src/scene_generation.py"
+echo -e "$MAGENTA$cmd$ENDC"
+$cmd
 
 # Generate cropped object images from scenes
 cmd="rosrun depth_scene_rendering postprocess_scenes"

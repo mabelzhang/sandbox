@@ -15,6 +15,7 @@ depth_range: cam_depth_range.txt
 # Directories under root/data
 grasps: grasps
 contacts: contacts
+quals: qualities
 
 # Subdirectories under root
 renders: renders

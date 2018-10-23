@@ -4,7 +4,7 @@
 // Mabel Zhang
 // 9 Oct 2018
 //
-// Classes to read YAML config files
+// Class to read YAML config files
 //
 
 #include <boost/filesystem.hpp>

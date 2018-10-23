@@ -42,8 +42,9 @@
 #include <depth_scene_rendering/depth_to_image.h>  // RawDepthScaling, crop_image_center()
 #include <depth_scene_rendering/postprocess_scenes.h>  // calc_object_pose_in_img(), calc_object_pose_wrt_cam()
 #include <depth_scene_rendering/scene_yaml.h>  // ScenesYaml
-#include <tactile_graspit_collection/contacts_io.h>
+//#include <tactile_graspit_collection/contacts_io.h>
 #include <tactile_graspit_collection/config_paths.h>  // PathConfigYaml
+#include <tactile_graspit_collection/labels_io.h>  // LabelsIO
 
 
 // Separate contact points into visible and occluded channels.
@@ -280,6 +281,8 @@ int main (int argc, char ** argv)
   PathConfigYaml config = PathConfigYaml (config_path);
   std::string contacts_dir;
   config.get_contacts_path (contacts_dir);
+  std::string qualities_dir;
+  config.get_quals_path (qualities_dir);
 
 
   // Octree resolution, in meters
@@ -299,8 +302,8 @@ int main (int argc, char ** argv)
 
   // scenes.yaml file
   //   Tells what object is in each scene file!
-  //   Outer loop around object, load grasps using contacts_io.h, and
-  //     load the .pcd files for different views of each object.
+  //   Outer loop around object, load .pcd files for different views of each
+  //     object.
   ScenesYaml scene_list_yaml = ScenesYaml (scene_list_path);
   std::vector <std::string> scene_paths;
   // For each object
@@ -310,6 +313,8 @@ int main (int argc, char ** argv)
     Eigen::MatrixXf contacts_O;
     Eigen::MatrixXf contacts_O4;
     Eigen::MatrixXf contacts_meta;
+    Eigen::MatrixXf quals;
+    std::string obj_name = "";
     int n_grasps = 0;
     if (! GEN_RAND_PTS)
     {
@@ -332,8 +337,8 @@ int main (int argc, char ** argv)
       // Load contacts per individual grasp.  _meta.csv tells how many elements
       //   to index the contacts_O matrix for each individual grasp, i.e.
       std::string obj_meta_path;
-      join_paths (contacts_dir,
-        scene_list_yaml.get_object_name (o_i) + "_meta.csv", obj_meta_path);
+      obj_name = scene_list_yaml.get_object_name (o_i);
+      join_paths (contacts_dir, obj_name + "_meta.csv", obj_meta_path);
 
       // 1 x nGrasps array
       fprintf (stderr, "%sLoading object contacts meta %s%s\n", OKCYAN,
@@ -344,6 +349,14 @@ int main (int argc, char ** argv)
       // For each grasp, render all the scenes. At the end have
       //   nGrasps x nScenes training samples
       n_grasps = contacts_meta.cols ();
+
+      // Load grasp quality
+      // 1 x nGrasps
+      std::string qualities_path;
+      join_paths (qualities_dir, obj_name + ".csv", qualities_path);
+      fprintf (stderr, "%sLoading grasp qualities for this object %s%s\n\n",
+        OKCYAN, qualities_path.c_str (), ENDC);
+      quals = load_csv_to_Eigen <Eigen::MatrixXf> (qualities_path);
     }
     // Else just generate one set of random points per scene. At the end have
     //   1 x nScenes training samples.
@@ -749,8 +762,24 @@ int main (int argc, char ** argv)
           // Press in the open window to close it
           cv::waitKey (0);
         }
+
+
+        // Output label file with object name and grasp quality for this scene
+        if (! GEN_RAND_PTS) 
+        {
+          // Output file path
+          std::string lbls_path = exts [0];
+          lbls_path += "_lbls.yaml";
+
+          // Pass in object name and integer numeric ID
+          LabelsIO::write_label (lbls_path, obj_name, quals (g_i));
+
+          fprintf (stderr, "%sWritten labels to %s%s\n", OKCYAN,
+            lbls_path.c_str (), ENDC);
+        }
       }
 
+      // Update for next grasp
       curr_contact_start_idx += n_contacts;
     }
   }

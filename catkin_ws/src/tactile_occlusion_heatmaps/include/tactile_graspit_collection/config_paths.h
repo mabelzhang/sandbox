@@ -1,7 +1,10 @@
 // Mabel Zhang
 // 4 Oct 2018
 //
-// C++ counterpart of config_paths.py
+// C++ counterpart of grasp_collection config_paths.py
+//
+// Paths are configured in YAML by hand in
+//   tactile_occlusion_heatmaps/config/paths.yaml
 //
 
 #ifndef _CONFIG_PATHS_H_
@@ -19,6 +22,7 @@ private:
   std::string depth_range_;
   std::string grasps_;
   std::string contacts_;
+  std::string quals_;
 
   std::string renders_;
   std::string vis_;
@@ -47,9 +51,10 @@ public:
     join_paths (data_, config ["intrinsics"].as <std::string> (), intrinsics_);
     join_paths (data_, config ["depth_range"].as <std::string> (),
       depth_range_);
-    //Subdirectories under data
+    // Subdirectories under data
     join_paths (data_, config ["grasps"].as <std::string> (), grasps_);
     join_paths (data_, config ["contacts"].as <std::string> (), contacts_);
+    join_paths (data_, config ["quals"].as <std::string> (), quals_);
 
     // Subdirectories under root
     join_paths (root_, config ["renders"].as <std::string> (), renders_);
@@ -79,6 +84,11 @@ public:
   void get_contacts_path (std::string & path)
   {
     path = contacts_;
+  }
+
+  void get_quals_path (std::string & path)
+  {
+    path = quals_;
   }
 };
 

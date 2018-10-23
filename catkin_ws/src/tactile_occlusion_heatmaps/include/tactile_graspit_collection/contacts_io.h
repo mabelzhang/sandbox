@@ -1,7 +1,7 @@
 // Mabel Zhang
 // 4 Oct 2018
 //
-// Reads contacts YAML file outputted by grasp_collection.py.
+// Reads contacts YAML file outputted by grasp_collect.py.
 //
 
 #ifndef _CONTACTS_IO_H_

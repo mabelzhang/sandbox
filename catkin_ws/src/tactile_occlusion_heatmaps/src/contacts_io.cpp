@@ -5,6 +5,9 @@
 //   contain positions of contacts expressed in object frame. Pass these
 //   positions to occlusion_test.cpp to generate heatmaps based on contacts.
 //
+// Used for testing contacts file, before copying working code into
+//   occlusion_test.cpp.
+//
 
 // C++
 #include <iostream>
@@ -79,13 +82,6 @@ int main (int argc, char ** argv)
     Eigen::MatrixXf contacts_m = load_csv_to_Eigen <Eigen::MatrixXf> (
       obj_path);
     std::cout << contacts_m << std::endl;
-
-
-    // TODO
-    // Pass contacts onto occlusion_test.cpp. They go into "endpoints" variable
-    //   in occlusion_test.cpp. Refactor main() in occlusion_test.cpp so it can
-    //   accept 3D point inputs!
-
   }
 
   return 0;

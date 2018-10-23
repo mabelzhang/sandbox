@@ -3,6 +3,8 @@
 # Mabel Zhang
 # 3 Sep 2018
 #
+# Manually configured, input object meshes for scene rendering.
+#
 # Defining constants in Python, because Blender does not bundle PyYaml. It
 #   would need to be installed manually into Blender 
 #   blender/2.74/python/lib/python3.4/.
@@ -29,4 +31,9 @@ objects = [
 
 # objects [i].replace(suffix, ''), to get bare object name
 obj_suffix = '_rotated_centered.obj'
+
+
+# Used to output a plain-text labels file for ease of access for predictor
+obj_names = [o.replace (obj_suffix, '') for o in objects]
+obj_ids = range (len (objects))
 

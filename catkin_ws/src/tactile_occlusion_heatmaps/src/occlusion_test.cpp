@@ -354,7 +354,7 @@ int main (int argc, char ** argv)
       // 1 x nGrasps
       std::string qualities_path;
       join_paths (qualities_dir, obj_name + ".csv", qualities_path);
-      fprintf (stderr, "%sLoading grasp qualities for this object %s%s\n\n",
+      fprintf (stderr, "%sLoading grasp qualities for this object %s%s\n",
         OKCYAN, qualities_path.c_str (), ENDC);
       quals = load_csv_to_Eigen <Eigen::MatrixXf> (qualities_path);
     }
@@ -618,10 +618,10 @@ int main (int argc, char ** argv)
         int SCALE_W = RawDepthScaling::SCALE_W;
         int SCALE_H = RawDepthScaling::SCALE_H;
 
-        std::cerr << "u out of bounds: " << 
-          (uv.row (0).array () >= SCALE_W) << std::endl;
-        std::cerr << "v out of bounds: " <<
-          (uv.row (1).array () >= SCALE_H) << std::endl;
+        //std::cerr << "u out of bounds: " << 
+        //  (uv.row (0).array () >= SCALE_W) << std::endl;
+        //std::cerr << "v out of bounds: " <<
+        //  (uv.row (1).array () >= SCALE_H) << std::endl;
 
         // Indices of (u, v) list that are out of bounds
         Eigen::Matrix <bool, 1, Eigen::Dynamic> u_obod =
@@ -782,6 +782,8 @@ int main (int argc, char ** argv)
       // Update for next grasp
       curr_contact_start_idx += n_contacts;
     }
+
+    fprintf (stderr, "\n");
   }
 
   return 0;

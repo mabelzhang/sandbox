@@ -12,6 +12,11 @@ import os
 import rospkg
 
 
+def get_depth_fmt ():
+
+  return '%scrop.png'
+
+
 def get_heatmap_raw_fmt ():
 
   # %s is timestamp from depth_scene_rendering scene_generation.py
@@ -22,6 +27,11 @@ def get_heatmap_raw_fmt ():
 def get_heatmap_blob_fmt ():
 
   return ('%s_g%d_vis_blob.png', '%s_g%d_occ_blob.png')
+
+
+def get_label_fmt ():
+
+  return '%s_g%d_lbls.yaml'
 
 
 def get_root ():

@@ -71,7 +71,8 @@ public:
   {
     scenes.clear ();
 
-    fprintf (stderr, "Object contains %ld scenes\n", objects_node [obj_i].size ());
+    fprintf (stderr, "Object contains %ld scenes\n",
+      objects_node [obj_i] ["scenes"].size ());
 
     // Loop through each scene
     for (std::size_t j = 0; j < objects_node [obj_i] ["scenes"].size (); j++)

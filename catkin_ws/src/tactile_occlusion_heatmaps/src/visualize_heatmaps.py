@@ -11,7 +11,6 @@
 
 # Python
 import os
-import yaml
 import csv
 import argparse
 
@@ -30,6 +29,7 @@ import matplotlib.pyplot as plt
 from util.ansi_colors import ansi_colors
 from util.image_util import np_from_depth, show_image, matshow_image
 from grasp_collection.config_paths import get_contacts_path
+from depth_scene_rendering.config_read_yaml import ConfigReadYAML
 
 # Local
 from tactile_occlusion_heatmaps.config_paths import \
@@ -73,13 +73,19 @@ def main ():
   # scenes.txt
   #for scene_path in scene_list_f:
 
+  # TODO: Should use depth_scene_rendering ConfigReadYAML instead.
   # scenes.yaml
-  scene_list_yaml = yaml.load (scene_list_f)
-  for o_i in range (len (scene_list_yaml ['objects'])):
+  objs = ConfigReadYAML.read_object_names ()
+  # String
+  obj_names = objs [0]
+  # List of list of strings, paths to .pcd scene files
+  scene_paths = objs [1]
+
+  # For each object
+  for o_i in range (len (obj_names)):
   #for o_i in [0, 1]:
 
-    obj = scene_list_yaml ['objects'] [o_i]
-    obj_name = obj ['object']
+    obj_name = obj_names [o_i]
 
     # Contacts meta file, number of elements in the list is number of grasps
     obj_meta_path = os.path.join (contacts_path, obj_name + '_meta.csv')
@@ -93,9 +99,9 @@ def main ():
     for g_i in range (n_grasps):
 
       # For each scene for this object
-      for s_i in range (len (obj ['scenes'])):
+      for s_i in range (len (scene_paths [o_i])):
      
-        scene_path = obj ['scenes'] [s_i]
+        scene_path = scene_paths [o_i] [s_i]
      
         print ('Loading triplet files for %s' % scene_path)
 

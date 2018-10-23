@@ -32,22 +32,21 @@ $ rosrun tactile_occlusion_heatmaps occlusion_test
 
 [For debugging only] Run ray-trace occlusion test on random points:
 Set GEN_RAND_PTS = true, recompile, run (TODO: Make this into a cmd line arg):
-$ rosrun tactile_graspit_collection occlusion_test 
+$ rosrun tactile_occlusion_heatmaps occlusion_test 
 
 
 4. (optional)
-$ roslaunch tactile_occlusion_heatmaps visualize_grasps_and_heatmaps.launch
-TODO: Not fully integrated yet, need to manually close matplotlib window, and
-  press enter at terminal, to advance to next grasp. Better to run separately
-  as 2 commands below for now.
+Inspect data between 3D and 2D:
 
-OR equivalently:
+Visualize 2D visible and occluded contact heat maps:
+$ rosrun tactile_occlusion_heatmaps visualize_heatmaps.py [--display]
 
-Visualize visible and occluded contact heat maps:
-$ rosrun tactile_occlusion_heatmaps visualize_heatmaps.py
-
-At the same time, visualize GraspIt saved grasps:
+At the same time, visualize 3D GraspIt saved grasps:
 $ rosrun grasp_collection grasp_replay.py
+
+
+5. Generate .npz files for predictor
+$ rosrun tactile_occlusion_heatmaps png_to_npz.py
 
 
 

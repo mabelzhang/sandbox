@@ -769,7 +769,7 @@ int main (int argc, char ** argv)
         {
           // Output file path
           std::string lbls_path = exts [0];
-          lbls_path += "_lbls.yaml";
+          lbls_path += "_g" + std::to_string (g_i) + "_lbls.yaml";
 
           // Pass in object name and integer numeric ID
           LabelsIO::write_label (lbls_path, obj_name, quals (g_i));

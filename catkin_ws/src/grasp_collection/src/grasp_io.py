@@ -10,6 +10,7 @@
 import os
 import cPickle as pickle
 import csv
+import numpy as np
 
 # Custom
 from util.ansi_colors import ansi_colors
@@ -98,6 +99,27 @@ class GraspIO:
 
 
   @staticmethod
+  def read_contacts (world_name):
+
+    # csv file, of a large matrix of nContactsPerGrasp * nGrasps.
+    contacts_fname = os.path.join (get_contacts_path (), world_name + '.csv')
+    print ('%sLoading contacts from file %s%s' % (ansi_colors.OKCYAN,
+      contacts_fname, ansi_colors.ENDC))
+
+    contacts_m = []
+
+    with open (contacts_fname, 'rb') as contacts_f:
+      contacts_reader = csv.reader (contacts_f)
+      # n x 3
+      for row in contacts_reader:
+        # 1 x 3. Convert strings to floats
+        contacts_m.append ([float (s) for s in row])
+
+    # n x 3
+    return np.array (contacts_m)
+
+
+  @staticmethod
   def read_contact_meta (world_name):
 
     cmeta_fname = os.path.join (get_contacts_path (), world_name + '_meta.csv')
@@ -115,16 +137,41 @@ class GraspIO:
 
 
   # Write grasp energies, or qualities, to csv file
+  #   energies: List of floats
   @staticmethod
   def write_energies (world_name, energies):
+
+    # Write nGrasps x 1, for easier human reading
+    energies_np = np.array (energies)
+    energies_np = np.reshape (energies_np, (energies_np.size, 1))
 
     # csv file, of a row of nGrasps elements
     quals_fname = os.path.join (get_quals_path (), world_name + '.csv')
     with open (quals_fname, 'wb') as quals_f:
       quals_writer = csv.writer (quals_f)
-      # Write n x 3, for easier human reading
-      quals_writer.writerow (energies)
+      quals_writer.writerow (energies_np)
     print ('%sWritten quals to file %s%s' % (ansi_colors.OKCYAN,
       quals_fname, ansi_colors.ENDC))
 
+
+  # Returns list of nGrasps floats
+  @staticmethod
+  def read_energies (world_name):
+
+    # csv file, of a row of nGrasps elements
+    quals_fname = os.path.join (get_quals_path (), world_name + '.csv')
+    print ('%sLoading quals from file %s%s' % (ansi_colors.OKCYAN,
+      quals_fname, ansi_colors.ENDC))
+
+    energies = []
+
+    with open (quals_fname, 'rb') as quals_f:
+      quals_reader = csv.reader (quals_f)
+      # nGrasps x 1
+      for row in quals_reader:
+        # There's only 1 value per row. Convert string to float
+        energies.extend ([float (s) for s in row])
+      
+    # List of nGrasps floats
+    return energies
 

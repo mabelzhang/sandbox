@@ -35,7 +35,7 @@ from util.tf_transformations import quaternion_from_matrix, \
 from scene_generation import reset_scene, setup_camera, load_obj
 from scan_kinect import ScanKinect
 from config_paths import get_render_path
-import config_consts
+import depth_scene_rendering.config_consts
 
 
 def setup_render_camera (kinect_obj):

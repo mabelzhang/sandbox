@@ -115,6 +115,7 @@ def main ():
       depth_path = os.path.join (in_dir, depth_fmt % (scene_name))
 
 
+      # TODO: Instead of using glob, should read contacts meta file to figure out how many grasps there are. Number of grasps == number of elements in meta file.
       # Replace the %d formatting for grasp number with *, to get all grasps
       vis_wildcard = vis_heatmap_fmt.replace ('%d', '*')
       vis_wildcard = vis_wildcard % scene_name

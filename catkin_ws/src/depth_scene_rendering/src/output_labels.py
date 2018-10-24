@@ -14,7 +14,7 @@ import yaml
 from util.ansi_colors import ansi_colors as ansi
 
 # Local
-from config_consts import obj_names, obj_ids
+from depth_scene_rendering.config_consts import obj_names, obj_ids
 
 
 def main ():

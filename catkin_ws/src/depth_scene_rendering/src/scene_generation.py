@@ -43,7 +43,7 @@ from util.tf_transformations import quaternion_matrix, euler_matrix, \
 
 # Local, from paths added above
 from scan_kinect import ScanKinect
-import config_consts
+import depth_scene_rendering.config_consts
 from config_paths import get_intrinsics_path, get_depth_range_path, \
   get_render_path
 

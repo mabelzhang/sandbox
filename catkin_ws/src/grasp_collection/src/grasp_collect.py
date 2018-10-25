@@ -22,6 +22,7 @@ import cPickle as pickle
 import csv
 import yaml
 import argparse
+import time
 
 import numpy as np
 
@@ -136,13 +137,14 @@ def main ():
   # Using just 1 grasp, for many camera views, to check if there are more
   #   occluded contacts in different camera views.
   n_best_grasps = 1
-  #n_best_grasps = 10
+  n_best_grasps = 100
 
   # Default 70000, takes 30 seconds. Set to small number for testing. Usually
   #   there are grasps ranking in top 20 from 30000s. Time is not linear wrt
   #   steps, so setting to 30000 will take a lot shorter time than 70000.
   #max_steps = 70000
-  max_steps = 40000
+  #max_steps = 40000  # Quickest without error
+  max_steps = 140000
 
   n_contacts_ttl = 0
 
@@ -154,10 +156,12 @@ def main ():
   #obj_names = objs [0]
 
 
+  start_time = time.time ()
+
   for w_i in range (len (worlds)):
   #for w_i in range (len (obj_names)):
   # TODO TEMPORARY debugging mismatch of contacts btw grasp_collection and grasp_replay
-  #for w_i in [0]:
+  #for w_i in [2]:
   #for w_i in range (3, len (worlds)):
 
     # graspit_interface loadWorld automatically looks in worlds/ path under
@@ -192,9 +196,11 @@ def main ():
     # Request for more than the default top 20 grasps, to get low-quality ones
     #   as well.
     # gres, g for grasp
+    plan_start = time.time ()
     gres = GraspitCommander.planGrasps (n_best_grasps=n_best_grasps,
       max_steps=max_steps,
       search_contact=SearchContact(SearchContact.CONTACT_LIVE))
+    print ('Planning elapsed time: %g seconds' % (time.time () - plan_start))
     print (type (gres))
     print ('Returned %d grasps. First one:' % (len (gres.grasps)))
     print (gres.grasps [0])
@@ -290,6 +296,9 @@ def main ():
       # Write grasp qualities to a separate csv file, for easy loading and
       #   inspection.
       GraspIO.write_energies (os.path.basename (world_fname), gres.energies)
+
+  end_time = time.time ()
+  print ('Elapsed time: %g seconds' % (end_time - start_time))
 
 
 if __name__ == '__main__':

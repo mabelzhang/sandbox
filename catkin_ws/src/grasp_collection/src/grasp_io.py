@@ -149,7 +149,7 @@ class GraspIO:
     quals_fname = os.path.join (get_quals_path (), world_name + '.csv')
     with open (quals_fname, 'wb') as quals_f:
       quals_writer = csv.writer (quals_f)
-      quals_writer.writerow (energies_np)
+      quals_writer.writerows (energies_np)
     print ('%sWritten quals to file %s%s' % (ansi_colors.OKCYAN,
       quals_fname, ansi_colors.ENDC))
 

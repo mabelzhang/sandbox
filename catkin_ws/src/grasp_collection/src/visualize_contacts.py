@@ -48,7 +48,7 @@ def main ():
   mesh_dir = 'package://grasp_collection/graspit_input/models/objects/dexnet/'
 
   # Marker size in meters
-  CONTACT_SIZE = 0.005
+  CONTACT_SIZE = 0.003
 
 
   # Loop through each object
@@ -76,7 +76,7 @@ def main ():
 
     # A set of contacts per object
     contacts_mkr = Marker ()
-    create_marker (Marker.CUBE_LIST, 'contacts', '/world', 0,
+    create_marker (Marker.SPHERE_LIST, 'contacts', '/world', 0,
       0, 0, 0, 0, 0, 0, 0.5, CONTACT_SIZE, CONTACT_SIZE, CONTACT_SIZE,
       contacts_mkr, duration=0)
 

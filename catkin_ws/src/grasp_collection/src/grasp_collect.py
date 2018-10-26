@@ -38,11 +38,11 @@ from graspit_interface.msg import SearchContact
 
 # Custom
 from util.ros_util import matrix_from_Pose
-from util.ansi_colors import ansi_colors
+from util.ansi_colors import ansi_colors as ansi
 from depth_scene_rendering.config_read_yaml import ConfigReadYAML
 
 # Local
-from grasp_collection.config_consts import worlds
+from grasp_collection.config_consts import worlds, SEARCH_ENERGY, ENERGY_ABBREV
 from grasp_collection.config_paths import world_subdir
 from grasp_io import GraspIO
 
@@ -126,9 +126,11 @@ def main ():
   UINPUT = args.debug
 
   # Set to False if debugging and don't want to overwrite previously saved data!
-  SAVE_GRASPS = True #False
+  SAVE_GRASPS = False
   print ('%sSAVE_GRASPS is set to %s, make sure this is what you want!%s' % (
-    ansi_colors.OKCYAN, str(SAVE_GRASPS), ansi_colors.ENDC))
+    ansi.OKCYAN, str(SAVE_GRASPS), ansi.ENDC))
+
+  print ('%sSearch energy: %s%s' % (ansi.OKCYAN, SEARCH_ENERGY, ansi.ENDC))
 
 
   # TODO: Change this to a bigger number to get poor quality grasps as well
@@ -199,6 +201,7 @@ def main ():
     plan_start = time.time ()
     gres = GraspitCommander.planGrasps (n_best_grasps=n_best_grasps,
       max_steps=max_steps,
+      search_energy=SEARCH_ENERGY,
       search_contact=SearchContact(SearchContact.CONTACT_LIVE))
     print ('Planning elapsed time: %g seconds' % (time.time () - plan_start))
     print (type (gres))
@@ -276,8 +279,8 @@ def main ():
     # Sanity check
     if len (gres.grasps) != len (contacts_l):
       print ('%sWARN: Length of grasps (%d) != length of contacts (%d), in parallel lists! You will not know which one goes with which when you load the file.%s' % (
-        ansi_colors.WARNING, len (gres.grasps), len (contacts_l),
-        ansi_colors.ENDC))
+        ansi.WARNING, len (gres.grasps), len (contacts_l),
+        ansi.ENDC))
     '''
 
 

@@ -19,6 +19,7 @@ import numpy as np
 from util.ansi_colors import ansi_colors as ansi
 from util.image_util import np_from_depth
 from depth_scene_rendering.config_read_yaml import ConfigReadYAML
+from grasp_collection.config_consts import ENERGY_ABBREV
 
 # Local
 from tactile_occlusion_heatmaps.config_paths import get_data_path, \
@@ -140,7 +141,7 @@ def main ():
 
   in_png_lists = [depth_png_list, vis_png_list, occ_png_list, lbl_list]
 
-  npz_prefix = ['depth', 'vis', 'occ', 'lbl']
+  npz_prefix = ['depth', 'vis', 'occ', 'lbl_' + ENERGY_ABBREV]
 
 
 

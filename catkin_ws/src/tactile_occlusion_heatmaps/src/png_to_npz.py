@@ -69,6 +69,8 @@ def main ():
   if not os.path.exists (out_dir):
     os.makedirs (out_dir)
 
+  print ('Reading from %s' % in_dir)
+
 
 
   # Get all input file formats for wildcard
@@ -100,11 +102,13 @@ def main ():
   for o_i in range (len (obj_names)):
 
     #obj_name = obj_names [o_i]
+    #print ('%s' % obj_names [o_i])
 
     # For each .pcd scene for this object
     for s_i in range (len (scene_paths [o_i])):
 
       scene_path = scene_paths [o_i] [s_i] 
+      #print (scene_path)
 
       # Prefix of each data file for predictor
       scene_name = os.path.splitext (os.path.basename (scene_path)) [0]
@@ -139,6 +143,7 @@ def main ():
 
       depth_png_list.extend ([depth_path] * len (vis_sublist))
 
+  print ('%d files' % (len (depth_png_list)))
   in_png_lists = [depth_png_list, vis_png_list, occ_png_list, lbl_list]
 
   npz_prefix = ['depth', 'vis', 'occ', 'lbl_' + ENERGY_ABBREV]
@@ -202,6 +207,7 @@ def main ():
     # (1000, height, width, 1) for images
     # (1000, 1, 1, 1) for grasp quality
     npz_arr = np.zeros ((BATCH_SIZE, NROWS [ext], NCOLS [ext], 1))
+      #dtype=np.float64)  # This doesn't eliminate warning from tensorflow
 
  
     # Loop through all files in this type
@@ -254,6 +260,7 @@ def main ():
  
         # Reset
         npz_arr = np.zeros ((BATCH_SIZE, NROWS [ext], NCOLS [ext], 1))
+          #dtype=np.float64)  # This doesn't eliminate warning from tensorflow
         rows_filled = 0
         batches_filled += 1
  

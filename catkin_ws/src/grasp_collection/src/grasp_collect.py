@@ -138,7 +138,7 @@ def main ():
   #n_best_grasps = 20
   # Using just 1 grasp, for many camera views, to check if there are more
   #   occluded contacts in different camera views.
-  n_best_grasps = 1
+  #n_best_grasps = 1
   n_best_grasps = 100
 
   # Default 70000, takes 30 seconds. Set to small number for testing. Usually

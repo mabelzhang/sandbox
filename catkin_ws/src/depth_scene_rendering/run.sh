@@ -3,7 +3,8 @@
 # Mabel Zhang
 # 12 Oct 2018
 #
-# First run GraspIt GUI and ROS interface:
+# If run grasp_collect.py (only need to run ONCE) or grasp_replay.py (for
+#   debugging), first run GraspIt GUI and ROS interface:
 #   $ roslaunch graspit_interface_custom graspit_interface.launch 
 # Then run this script.
 #
@@ -14,6 +15,7 @@ ENDC="\e[0m"
 
 
 # Render scenes
+# Change n_camera_poses to change the number of scenes generated per object
 cmd="blensor -b -P `rospack find depth_scene_rendering`/src/scene_generation.py"
 echo -e "$MAGENTA$cmd$ENDC"
 $cmd
@@ -40,11 +42,15 @@ $cmd
 
 # Visualize visible and occluded contact heat maps:
 #cmd="rosrun tactile_occlusion_heatmaps visualize_heatmaps.py --display"
-cmd="rosrun tactile_occlusion_heatmaps visualize_heatmaps.py"
-echo -e "$MAGENTA$cmd$ENDC"
-$cmd
+#cmd="rosrun tactile_occlusion_heatmaps visualize_heatmaps.py"
+#echo -e "$MAGENTA$cmd$ENDC"
+#$cmd
 
 # At the same time, visualize GraspIt saved grasps:
 # $ rosrun grasp_collection grasp_replay.py
 
+# Generate npz files
+cmd="rosrun tactile_occlusion_heatmaps png_to_npz.py"
+echo -e "$MAGENTA$cmd$ENDC"
+$cmd
 

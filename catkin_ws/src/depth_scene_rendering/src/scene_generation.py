@@ -33,7 +33,7 @@ import numpy as np
 import bpy
 
 # Custom
-from util.ansi_colors import ansi_colors
+from util.ansi_colors import ansi_colors as ansi
 from util.spherical_pose_generation import get_rand_pose
 from util.euler_pose_generation import get_rand_rot
 # NOTE that this has quaternions ordered (w, x, y, z), same as Blender, unlike
@@ -43,7 +43,7 @@ from util.tf_transformations import quaternion_matrix, euler_matrix, \
 
 # Local, from paths added above
 from scan_kinect import ScanKinect
-import depth_scene_rendering.config_consts
+from depth_scene_rendering import config_consts
 from config_paths import get_intrinsics_path, get_depth_range_path, \
   get_render_path
 
@@ -117,8 +117,8 @@ def setup_camera (kinect_obj):
   # Don't want NumPy format, because might load in C++.
   intrinsics_path = get_intrinsics_path ()
   np.savetxt (intrinsics_path, intrinsics, '%f')
-  print ('%sCamera intrinsics matrix written to %s%s' % (ansi_colors.OKCYAN,
-    intrinsics_path, ansi_colors.ENDC))
+  print ('%sCamera intrinsics matrix written to %s%s' % (ansi.OKCYAN,
+    intrinsics_path, ansi.ENDC))
   
   # Write Kinect min/max depth range to text file, for postprocessing
   depth_range_path = get_depth_range_path ()
@@ -127,8 +127,8 @@ def setup_camera (kinect_obj):
     depth_range_f.write (str (kinect_max_dist) + '\n')
     # Focal length in mm
     #depth_range_f.write (str (kinect_obj.flength))
-  print ('%sCamera depth range written to %s%s' % (ansi_colors.OKCYAN,
-    depth_range_path, ansi_colors.ENDC))
+  print ('%sCamera depth range written to %s%s' % (ansi.OKCYAN,
+    depth_range_path, ansi.ENDC))
 
   # Get directory of current file
   this_dir = os.path.dirname (os.path.realpath (__file__))
@@ -140,8 +140,8 @@ def setup_camera (kinect_obj):
   cam_cfg_path = os.path.join (config_path, 'cam_config_path.txt')
   with open (cam_cfg_path, 'w') as intrinsics_cfg_f:
     intrinsics_cfg_f.write (intrinsics_path)
-  print ('%sPath of camera intrinsics matrix written to %s%s' % (ansi_colors.OKCYAN,
-    cam_cfg_path, ansi_colors.ENDC))
+  print ('%sPath of camera intrinsics matrix written to %s%s' % (ansi.OKCYAN,
+    cam_cfg_path, ansi.ENDC))
   print ('')
 
 
@@ -372,7 +372,7 @@ def save_extrinsics_from_pose (cam_pos, cam_quat, T_W_obj, noisy_scene_name):
   np.savetxt (extrinsics_path, T_o_cam, '%f')
   #np.savetxt (extrinsics_path, T_W_cam, '%f')
   print ('%sCamera extrinsics matrix wrt object written to %s%s' % (
-    ansi_colors.OKCYAN, extrinsics_path, ansi_colors.ENDC))
+    ansi.OKCYAN, extrinsics_path, ansi.ENDC))
 
 
 
@@ -389,6 +389,8 @@ if __name__ == '__main__':
 
   # For human inspection
   setup_render_camera (kinect_obj)
+
+  SAVE_NOISELESS = False
   
   
   #####
@@ -402,10 +404,11 @@ if __name__ == '__main__':
   # Define file with list of scene .pcd names
   scene_list_path = os.path.join (config_path, 'scenes.yaml')
   scene_noisy_list_path = os.path.join (config_path, 'scenes_noisy.yaml')
-  scene_list_f = open (scene_list_path, 'w')
+  if SAVE_NOISELESS:
+    scene_list_f = open (scene_list_path, 'w')
   scene_noisy_list_f = open (scene_noisy_list_path, 'w')
   print ('%sPaths of output scenes .pcd files will be written to\n  %s\n  and noisy scenes to\n  %s%s' % (
-    ansi_colors.OKCYAN, scene_list_path, scene_noisy_list_path, ansi_colors.ENDC))
+    ansi.OKCYAN, scene_list_path, scene_noisy_list_path, ansi.ENDC))
   
   # Path with object .obj files
   obj_dir = config_consts.obj_path
@@ -416,8 +419,8 @@ if __name__ == '__main__':
   n_objs = len (config_consts.objects)
   #n_objs = 1
   
-  #n_camera_poses = 10
-  n_camera_poses = 1
+  n_camera_poses = 10
+  #n_camera_poses = 1
   # For testing. Set to False for real run.
   # Skips the 1st canonical pose pointing straight down from north pole.
   SKIP_CAM_IDENTITY = False #True
@@ -425,7 +428,8 @@ if __name__ == '__main__':
 
   start_time = time.time ()
   
-  scene_list_f.write ('objects:\n')
+  if SAVE_NOISELESS:
+    scene_list_f.write ('objects:\n')
   scene_noisy_list_f.write ('objects:\n')
 
   # Loop through each object file
@@ -433,18 +437,19 @@ if __name__ == '__main__':
   #for o_i in [0]:
   
     print ('================')
-    print ('%sLoading file %d out of %d%s' % (ansi_colors.OKCYAN, o_i+1,
-      len (config_consts.objects), ansi_colors.ENDC))
+    print ('%sLoading file %d out of %d%s' % (ansi.OKCYAN, o_i+1,
+      len (config_consts.objects), ansi.ENDC))
   
     obj_base = config_consts.objects [o_i]
     obj_path = os.path.join (obj_dir, obj_base)
   
-    print ('%s  %s%s' % (ansi_colors.OKCYAN, obj_base, ansi_colors.ENDC))
+    print ('%s  %s%s' % (ansi.OKCYAN, obj_base, ansi.ENDC))
     load_obj (obj_path)
     #create_cone ()
 
     # Write object name
-    scene_list_f.write ('  - object: ' + obj_base.replace (obj_suffix, '') + '\n')
+    if SAVE_NOISELESS:
+      scene_list_f.write ('  - object: ' + obj_base.replace (obj_suffix, '') + '\n')
     scene_noisy_list_f.write ('  - object: ' + obj_base.replace (obj_suffix, '') + '\n')
   
     # Set stationary camera pose. Do first shot using this, as reference
@@ -454,7 +459,8 @@ if __name__ == '__main__':
     cam_quat = (1, 0, 0, 0)
   
 
-    scene_list_f.write ('    scenes:\n')
+    if SAVE_NOISELESS:
+      scene_list_f.write ('    scenes:\n')
     scene_noisy_list_f.write ('    scenes:\n')
   
     for c_i in range (n_camera_poses):
@@ -463,6 +469,9 @@ if __name__ == '__main__':
       if SKIP_CAM_IDENTITY and c_i == 0:
         cam_pos, cam_euler, cam_quat = generate_random_camera_pose ()
         continue
+
+      print ('%sScene %d out of %d, in object %d out of %d%s' % (
+        ansi.OKCYAN, c_i+1, n_camera_poses, o_i+1, n_objs, ansi.ENDC))
   
       # Scan scene
       out_name, orig_scene_name, orig_noisy_scene_name = kinect_obj.scan (
@@ -472,12 +481,18 @@ if __name__ == '__main__':
       scene_name = out_name
       noisy_scene_name = os.path.splitext (out_name) [0] + '_n' + \
         os.path.splitext (out_name) [1]
-      shutil.move (orig_scene_name, scene_name)
+
+      if SAVE_NOISELESS:
+        shutil.move (orig_scene_name, scene_name)
+      # Remove the noiseless file, don't need it. Save 50% disk space.
+      else:
+        os.remove (orig_scene_name)
       shutil.move (orig_noisy_scene_name, noisy_scene_name)
    
       # Write scene output file names in a text file, for postprocessing script
       #   to read.
-      scene_list_f.write ('    - ' + scene_name + '\n')
+      if SAVE_NOISELESS:
+        scene_list_f.write ('    - ' + scene_name + '\n')
       scene_noisy_list_f.write ('    - ' + noisy_scene_name + '\n')
 
 
@@ -527,13 +542,14 @@ if __name__ == '__main__':
     # Select all - with the above setup that made all default objs unselectable,
     #   this will select only the loaded object, without needing to know the
     #   object's name - because there is no way to know.
-    print ('%sDeleting loaded object%s' % (ansi_colors.OKCYAN, ansi_colors.ENDC))
+    print ('%sDeleting loaded object%s' % (ansi.OKCYAN, ansi.ENDC))
     bpy.ops.object.select_all (action='SELECT')
     bpy.ops.object.delete ()
 
   
   # Close text files
-  scene_list_f.close ()
+  if SAVE_NOISELESS:
+    scene_list_f.close ()
   scene_noisy_list_f.close ()
   
   

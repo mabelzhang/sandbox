@@ -310,7 +310,9 @@ int main (int argc, char ** argv)
   //     object.
   ScenesYaml scene_list_yaml = ScenesYaml (scene_list_path);
   // For each object
-  for (int o_i = 0; o_i < scene_list_yaml.get_n_objects (); o_i++)
+  //for (int o_i = 0; o_i < scene_list_yaml.get_n_objects (); o_i++)
+// TODO TEMPORARY starting at o_i to continue where seg fault left off
+  for (int o_i = 7; o_i < scene_list_yaml.get_n_objects (); o_i++)
   {
     size_t start_time_o = time (NULL);
 
@@ -805,12 +807,12 @@ int main (int argc, char ** argv)
       // Update for next grasp
       curr_contact_start_idx += n_contacts;
 
-      fprintf (stderr, "Elapsed time for this grasp, %d scenes in it: %g\n",
-        scene_paths.size (), time () - start_time_g);
+      fprintf (stderr, "Elapsed time for this grasp, %ld scenes in it: %ld s\n",
+        scene_paths.size (), time (NULL) - start_time_g);
     }
 
-    fprintf (stderr, "Elapsed time for this object, %d grasps in it: %g\n",
-      n_grasps, time () - start_time_o);
+    fprintf (stderr, "Elapsed time for this object, %d grasps in it: %ld s\n",
+      n_grasps, time (NULL) - start_time_o);
 
     fprintf (stderr, "\n");
   }

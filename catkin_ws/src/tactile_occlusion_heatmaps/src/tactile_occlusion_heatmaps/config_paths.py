@@ -58,6 +58,29 @@ def get_data_path ():
   return path
 
 
+# Subdir of data/
+def get_renders_data_path ():
+
+  path = os.path.join (get_data_path (), 'renders')
+
+  if not os.path.exists (path):
+    os.makedirs (path)
+
+  return path
+
+
+# Subdir of data/
+def get_heatmap_data_path ():
+
+  path = os.path.join (get_data_path (), 'heatmaps')
+
+  if not os.path.exists (path):
+    os.makedirs (path)
+
+  return path
+
+
+
 def get_vis_path ():
 
   path = os.path.join (get_root (), 'vis')

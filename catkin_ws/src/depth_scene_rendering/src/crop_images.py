@@ -17,7 +17,7 @@ import cv2
 
 from util.ansi_colors import ansi_colors
 
-from config_paths import get_render_path
+from config_paths import get_test_render_path
 
 
 # Crop out the center portion of specified dimensions from an image
@@ -46,7 +46,7 @@ def main ():
 
 
   if not meta_path:
-    render_path = get_render_path ()
+    render_path = get_test_render_path ()
     meta_path = os.path.join (render_path, 'translations', 'uncropped.txt')
 
 

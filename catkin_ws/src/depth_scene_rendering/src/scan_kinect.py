@@ -42,7 +42,7 @@ from util.io_util import current_timestamp_string
 from util.ansi_colors import ansi_colors
 
 # Local
-from config_paths import get_data_root
+from config_paths import get_render_data_path
 
 
 class ScanKinect:
@@ -152,7 +152,8 @@ class ScanKinect:
 
   # Parameters:
   #   quat: (w, x, y, z), Blender ordering
-  def scan (self, cam_name='Camera', pos=(0, -4, 0), quat=(0.707, 0.707, 0, 0)):
+  def scan (self, out_path, cam_name='Camera', pos=(0, -4, 0),
+    quat=(0.707, 0.707, 0, 0)):
 
     if not self.kinect_initialized:
       init_kinect ()
@@ -193,7 +194,6 @@ class ScanKinect:
     scanner.add_noise_scan_mesh = False
  
  
-    out_path = get_data_root ()
     out_ext = '.pcd' #'.pgm'
     out_name = os.path.join (out_path, current_timestamp_string () + out_ext)
     print ('%sSensor scans will be written to %s*%s%s' % (

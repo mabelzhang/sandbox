@@ -8,7 +8,7 @@
 //
 
 // Local
-#include "camera_info.h"
+#include "camera_info.h"  // CAM_CFG_SUFF
 #include <util/ansi_colors.h>
 
 class RawDepthScaling

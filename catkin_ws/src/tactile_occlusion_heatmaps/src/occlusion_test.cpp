@@ -127,8 +127,8 @@ public:
   //   valid_idx: If valid_idx[i]==false, ignore the ith point in pts, occluded.
   //     and uv.
   //   height, width: Dimensions of the 2D mask to create
-  //   uv: 2D coordinates that the 3D points pts projected to in image plane,
-  //     of the image with (height, width) dimensions
+  //   uv: 2 x n. 2D coordinates that the 3D points pts projected to in image
+  //     plane, of the image with (height, width) dimensions
   //   visible_img, occluded_img: Return values. Masks with white at uv, black
   //     everywhere else.
   void create_masks (Eigen::MatrixXf & pts, std::vector <bool> occluded,
@@ -281,8 +281,10 @@ int main (int argc, char ** argv)
   PathConfigYaml config = PathConfigYaml (config_path);
   std::string contacts_dir;
   config.get_contacts_path (contacts_dir);
-  std::string qualities_dir;
-  config.get_quals_path (qualities_dir);
+  std::string energies_dir;
+  config.get_energies_path (energies_dir);
+  std::string heatmaps_dir;
+  config.get_heatmaps_path (heatmaps_dir);
 
 
   // Octree resolution, in meters
@@ -292,6 +294,8 @@ int main (int argc, char ** argv)
   // Load 3 x 4 camera intrinsics matrix, to project 3D to 2D
   Eigen::MatrixXf P;
   load_intrinsics (P);
+
+  size_t start_time_ttl = time (NULL);
 
   // scenes.txt file
   // Read text file line by line. Each line is the path to a .pcd scene file
@@ -305,10 +309,14 @@ int main (int argc, char ** argv)
   //   Outer loop around object, load .pcd files for different views of each
   //     object.
   ScenesYaml scene_list_yaml = ScenesYaml (scene_list_path);
-  std::vector <std::string> scene_paths;
   // For each object
   for (int o_i = 0; o_i < scene_list_yaml.get_n_objects (); o_i++)
   {
+    size_t start_time_o = time (NULL);
+
+    fprintf (stderr, "%sObject [%d] out of %d%s\n", MAGENTA, o_i,
+      scene_list_yaml.get_n_objects (), ENDC);
+
     // Load contact points for this object
     Eigen::MatrixXf contacts_O;
     Eigen::MatrixXf contacts_O4;
@@ -352,11 +360,11 @@ int main (int argc, char ** argv)
 
       // Load grasp quality
       // 1 x nGrasps
-      std::string qualities_path;
-      join_paths (qualities_dir, obj_name + ".csv", qualities_path);
-      fprintf (stderr, "%sLoading grasp qualities for this object %s%s\n",
-        OKCYAN, qualities_path.c_str (), ENDC);
-      quals = load_csv_to_Eigen <Eigen::MatrixXf> (qualities_path);
+      std::string energies_path;
+      join_paths (energies_dir, obj_name + ".csv", energies_path);
+      fprintf (stderr, "%sLoading grasp energies for this object %s%s\n",
+        OKCYAN, energies_path.c_str (), ENDC);
+      quals = load_csv_to_Eigen <Eigen::MatrixXf> (energies_path);
     }
     // Else just generate one set of random points per scene. At the end have
     //   1 x nScenes training samples.
@@ -368,8 +376,9 @@ int main (int argc, char ** argv)
     int curr_contact_start_idx = 0;
     for (int g_i = 0; g_i < n_grasps; g_i++)
     {
-      fprintf (stderr, "%sGrasp [%d] out of %d%s\n", OKCYAN, g_i, n_grasps,
-        ENDC);
+      fprintf (stderr, "%sObject [%d], Grasp [%d] out of %d%s\n", MAGENTA, o_i,
+        g_i, n_grasps, ENDC);
+      size_t start_time_g = time (NULL);
 
       Eigen::MatrixXf curr_grasp_contacts;
       int n_contacts = 0;
@@ -397,6 +406,7 @@ int main (int argc, char ** argv)
 
 
       // Get scenes of current object, rendered at different camera angles
+      std::vector <std::string> scene_paths;
       scene_list_yaml.get_scenes (o_i, scene_paths);
      
       // For each rendered scene of this object
@@ -534,7 +544,7 @@ int main (int argc, char ** argv)
        
        
         // Separate endpoints into visible and occluded, in pixel coordinates
-        Eigen::MatrixXf visible_uv, occluded_uv;
+        //Eigen::MatrixXf visible_uv, occluded_uv;
        
         // Project 3D points to 2D image plane, create heatmaps of visible
         //   and occluded points.
@@ -597,10 +607,16 @@ int main (int argc, char ** argv)
   
         // Make uv into homogenous coordinates
         // 3 x n
+        //std::cerr << "uv.cols(): " << uv.cols () << std::endl;
         Eigen::MatrixXf one_row = Eigen::MatrixXf::Ones (1, uv.cols ());
         Eigen::MatrixXf uv_homo (3, uv.cols ());
-        uv_homo << uv.cast <float> (),
-          one_row;
+        // Wrap in if-stmt so that operator<< does not get run-time error.
+        //   If no contacts, uv will be empty. Create empty heatmap.
+        if (uv.cols () > 0)
+        {
+          uv_homo << uv.cast <float> (),
+            one_row;
+        }
   
         // Apply scaling onto uv
         Eigen::MatrixXf uv_scaled_homo = scale * uv_homo;
@@ -652,20 +668,21 @@ int main (int argc, char ** argv)
 
 
         // Save visible and occluded channels
-        std::vector <std::string> exts;
-        splitext (scene_path, exts);
- 
+        // basename() returns file name without extension
+        std::string scene_base = "";
+        basename (scene_path, scene_base);
+
         // Optional. Individual non-zero point. Saving because easier to test
         //   different parameters of blob, than to regenerate contact points and
         //   raytracing.
         /*
-        std::string visible_path = exts [0];
+        std::string visible_path = heatmaps_prefix;
         visible_path += "_g" + std::to_string (g_i) + "_vis.png";
         cv::imwrite (visible_path, vis_crop);  //visible_img);
         fprintf (stderr, "%sWritten visible heatmap to %s%s\n", OKCYAN,
           visible_path.c_str (), ENDC);
        
-        std::string occluded_path = exts [0];
+        std::string occluded_path = heatmaps_prefix;
         occluded_path += "_g" + std::to_string (g_i) + "_occ.png";
         cv::imwrite (occluded_path, occ_crop);  //occluded_img);
         fprintf (stderr, "%sWritten occluded heatmap to %s%s\n", OKCYAN,
@@ -687,17 +704,21 @@ int main (int argc, char ** argv)
         int GAUSS_SZ = 7;
         // Pass in 0 to let OpenCV calculating sigma from size
         float GAUSS_SIGMA = 0;
-       
-        std::string vis_blob_path = exts [0];
-        vis_blob_path += "_g" + std::to_string (g_i) + "_vis_blob.png";
+
+        std::string vis_blob_base = scene_base + "_g" + std::to_string (g_i) +
+          "_vis_blob.png";
+        std::string vis_blob_path;
+        join_paths (heatmaps_dir, vis_blob_base, vis_blob_path);
         // Operate on the cropped img
         blob_filter (vis_crop, visible_blob, BLOB_EXPAND, GAUSS_SZ, GAUSS_SIGMA);
         cv::imwrite (vis_blob_path, visible_blob);
         fprintf (stderr, "%sWritten visible blobbed heatmap to %s%s\n", OKCYAN,
           vis_blob_path.c_str (), ENDC);
        
-        std::string occ_blob_path = exts [0];
-        occ_blob_path += "_g" + std::to_string (g_i) + "_occ_blob.png";
+        std::string occ_blob_base = scene_base + "_g" + std::to_string (g_i) +
+          "_occ_blob.png";
+        std::string occ_blob_path;
+        join_paths (heatmaps_dir, occ_blob_base, occ_blob_path);
         // Operate on the cropped img
         blob_filter (occ_crop, occluded_blob, BLOB_EXPAND, GAUSS_SZ, 
           GAUSS_SIGMA);
@@ -768,8 +789,10 @@ int main (int argc, char ** argv)
         if (! GEN_RAND_PTS) 
         {
           // Output file path
-          std::string lbls_path = exts [0];
-          lbls_path += "_g" + std::to_string (g_i) + "_lbls.yaml";
+          std::string lbls_base = scene_base + "_g" + std::to_string (g_i) +
+            "_lbls.yaml";
+          std::string lbls_path;
+          join_paths (heatmaps_dir, lbls_base, lbls_path);
 
           // Pass in object name and integer numeric ID
           LabelsIO::write_label (lbls_path, obj_name, quals (g_i));
@@ -781,7 +804,13 @@ int main (int argc, char ** argv)
 
       // Update for next grasp
       curr_contact_start_idx += n_contacts;
+
+      fprintf (stderr, "Elapsed time for this grasp, %d scenes in it: %g\n",
+        scene_paths.size (), time () - start_time_g);
     }
+
+    fprintf (stderr, "Elapsed time for this object, %d grasps in it: %g\n",
+      n_grasps, time () - start_time_o);
 
     fprintf (stderr, "\n");
   }

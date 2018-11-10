@@ -16,6 +16,7 @@
 #   $ rosrun grasp_collection grasp_collection.py
 #
 
+# Python
 import os
 import re  # Regular expressions
 import cPickle as pickle
@@ -26,13 +27,13 @@ import time
 
 import numpy as np
 
+# ROS
 import rospy
 import rospkg
 from geometry_msgs.msg import Pose
-import tf
 
+# GraspIt
 from graspit_commander_custom.graspit_commander_custom import GraspitCommander
-
 from graspit_interface.srv import LoadWorld
 from graspit_interface.msg import SearchContact
 
@@ -108,7 +109,7 @@ def find_contacts (T_W_O):
 
 def main ():
 
-  rospy.init_node ('graspit_commander')
+  rospy.init_node ('grasp_collect')
 
   rospack = rospkg.RosPack ()
   pkg_path = rospack.get_path ('grasp_collection')
@@ -184,6 +185,7 @@ def main ():
     GraspitCommander.loadWorld (world_fname)
 
     # T^W_O. Used to transform contact points to be wrt object frame later
+    # Object pose wrt GraspIt world
     body = GraspitCommander.getGraspableBody(0).graspable_body
     T_W_O = matrix_from_Pose (body.pose)
     #print ('Graspable body [0]:')
@@ -192,7 +194,7 @@ def main ():
 
     # Plan Eigengrasps
 
-    # TODO Try different quality measures.
+    # TODO Try different energy measures.
 
     # Returns graspit_interface_custom/action/PlanGrasps.action result.
     # Request for more than the default top 20 grasps, to get low-quality ones
@@ -210,8 +212,6 @@ def main ():
     print (gres.energies)
     print (gres.search_energy)
 
-    # Parallel list to gres.grasps. Make sure these are the same length!
-    #contacts_l = []
     # 3 x (nContacts * nGrasps)
     contacts_m = np.zeros ((3, 0))
     cmeta = [0] * len (gres.grasps)
@@ -259,7 +259,6 @@ def main ():
 
       # One list item per grasp. List item is a matrix 4 x n of n contacts
       # Take top 3 rows, skip bottom homogeneous coordinate row, all 1s
-      #contacts_l.append (contacts_O [0:3, :])
       contacts_m = np.hstack ((contacts_m, contacts_O [0:3, :]))
 
 
@@ -274,20 +273,10 @@ def main ():
     #   world file, `.` file I/O is expensive. But don't wait till end of
     #   program, `.` may leave it running for hours, don't want to lose all the
     #   work!
-
-    '''
-    # Sanity check
-    if len (gres.grasps) != len (contacts_l):
-      print ('%sWARN: Length of grasps (%d) != length of contacts (%d), in parallel lists! You will not know which one goes with which when you load the file.%s' % (
-        ansi.WARNING, len (gres.grasps), len (contacts_l),
-        ansi.ENDC))
-    '''
-
-
     if SAVE_GRASPS:
 
-      # One file per world for now. It contains all grasps obtained in this
-      #   world, possibly hundreds of grasps.
+      # One file per world (object) for now. It contains all grasps obtained in
+      #   this world, possibly hundreds of grasps.
       # Some grasps have 0 contacts with object, usually because finger hits
       #   floor, and gripper stops closing. Will save them, as bad grasps.
       #   TODO: Hopefully their energies are low. If not, might overwrite as
@@ -296,9 +285,12 @@ def main ():
  
       GraspIO.write_contacts (os.path.basename (world_fname), contacts_m, cmeta)
  
-      # Write grasp qualities to a separate csv file, for easy loading and
+      # Write grasp energies to a separate csv file, for easy loading and
       #   inspection.
-      GraspIO.write_energies (os.path.basename (world_fname), gres.energies)
+      # TODO: Should I be using GraspitCommander.computeQuality() after each
+      #   grasp instead? What is difference between energy and quality?
+      GraspIO.write_energies (os.path.basename (world_fname), gres.energies,
+        ENERGY_ABBREV)
 
   end_time = time.time ()
   print ('Elapsed time: %g seconds' % (end_time - start_time))

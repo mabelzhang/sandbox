@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+
+<!-- Mabel Zhang
+     10 Nov 2018
+
+     Run occlusion_test.cpp with suppressed output
+  -->
+
+<launch>
+
+  <!-- Do not specify output="screen", to suppress all output. Note that if there are errors, you won't see it either, so only use this when sure the code works. Could print with ROS_INFO ROS_ERROR etc in code instead of fprintf but I haven't had time to do that. -->
+  <node pkg="tactile_occlusion_heatmaps" type="occlusion_test"
+    name="occlusion_test" />
+
+</launch>
+

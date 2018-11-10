@@ -9,15 +9,24 @@ root: /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile
 
 # Subdirectories under root
 data: data
-# Text files under data
-intrinsics: intrinsics.txt
-depth_range: cam_depth_range.txt
+
+# Text files under data/renders - these are defined in
+#   depth_scene_rendering config_paths.py, used by scene_generation.py,
+#   which cannot import yaml library because it needs to be run in Blender.
+#   So it cannot read this file.
+#   Read these paths from depth_scene_rendering/config/cam_config_path.txt,
+#   written by scene_generation.py.
+#intrinsics: intrinsics.txt
+#depth_range: cam_depth_range.txt
 # Directories under root/data
+
+renders: renders
+heatmaps: heatmaps
 grasps: grasps
 contacts: contacts
-quals: qualities
+energies: energies
 
 # Subdirectories under root
-renders: renders
+test_renders: test_renders
 vis: vis
 

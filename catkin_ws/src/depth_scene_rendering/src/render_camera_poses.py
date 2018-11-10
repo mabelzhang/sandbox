@@ -34,7 +34,7 @@ from util.tf_transformations import quaternion_from_matrix, \
 # Local
 from scene_generation import reset_scene, setup_camera, load_obj
 from scan_kinect import ScanKinect
-from config_paths import get_render_path
+from config_paths import get_test_render_path
 import depth_scene_rendering.config_consts
 
 
@@ -321,7 +321,7 @@ if __name__ == '__main__':
   setup_render_camera (kinect_obj)
 
 
-  render_path = get_render_path ()
+  render_path = get_test_render_path ()
   rots_path = os.path.join (render_path, 'rotations')
   pots_path = os.path.join (render_path, 'translations')
 

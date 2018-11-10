@@ -38,8 +38,7 @@ energies_abbrevs = {
 }
 
 # Select the search energy to use
-ENERGY_IDX = 3
-
-SEARCH_ENERGY = energies_abbrevs.keys () [ENERGY_IDX]
+#SEARCH_ENERGY = 'GUIDED_POTENTIAL_QUALITY_ENERGY'
+SEARCH_ENERGY = 'GUIDED_AUTO_GRASP_QUALITY_ENERGY'
 ENERGY_ABBREV = energies_abbrevs [SEARCH_ENERGY]
 

@@ -23,7 +23,8 @@ from grasp_collection.config_consts import ENERGY_ABBREV
 
 # Local
 from tactile_occlusion_heatmaps.config_paths import get_data_path, \
-  get_depth_fmt, get_heatmap_blob_fmt, get_label_fmt
+  get_renders_data_path, get_heatmap_data_path, get_depth_fmt, \
+  get_heatmap_blob_fmt, get_label_fmt
 from depth_to_image import RawDepthScaling
 from labels_io import LabelsIO
 
@@ -57,15 +58,18 @@ def main ():
 
   # Sanity checks
   if not args.path:
-    in_dir = get_data_path ()
+    heatmaps_dir = get_heatmap_data_path ()
+    renders_dir = get_renders_data_path ()
   else:
     if not os.path.exists (args.path):
       print ('%sERROR: Path specified does not exist: %s%s' % (
         ansi.FAIL, args.path, ansi.ENDC))
       return
     in_dir = args.path
+    heatmaps_dir = os.path.join (in_dir, 'heatmaps')
+    renders_dir = os.path.join (in_dir, 'renders')
 
-  out_dir = os.path.join (in_dir, 'npz')
+  out_dir = os.path.join (get_data_path (), 'npz')
   if not os.path.exists (out_dir):
     os.makedirs (out_dir)
 
@@ -117,24 +121,24 @@ def main ():
       #   vis, occ, and lbls than there are depth images. Depth images will be
       #   duplicated for each example, to make correpsonding btw different npz
       #   files easier, and `.` CNN wants all data in a matrix in memory anyway.
-      depth_path = os.path.join (in_dir, depth_fmt % (scene_name))
+      depth_path = os.path.join (renders_dir, depth_fmt % (scene_name))
 
 
       # TODO: Instead of using glob, should read contacts meta file to figure out how many grasps there are. Number of grasps == number of elements in meta file.
       # Replace the %d formatting for grasp number with *, to get all grasps
       vis_wildcard = vis_heatmap_fmt.replace ('%d', '*')
       vis_wildcard = vis_wildcard % scene_name
-      vis_sublist = glob.glob (os.path.join (in_dir, vis_wildcard))
+      vis_sublist = glob.glob (os.path.join (heatmaps_dir, vis_wildcard))
       vis_png_list.extend (vis_sublist)
 
       occ_wildcard = occ_heatmap_fmt.replace ('%d', '*')
       occ_wildcard = occ_wildcard % scene_name
-      occ_sublist = glob.glob (os.path.join (in_dir, occ_wildcard))
+      occ_sublist = glob.glob (os.path.join (heatmaps_dir, occ_wildcard))
       occ_png_list.extend (occ_sublist)
 
       lbl_wildcard = lbl_fmt.replace ('%d', '*')
       lbl_wildcard = lbl_wildcard % scene_name
-      lbl_sublist = glob.glob (os.path.join (in_dir, lbl_wildcard))
+      lbl_sublist = glob.glob (os.path.join (heatmaps_dir, lbl_wildcard))
       lbl_list.extend (lbl_sublist)
 
       if len (vis_sublist) != len (occ_sublist) or \
@@ -146,6 +150,10 @@ def main ():
   print ('%d files' % (len (depth_png_list)))
   in_png_lists = [depth_png_list, vis_png_list, occ_png_list, lbl_list]
 
+  # TODO: ENERGY_ABBREV should be read from the file name of the energy csv
+  #   file (new code, haven't trained yet, need to rerun GraspIt training).
+  #   otherwise no way to keep track of which file used which energy if I change
+  #   the energy in code!!!
   npz_prefix = ['depth', 'vis', 'occ', 'lbl_' + ENERGY_ABBREV]
 
 
@@ -176,9 +184,9 @@ def main ():
   NROWS = {'.png': img.shape [0], '.yaml': 1}
   NCOLS = {'.png': img.shape [1], '.yaml': 1}
 
-  #BATCH_SIZE = 1000
+  BATCH_SIZE = 1000
   # TODO: Temporary for testing
-  BATCH_SIZE = 10
+  #BATCH_SIZE = 10
 
 
   # Output npz files for each data sample
@@ -213,7 +221,7 @@ def main ():
     # Loop through all files in this type
     for png_name in png_list:
  
-      print ('Batch %d, image [%d] out of %d: %s' % (batches_filled,
+      print ('Batch %d, image [%d] out of max %d: %s' % (batches_filled,
         rows_filled, BATCH_SIZE, png_name))
 
       # Load PNG

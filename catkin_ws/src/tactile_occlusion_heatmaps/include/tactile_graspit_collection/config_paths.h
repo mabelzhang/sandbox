@@ -1,7 +1,8 @@
 // Mabel Zhang
 // 4 Oct 2018
 //
-// C++ counterpart of grasp_collection config_paths.py
+// C++ counterpart of config_paths.py in depth_scene_rendering and
+//   grasp_collection packages.
 //
 // Paths are configured in YAML by hand in
 //   tactile_occlusion_heatmaps/config/paths.yaml
@@ -18,13 +19,16 @@ private:
   std::string root_;
 
   std::string data_;
-  std::string intrinsics_;
-  std::string depth_range_;
-  std::string grasps_;
-  std::string contacts_;
-  std::string quals_;
+  //std::string intrinsics_;
+  //std::string depth_range_;
 
   std::string renders_;
+  std::string heatmaps_;
+  std::string grasps_;
+  std::string contacts_;
+  std::string energies_;
+
+  std::string test_renders_;
   std::string vis_;
 
 
@@ -47,17 +51,22 @@ public:
 
     // Subdirectories under root
     join_paths (root_, config ["data"].as <std::string> (), data_);
-    // Text files under data
-    join_paths (data_, config ["intrinsics"].as <std::string> (), intrinsics_);
-    join_paths (data_, config ["depth_range"].as <std::string> (),
-      depth_range_);
+
+    // Text files under data/renders
+    //join_paths (renders_, config ["intrinsics"].as <std::string> (), intrinsics_);
+    //join_paths (renders_, config ["depth_range"].as <std::string> (),
+    //  depth_range_);
+
     // Subdirectories under data
+    join_paths (data_, config ["renders"].as <std::string> (), renders_);
+    join_paths (data_, config ["heatmaps"].as <std::string> (), heatmaps_);
     join_paths (data_, config ["grasps"].as <std::string> (), grasps_);
     join_paths (data_, config ["contacts"].as <std::string> (), contacts_);
-    join_paths (data_, config ["quals"].as <std::string> (), quals_);
+    join_paths (data_, config ["energies"].as <std::string> (), energies_);
 
     // Subdirectories under root
-    join_paths (root_, config ["renders"].as <std::string> (), renders_);
+    join_paths (root_, config ["test_renders"].as <std::string> (),
+      test_renders_);
     join_paths (root_, config ["vis"].as <std::string> (), vis_);
   }
 
@@ -71,9 +80,14 @@ public:
     path = data_;
   }
 
-  void get_vis_path (std::string & path)
+  void get_renders_path (std::string & path)
   {
-    path = vis_;
+    path = renders_;
+  }
+
+  void get_heatmaps_path (std::string & path)
+  {
+    path = heatmaps_;
   }
 
   void get_grasps_path (std::string & path)
@@ -86,10 +100,16 @@ public:
     path = contacts_;
   }
 
-  void get_quals_path (std::string & path)
+  void get_energies_path (std::string & path)
   {
-    path = quals_;
+    path = energies_;
   }
+
+  void get_vis_path (std::string & path)
+  {
+    path = vis_;
+  }
+
 };
 
 #endif

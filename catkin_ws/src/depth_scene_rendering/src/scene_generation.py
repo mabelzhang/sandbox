@@ -45,7 +45,7 @@ from util.tf_transformations import quaternion_matrix, euler_matrix, \
 from scan_kinect import ScanKinect
 from depth_scene_rendering import config_consts
 from config_paths import get_intrinsics_path, get_depth_range_path, \
-  get_render_path
+  get_render_data_path
 
 
 # Clear current scene with whatever is in it, set up our scene
@@ -413,17 +413,19 @@ if __name__ == '__main__':
   # Path with object .obj files
   obj_dir = config_consts.obj_path
   obj_suffix = config_consts.obj_suffix
-  
+ 
+  # Output path for renders 
+  out_path = get_render_data_path ()
   
   
   n_objs = len (config_consts.objects)
   #n_objs = 1
   
-  n_camera_poses = 10
+  n_camera_poses = 20
   #n_camera_poses = 1
   # For testing. Set to False for real run.
   # Skips the 1st canonical pose pointing straight down from north pole.
-  SKIP_CAM_IDENTITY = False #True
+  SKIP_CAM_IDENTITY = True #False
 
 
   start_time = time.time ()
@@ -475,7 +477,7 @@ if __name__ == '__main__':
   
       # Scan scene
       out_name, orig_scene_name, orig_noisy_scene_name = kinect_obj.scan (
-        'Camera', cam_pos, cam_quat)
+        out_path, 'Camera', cam_pos, cam_quat)
    
       # Rename files using better convention
       scene_name = out_name

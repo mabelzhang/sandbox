@@ -17,7 +17,7 @@ from util.ansi_colors import ansi_colors
 
 # Local
 from grasp_collection.config_paths import get_grasps_path, get_contacts_path, \
-  get_quals_path
+  get_energies_path
 
 
 # One file per object. A file may contain many grasps.
@@ -31,13 +31,16 @@ class GraspIO:
   #   grasps: graspit_interface.msg.Grasp[], returned from graspit_interface
   #     action/PlanGrasps.action.
   @staticmethod
-  def write_grasps (world_name, grasps):
+  def write_grasps (world_name, grasps, suffix=''):
 
     # Save raw Grasp type, so can easily feed back into GraspIt if need be.
     #   Otherwise need custom translation code between saved format and
     #   Grasp.msg. The less code required, the better.
 
-    grasps_fname = os.path.join (get_grasps_path (), world_name + '.pkl')
+    if len (suffix) > 0 and not suffix.startswith ('_'):
+      suffix = '_' + suffix
+
+    grasps_fname = os.path.join (get_grasps_path (), world_name + suffix + '.pkl')
     with open (grasps_fname, 'wb') as grasps_f:
       pickle.dump (grasps, grasps_f, pickle.HIGHEST_PROTOCOL)
     print ('%sWritten grasps to file %s%s' % (ansi_colors.OKCYAN,
@@ -45,9 +48,12 @@ class GraspIO:
 
 
   @staticmethod
-  def read_grasps (world_name):
+  def read_grasps (world_name, suffix=''):
 
-    grasps_fname = os.path.join (get_grasps_path (), world_name + '.pkl')
+    if len (suffix) > 0 and not suffix.startswith ('_'):
+      suffix = '_' + suffix
+
+    grasps_fname = os.path.join (get_grasps_path (), world_name + suffix + '.pkl')
     print ('%sLoading grasps from file %s%s' % (ansi_colors.OKCYAN,
       grasps_fname, ansi_colors.ENDC))
 
@@ -67,7 +73,7 @@ class GraspIO:
   #   cmeta: List of integers. Each integer describes number of contacts in
   #     each grasp. A grasp is a graspit_interface.msg.Grasp.
   @staticmethod
-  def write_contacts (world_name, contacts_m, cmeta):
+  def write_contacts (world_name, contacts_m, cmeta, suffix=''):
 
     '''
     # pickle file, of a list of matrices, one list item per grasp
@@ -79,8 +85,11 @@ class GraspIO:
     '''
 
 
+    if len (suffix) > 0 and not suffix.startswith ('_'):
+      suffix = '_' + suffix
+
     # csv file, of a large matrix of nContactsPerGrasp * nGrasps.
-    contacts_fname = os.path.join (get_contacts_path (), world_name + '.csv')
+    contacts_fname = os.path.join (get_contacts_path (), world_name + suffix + '.csv')
     with open (contacts_fname, 'wb') as contacts_f:
       contacts_writer = csv.writer (contacts_f)
       # Write n x 3, for easier human reading
@@ -90,7 +99,7 @@ class GraspIO:
 
     # Meta csv file, records how many contacts there are in each grasp. Used
     #   for indexing the big contacts matrix by grasp.
-    cmeta_fname = os.path.join (get_contacts_path (), world_name + '_meta.csv')
+    cmeta_fname = os.path.join (get_contacts_path (), world_name + suffix + '_meta.csv')
     with open (cmeta_fname, 'wb') as cmeta_f:
       cmeta_writer = csv.writer (cmeta_f)
       cmeta_writer.writerow (cmeta)
@@ -99,10 +108,13 @@ class GraspIO:
 
 
   @staticmethod
-  def read_contacts (world_name):
+  def read_contacts (world_name, suffix=''):
+
+    if len (suffix) > 0 and not suffix.startswith ('_'):
+      suffix = '_' + suffix
 
     # csv file, of a large matrix of nContactsPerGrasp * nGrasps.
-    contacts_fname = os.path.join (get_contacts_path (), world_name + '.csv')
+    contacts_fname = os.path.join (get_contacts_path (), world_name + suffix + '.csv')
     print ('%sLoading contacts from file %s%s' % (ansi_colors.OKCYAN,
       contacts_fname, ansi_colors.ENDC))
 
@@ -120,9 +132,12 @@ class GraspIO:
 
 
   @staticmethod
-  def read_contact_meta (world_name):
+  def read_contact_meta (world_name, suffix=''):
 
-    cmeta_fname = os.path.join (get_contacts_path (), world_name + '_meta.csv')
+    if len (suffix) > 0 and not suffix.startswith ('_'):
+      suffix = '_' + suffix
+
+    cmeta_fname = os.path.join (get_contacts_path (), world_name + suffix + '_meta.csv')
     print ('%sLoading contacts meta from file %s%s' % (ansi_colors.OKCYAN,
       cmeta_fname, ansi_colors.ENDC))
 
@@ -136,17 +151,21 @@ class GraspIO:
     return cmeta
 
 
-  # Write grasp energies, or qualities, to csv file
+  # Write grasp energies to csv file
   #   energies: List of floats
   @staticmethod
-  def write_energies (world_name, energies):
+  def write_energies (world_name, energies, energy_abbrev, suffix=''):
+
+    if len (suffix) > 0 and not suffix.startswith ('_'):
+      suffix = '_' + suffix
 
     # Write nGrasps x 1, for easier human reading
     energies_np = np.array (energies)
     energies_np = np.reshape (energies_np, (energies_np.size, 1))
 
     # csv file, of a row of nGrasps elements
-    quals_fname = os.path.join (get_quals_path (), world_name + '.csv')
+    quals_fname = os.path.join (get_energies_path (),
+      world_name + '_' + energy_abbrev + suffix + '.csv')
     with open (quals_fname, 'wb') as quals_f:
       quals_writer = csv.writer (quals_f)
       quals_writer.writerows (energies_np)
@@ -156,10 +175,14 @@ class GraspIO:
 
   # Returns list of nGrasps floats
   @staticmethod
-  def read_energies (world_name):
+  def read_energies (world_name, energy_abbrev, suffix=''):
+
+    if len (suffix) > 0 and not suffix.startswith ('_'):
+      suffix = '_' + suffix
 
     # csv file, of a row of nGrasps elements
-    quals_fname = os.path.join (get_quals_path (), world_name + '.csv')
+    quals_fname = os.path.join (get_energies_path (),
+      world_name + '_' + energy_abbrev + suffix + '.csv')
     print ('%sLoading quals from file %s%s' % (ansi_colors.OKCYAN,
       quals_fname, ansi_colors.ENDC))
 

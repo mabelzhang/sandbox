@@ -29,22 +29,35 @@ def get_data_root ():
   return data_root
 
 
+def get_render_data_path ():
+
+  path = os.path.join (get_data_root (), 'renders')
+
+  if not os.path.exists (path):
+    os.makedirs (path)
+
+  return path
+
+
 # NOTE: Called by scene_generation.py, which runs in Blender Python.
 #   Do not use libraries not in Blender Python, e.g. PyYAML.
 def get_intrinsics_path ():
-  return os.path.join (get_data_root (), 'intrinsics.txt')
+  return os.path.join (get_render_data_path (), 'intrinsics.txt')
 
 def get_depth_range_path ():
-  return os.path.join (get_data_root (), 'cam_depth_range.txt')
+  return os.path.join (get_render_data_path (), 'cam_depth_range.txt')
 
 
-def get_render_path ():
+# Used by render_camera_poses.py and crop_images.py to determine range of
+#   extrinsics camera poses to use, so that there is a variety of poses, and
+#   object is still in camera view.
+def get_test_render_path ():
 
   # Get directory of current file
   this_dir = os.path.dirname (os.path.realpath (__file__))
 
   # Set where you desire to place all output data
-  path = os.path.realpath (os.path.join (this_dir, '../../../../../train/visuotactile_grasping/renders'))
+  path = os.path.realpath (os.path.join (this_dir, '../../../../../train/visuotactile_grasping/test_renders'))
 
   if not os.path.exists (path):
     os.makedirs (path)

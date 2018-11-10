@@ -35,9 +35,9 @@ def get_contacts_path ():
   return path
 
 
-def get_quals_path ():
+def get_energies_path ():
 
-  path = os.path.join (get_data_path (), 'qualities')
+  path = os.path.join (get_data_path (), 'energies')
 
   if not os.path.exists (path):
     os.makedirs (path)

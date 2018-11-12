@@ -131,8 +131,8 @@ public:
   //     plane, of the image with (height, width) dimensions
   //   visible_img, occluded_img: Return values. Masks with white at uv, black
   //     everywhere else.
-  void create_masks (Eigen::MatrixXf & pts, std::vector <bool> occluded,
-    std::vector <bool> valid_idx,
+  void create_masks (Eigen::MatrixXf & pts, std::vector <bool> & occluded,
+    std::vector <bool> & valid_idx,
     int height, int width, Eigen::MatrixXi & uv,
     cv::Mat & visible_img, cv::Mat & occluded_img)
   {
@@ -310,9 +310,9 @@ int main (int argc, char ** argv)
   //     object.
   ScenesYaml scene_list_yaml = ScenesYaml (scene_list_path);
   // For each object
-  //for (int o_i = 0; o_i < scene_list_yaml.get_n_objects (); o_i++)
+  for (int o_i = 0; o_i < scene_list_yaml.get_n_objects (); o_i++)
 // TODO TEMPORARY starting at o_i to continue where seg fault left off
-  for (int o_i = 7; o_i < scene_list_yaml.get_n_objects (); o_i++)
+  //for (int o_i = 7; o_i < scene_list_yaml.get_n_objects (); o_i++)
   {
     size_t start_time_o = time (NULL);
 
@@ -412,13 +412,17 @@ int main (int argc, char ** argv)
       scene_list_yaml.get_scenes (o_i, scene_paths);
      
       // For each rendered scene of this object
-      for (std::vector <std::string>::iterator s_it = scene_paths.begin ();
-        s_it != scene_paths.end (); s_it++)
+      //for (std::vector <std::string>::iterator s_it = scene_paths.begin ();
+      //  s_it != scene_paths.end (); s_it++)
+      for (size_t s_i = 0; s_i < scene_paths.size (); s_i ++)
       {
+        //fprintf (stderr, "%sScene %ld out of %ld%s\n", OKCYAN,
+        //  s_it - scene_paths.begin () + 1, scene_paths.size (), ENDC);
         fprintf (stderr, "%sScene %ld out of %ld%s\n", OKCYAN,
-          s_it - scene_paths.begin () + 1, scene_paths.size (), ENDC);
+          s_i + 1, scene_paths.size (), ENDC);
 
-        std::string scene_path = *s_it;
+        //std::string scene_path = *s_it;
+        std::string scene_path = scene_paths [s_i];
      
         // Instantiate cloud
         pcl::PointCloud <pcl::PointXYZ>::Ptr cloud_ptr =
@@ -426,13 +430,33 @@ int main (int argc, char ** argv)
             new pcl::PointCloud <pcl::PointXYZ> ());
        
         // Load scene cloud
-        load_cloud_file (scene_path, cloud_ptr);
+        bool success = load_cloud_file (scene_path, cloud_ptr);
+        if (! success)
+        {
+          fprintf (stderr, "%sERROR: load_cloud_file() could not load cloud %s."
+            " Skipping this cloud.%s\n", FAIL, scene_path.c_str (), ENDC);
+          continue;
+        }
         // Multiply y and z by -1, to account for Blender camera facing -z.
         flip_yz (cloud_ptr);
         //fprintf (stderr, "Cloud size: %ld points\n", cloud_ptr->size ());
         //fprintf (stderr, "Organized? %s\n",
         //  cloud_ptr->isOrganized () ? "true" : "false");
-       
+
+        // Check how many NaNs are there. Don't actually remove them, `.` then
+        //   the "density of the cloud will be lost". Call the dry run fn.
+        //   Need to keep all the points `.` image width*height structure must
+        //   be preserved in cloud!
+        //   Ref: http://docs.pointclouds.org/trunk/group__filters.html#gac463283a9e9c18a66d3d29b28a575064
+        std::vector <int> notNaNs_idx;
+        pcl::removeNaNFromPointCloud (*cloud_ptr, notNaNs_idx);
+        // Sanity check
+        if (notNaNs_idx.size () == 0)
+        {
+          fprintf (stderr, "%sERROR: All points in cloud are NaNs. Rendering does not have object in frame. Skipping this cloud. You might want to remove this scene from YAML scene list.%s\n", FAIL, ENDC);
+          continue;
+        }
+
         // Make octree to hold point cloud, for raytrace test
         // Ref: http://pointclouds.org/documentation/tutorials/octree.php
         RayTracer raytracer = RayTracer (cloud_ptr, octree_res, VIS_RAYTRACE,
@@ -671,7 +695,7 @@ int main (int argc, char ** argv)
 
         // Save visible and occluded channels
         // basename() returns file name without extension
-        std::string scene_base = "";
+        std::string scene_base;
         basename (scene_path, scene_base);
 
         // Optional. Individual non-zero point. Saving because easier to test
@@ -709,8 +733,9 @@ int main (int argc, char ** argv)
 
         std::string vis_blob_base = scene_base + "_g" + std::to_string (g_i) +
           "_vis_blob.png";
-        std::string vis_blob_path;
-        join_paths (heatmaps_dir, vis_blob_base, vis_blob_path);
+        std::string vis_blob_path = heatmaps_dir + "/" + vis_blob_base;
+        // This causes seg fault, mem leak, or bus error!!
+        //join_paths (heatmaps_dir, vis_blob_base, vis_blob_path, false);
         // Operate on the cropped img
         blob_filter (vis_crop, visible_blob, BLOB_EXPAND, GAUSS_SZ, GAUSS_SIGMA);
         cv::imwrite (vis_blob_path, visible_blob);
@@ -719,8 +744,9 @@ int main (int argc, char ** argv)
        
         std::string occ_blob_base = scene_base + "_g" + std::to_string (g_i) +
           "_occ_blob.png";
-        std::string occ_blob_path;
-        join_paths (heatmaps_dir, occ_blob_base, occ_blob_path);
+        std::string occ_blob_path = heatmaps_dir + "/" + occ_blob_base;
+        // This causes seg fault, mem leak, or bus error!!
+        //join_paths (heatmaps_dir, occ_blob_base, occ_blob_path, false);
         // Operate on the cropped img
         blob_filter (occ_crop, occluded_blob, BLOB_EXPAND, GAUSS_SZ, 
           GAUSS_SIGMA);
@@ -793,8 +819,9 @@ int main (int argc, char ** argv)
           // Output file path
           std::string lbls_base = scene_base + "_g" + std::to_string (g_i) +
             "_lbls.yaml";
-          std::string lbls_path;
-          join_paths (heatmaps_dir, lbls_base, lbls_path);
+          std::string lbls_path = heatmaps_dir + "/" + lbls_base;
+          // This causes seg fault, mem leak, or bus error!!
+          //join_paths (heatmaps_dir, lbls_base, lbls_path, false);
 
           // Pass in object name and integer numeric ID
           LabelsIO::write_label (lbls_path, obj_name, quals (g_i));

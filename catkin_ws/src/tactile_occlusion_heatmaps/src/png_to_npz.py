@@ -23,7 +23,7 @@ from grasp_collection.config_consts import ENERGY_ABBREV
 
 # Local
 from tactile_occlusion_heatmaps.config_paths import get_data_path, \
-  get_renders_data_path, get_heatmap_data_path, get_depth_fmt, \
+  get_renders_data_path, get_heatmaps_data_path, get_depth_fmt, \
   get_heatmap_blob_fmt, get_label_fmt
 from depth_to_image import RawDepthScaling
 from labels_io import LabelsIO
@@ -58,7 +58,7 @@ def main ():
 
   # Sanity checks
   if not args.path:
-    heatmaps_dir = get_heatmap_data_path ()
+    heatmaps_dir = get_heatmaps_data_path ()
     renders_dir = get_renders_data_path ()
   else:
     if not os.path.exists (args.path):
@@ -73,7 +73,7 @@ def main ():
   if not os.path.exists (out_dir):
     os.makedirs (out_dir)
 
-  print ('Reading from %s' % in_dir)
+  print ('Reading from %s' % os.path.dirname (heatmaps_dir))
 
 
 

@@ -70,7 +70,7 @@ def get_renders_data_path ():
 
 
 # Subdir of data/
-def get_heatmap_data_path ():
+def get_heatmaps_data_path ():
 
   path = os.path.join (get_data_path (), 'heatmaps')
 

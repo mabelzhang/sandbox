@@ -40,7 +40,7 @@ public:
 
   void get_objects (std::vector <std::string> & rv)
   {
-    rv = objects_;
+    rv = std::vector <std::string> (objects_);
   }
 };
 

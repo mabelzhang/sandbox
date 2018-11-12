@@ -53,7 +53,7 @@ public:
 
   void get_objects (std::vector <std::string> & rv)
   {
-    rv = objects_;
+    rv = std::vector <std::string> (objects_);
   }
 
   int get_n_objects ()

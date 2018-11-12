@@ -26,7 +26,7 @@ if socket.gethostname () != 'snaefellsjokull':
 import matplotlib.pyplot as plt
 
 # Custom packages
-from util.ansi_colors import ansi_colors
+from util.ansi_colors import ansi_colors as ansi
 from util.image_util import np_from_depth, show_image, matshow_image
 from grasp_collection.config_paths import get_contacts_path
 from depth_scene_rendering.config_read_yaml import ConfigReadYAML
@@ -34,6 +34,7 @@ from depth_scene_rendering.config_read_yaml import ConfigReadYAML
 # Local
 from tactile_occlusion_heatmaps.config_paths import \
   get_heatmap_raw_fmt, get_heatmap_blob_fmt, \
+  get_renders_data_path, get_heatmaps_data_path, \
   get_vis_path, get_vis_heatmap_fmt
 from depth_to_image import RawDepthScaling
 
@@ -56,6 +57,9 @@ def main ():
   scene_list_path = os.path.join (pkg_path, "config/scenes_noisy.yaml")
   scene_list_f = open (scene_list_path, 'rb')
 
+  renders_dir = get_renders_data_path ()
+  heatmaps_dir = get_heatmaps_data_path ()
+
   vis_fmt, occ_fmt = get_heatmap_blob_fmt ()
   #vis_fmt, occ_fmt = get_heatmap_raw_fmt ()
 
@@ -66,8 +70,8 @@ def main ():
   MIN_DEPTH = depth_range [0]
   MAX_DEPTH = depth_range [1]
 
-  vis_path = get_vis_path ()
-  contacts_path = get_contacts_path ()
+  vis_dir = get_vis_path ()
+  contacts_dir = get_contacts_path ()
 
 
   # scenes.txt
@@ -83,12 +87,13 @@ def main ():
 
   # For each object
   for o_i in range (len (obj_names)):
-  #for o_i in [0, 1]:
+  # TODO: TEMPORARY debugging object 7 only
+  #for o_i in [7]:
 
     obj_name = obj_names [o_i]
 
     # Contacts meta file, number of elements in the list is number of grasps
-    obj_meta_path = os.path.join (contacts_path, obj_name + '_meta.csv')
+    obj_meta_path = os.path.join (contacts_dir, obj_name + '_meta.csv')
     with open (obj_meta_path, 'rb') as obj_meta_f:
       obj_meta_reader = csv.reader (obj_meta_f)
       # Only 1 row in file. List of strings separated by comma
@@ -102,15 +107,24 @@ def main ():
       for s_i in range (len (scene_paths [o_i])):
      
         scene_path = scene_paths [o_i] [s_i]
+        scene_base = os.path.basename (scene_path)
      
         print ('Loading triplet files for %s' % scene_path)
 
-        depth_im = np_from_depth (os.path.splitext (scene_path) [0] + 'crop.png')
-        vis_im = np_from_depth (vis_fmt % (os.path.splitext (scene_path) [0], g_i))
-        occ_im = np_from_depth (occ_fmt % (os.path.splitext (scene_path) [0], g_i))
+        depth_name = os.path.join (renders_dir,
+          os.path.splitext (scene_base) [0] + 'crop.png')
+        vis_name = os.path.join (heatmaps_dir,
+          vis_fmt % (os.path.splitext (scene_base) [0], g_i))
+        occ_name = os.path.join (heatmaps_dir,
+          occ_fmt % (os.path.splitext (scene_base) [0], g_i))
+
+        depth_im = np_from_depth (depth_name)
+        vis_im = np_from_depth (vis_name)
+        occ_im = np_from_depth (occ_name)
  
-        if depth_im is None:
-          print ('ERROR: Cropped depth image does not exist. Did you forget to run rosrun depth_scene_generation postprocess_scenes.cpp? Run it to generate the cropped images. Terminating...')
+        if depth_im is None or vis_im is None or occ_im is None:
+          print ('%sERROR: One or more of (depth, vis_tac, occ_tac) images does not exist. Did you forget to run rosrun depth_scene_generation postprocess_scenes? Run it to generate the cropped images. Terminating...%s' % (
+            ansi.FAIL, ansi.ENDC))
           return
 
         # Calculate raw depths from the integers in image
@@ -147,17 +161,17 @@ def main ():
      
         ax = plt.gca ()
         ax.set_aspect (1)
-        dest = os.path.join (vis_path,
+        dest = os.path.join (vis_dir,
           get_vis_heatmap_fmt () % (
-            os.path.splitext (os.path.basename (scene_path)) [0], g_i))
+            os.path.splitext (os.path.basename (scene_base)) [0], g_i))
         fig.savefig (dest)
      
         # To save individual axis cleanly
         #extent = ax.get_window_extent ().transformed (fig.dpi_scale_trans.inverted ())
         #fig.savefig (dest, bbox_inches=extent)
      
-        print ('%sWritten entire plot to %s%s' % (ansi_colors.OKCYAN, dest,
-          ansi_colors.ENDC))
+        print ('%sWritten entire plot to %s%s' % (ansi.OKCYAN, dest,
+          ansi.ENDC))
      
      
         if DISPLAY_IMAGES:

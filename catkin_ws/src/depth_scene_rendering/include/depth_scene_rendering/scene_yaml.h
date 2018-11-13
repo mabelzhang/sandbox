@@ -63,7 +63,7 @@ public:
 
   const std::string get_object_name (int i)
   {
-    return objects_.at (i);
+    return std::string (objects_.at (i));
   }  
 
   // Get all the pcd paths for the specified object

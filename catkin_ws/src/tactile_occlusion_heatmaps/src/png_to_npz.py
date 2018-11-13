@@ -123,8 +123,9 @@ def main ():
       #   files easier, and `.` CNN wants all data in a matrix in memory anyway.
       depth_path = os.path.join (renders_dir, depth_fmt % (scene_name))
 
-
-      # TODO: Instead of using glob, should read contacts meta file to figure out how many grasps there are. Number of grasps == number of elements in meta file.
+      # Use glob instead of reading contacts file for number of grasps, `.`
+      #   glob is safer - won't read any files that don't exist if I skipped it
+      #   because of 0 contacts or 0 points in point cloud, and is faster.
       # Replace the %d formatting for grasp number with *, to get all grasps
       vis_wildcard = vis_heatmap_fmt.replace ('%d', '*')
       vis_wildcard = vis_wildcard % scene_name
@@ -288,6 +289,8 @@ def main ():
       print ('%sWritten %d x %d matrix to %s%s' % (ansi.OKCYAN,
         npz_arr.shape [0], npz_arr.shape [1], out_path, ansi.ENDC))
 
+
+  print ('%d total examples' % (batches_filled * BATCH_SIZE + rows_filled))
 
 
 if __name__ == '__main__':

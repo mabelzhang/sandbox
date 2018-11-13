@@ -194,7 +194,7 @@ def main ():
 
     # Plan Eigengrasps
 
-    # TODO Try different energy measures.
+    # TODO Try different energy measures, set SEARCH_ENERGY to something else.
 
     # Returns graspit_interface_custom/action/PlanGrasps.action result.
     # Request for more than the default top 20 grasps, to get low-quality ones
@@ -219,6 +219,7 @@ def main ():
 
     # Loop through each result grasp
     g_i = 0
+    rm_grasps = [False] * len (gres.grasps)
     while g_i < len (gres.grasps):
 
       print ('\nGrasp %d: energy %g' % (g_i, gres.energies [g_i]))
@@ -254,6 +255,14 @@ def main ():
           break
  
 
+      # TODO: Newly implemented, test this.
+      if n_contacts == 0:
+        print ('%s0 contacts produced from grasp [%d]. Skipping this grasp, will not save it.%s' % (
+          ansi.OKCYAN, g_i, ansi.ENDC))
+        # Set flag to remove this grasp
+        rm_grasps [g_i] = True
+        continue
+
       cmeta [g_i] = n_contacts
       n_contacts_ttl += n_contacts
 
@@ -265,6 +274,17 @@ def main ():
       # Open gripper for next grasp
       GraspitCommander.autoOpen ()
       g_i += 1
+
+    # TODO: Newly implemented, test this. Make sure grasps, contacts, and
+    #   energies have the same length after bad grasps are removed.
+    # Remove grasps that did not produce contacts
+    final_grasps = []
+    final_energies = []
+    for g_i in range (len (gres.grasps)):
+      # If flag says to keep this grasp, add it to final list
+      if rm_grasps [g_i] == False:
+        final_grasps.append (gres.grasps [i])
+        final_energies.append (gres.energies [i])
 
     print ('Total %d contacts in %d grasps' % (n_contacts_ttl, n_best_grasps))
 
@@ -281,7 +301,7 @@ def main ():
       #   floor, and gripper stops closing. Will save them, as bad grasps.
       #   TODO: Hopefully their energies are low. If not, might overwrite as
       #   0 energy?
-      GraspIO.write_grasps (os.path.basename (world_fname), gres.grasps)
+      GraspIO.write_grasps (os.path.basename (world_fname), final_grasps)
  
       GraspIO.write_contacts (os.path.basename (world_fname), contacts_m, cmeta)
  
@@ -289,7 +309,7 @@ def main ():
       #   inspection.
       # TODO: Should I be using GraspitCommander.computeQuality() after each
       #   grasp instead? What is difference between energy and quality?
-      GraspIO.write_energies (os.path.basename (world_fname), gres.energies,
+      GraspIO.write_energies (os.path.basename (world_fname), final_energies,
         ENERGY_ABBREV)
 
   end_time = time.time ()

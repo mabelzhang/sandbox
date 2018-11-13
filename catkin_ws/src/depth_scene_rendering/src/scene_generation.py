@@ -421,11 +421,16 @@ if __name__ == '__main__':
   n_objs = len (config_consts.objects)
   #n_objs = 1
   
-  n_camera_poses = 20
+  n_camera_poses = 30
   #n_camera_poses = 1
   # For testing. Set to False for real run.
   # Skips the 1st canonical pose pointing straight down from north pole.
   SKIP_CAM_IDENTITY = True #False
+
+  # Add 1 back to number of poses, so get the actual number of poses even after
+  #   skipping the first identity pose!
+  if SKIP_CAM_IDENTITY:
+    n_camera_poses += 1
 
 
   start_time = time.time ()

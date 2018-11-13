@@ -239,11 +239,16 @@ int main (int argc, char ** argv)
 {
   bool DISPLAY_IMAGES = false;
 
+  // Dry run only counts how many point clouds are all NaNs
+  bool DRY_RUN = false;
+
   // Parse cmd line args
   for (int i = 0; i < argc; i++)
   {
     if (! strcmp (argv [i], "--display"))
       DISPLAY_IMAGES = true;
+    if (! strcmp (argv [i], "--dry-run"))
+      DRY_RUN = true;
   }
 
 
@@ -270,15 +275,11 @@ int main (int argc, char ** argv)
   Eigen::MatrixXf P;
   load_intrinsics (P);
 
-  // scenes.txt file
-  //std::ifstream scene_list_f (scene_list_path.c_str ());
-  // Read text file line by line. Each line is the path to one .pcd scene
-  //std::string scene_path = "";
-  //while (std::getline (scene_list_f, scene_path))
-
   // scenes.yaml file
   ScenesYaml scene_list_yaml = ScenesYaml (scene_list_path);
   std::vector <std::string> scene_paths;
+  std::vector <std::string> empty_scenes;
+  std::vector <std::string> empty_scene_objs;
   // For each object
   for (int o_i = 0; o_i < scene_list_yaml.get_n_objects (); o_i++)
   {
@@ -311,7 +312,25 @@ int main (int argc, char ** argv)
       fprintf (stderr, "Cloud size: %ld points\n", cloud_ptr->size ());
       fprintf (stderr, "Organized? %s\n",
         cloud_ptr->isOrganized () ? "true" : "false");
- 
+
+      // Check how many NaNs are there. Don't actually remove them, `.` then
+      //   the "density of the cloud will be lost". Call the dry run fn.
+      //   Need to keep all the points `.` image width*height structure must
+      //   be preserved in cloud!
+      //   Ref: http://docs.pointclouds.org/trunk/group__filters.html#gac463283a9e9c18a66d3d29b28a575064
+      std::vector <int> notNaNs_idx;
+      pcl::removeNaNFromPointCloud (*cloud_ptr, notNaNs_idx);
+      // Sanity check
+      if (notNaNs_idx.size () == 0)
+      {
+        fprintf (stderr, "%sERROR: All points in cloud are NaNs. Rendering does not have object in frame. Skipping this cloud. You might want to remove this scene from YAML scene list.%s\n", FAIL, ENDC);
+        empty_scenes.push_back (scene_path);
+        empty_scene_objs.push_back (scene_list_yaml.get_object_name (o_i));
+        continue;
+      }
+      if (DRY_RUN)
+        continue;
+
       std::vector <std::string> exts;
       splitext (scene_path, exts);
       // Path to output image
@@ -362,7 +381,13 @@ int main (int argc, char ** argv)
     }
   }
 
-  //scene_list_f.close ();
+  fprintf (stderr, "%s%ld point cloud scenes had all points NaNs, you might want to delete these from YAML file, and delete the files altogether:%s\n",
+    OKCYAN, empty_scenes.size (), ENDC);
+  for (int s_i = 0; s_i < empty_scenes.size (); s_i ++)
+  {
+    fprintf (stderr, "%s: %s\n", empty_scene_objs [s_i].c_str (),
+      empty_scenes [s_i].c_str ());
+  }
 
   return 0;
 }

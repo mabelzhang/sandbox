@@ -202,6 +202,8 @@ void generate_random_endpoints (int max_pts, RayTracer & raytracer,
   int nPts = rand () % max_pts + 1;
   fprintf (stderr, "Generating %d random points\n", nPts);
 
+  /* TODO: TEMPORARY commented out, `.` not using GEN_RAND_PTS now, debugging
+  //   memory error, suspecting octree on heap is causing error
   int nVoxels = raytracer.get_n_voxels ();
   // Init to 3 x n, as opposed to n x 3, so that each point is on a column.
   //   Makes indexing run faster. Eigen is column-major by default.
@@ -224,6 +226,7 @@ void generate_random_endpoints (int max_pts, RayTracer & raytracer,
     endpoints.col (i) = noisy_pt + noise;
     //std::cerr << "noisy_pt: " << endpoints.col (i).transpose () << std::endl;
   }
+  */
 }
 
 
@@ -242,12 +245,33 @@ int main (int argc, char ** argv)
 
 
   // Parse cmd line args
+  int o_i_start = 0;
+  int g_i_start = 0;
+  int s_i_start = 0;
   for (int i = 0; i < argc; i++)
   {
     if (! strcmp (argv [i], "--display"))
       DISPLAY_IMAGES = true;
     else if (! strcmp (argv [i], "--vis"))
       VIS_RAYTRACE = true;
+    else if (! strcmp (argv [i], "--object_i"))
+    {
+      o_i_start = atoi (argv [++i]);
+      fprintf (stderr, "%sStarting object_i at %d per cmd line arg%s\n",
+        OKCYAN, o_i_start, ENDC);
+    }
+    else if (! strcmp (argv [i], "--grasp_i"))
+    {
+      g_i_start = atoi (argv [++i]);
+      fprintf (stderr, "%sStarting grasp_i at %d per cmd line arg%s\n",
+        OKCYAN, g_i_start, ENDC);
+    }
+    else if (! strcmp (argv [i], "--scene_i"))
+    {
+      s_i_start = atoi (argv [++i]);
+      fprintf (stderr, "%sStarting scene_i at %d per cmd line arg%s\n",
+        OKCYAN, s_i_start, ENDC);
+    }
   }
 
 
@@ -310,9 +334,7 @@ int main (int argc, char ** argv)
   //     object.
   ScenesYaml scene_list_yaml = ScenesYaml (scene_list_path);
   // For each object
-  for (int o_i = 0; o_i < scene_list_yaml.get_n_objects (); o_i++)
-// TODO TEMPORARY starting at o_i to continue where seg fault left off
-  //for (int o_i = 7; o_i < scene_list_yaml.get_n_objects (); o_i++)
+  for (int o_i = o_i_start; o_i < scene_list_yaml.get_n_objects (); o_i++)
   {
     size_t start_time_o = time (NULL);
 
@@ -376,7 +398,7 @@ int main (int argc, char ** argv)
 
     // For each grasp of this object
     int curr_contact_start_idx = 0;
-    for (int g_i = 0; g_i < n_grasps; g_i++)
+    for (int g_i = g_i_start; g_i < n_grasps; g_i++)
     {
       fprintf (stderr, "%sObject [%d], Grasp [%d] out of %d%s\n", MAGENTA, o_i,
         g_i, n_grasps, ENDC);
@@ -414,12 +436,12 @@ int main (int argc, char ** argv)
       // For each rendered scene of this object
       //for (std::vector <std::string>::iterator s_it = scene_paths.begin ();
       //  s_it != scene_paths.end (); s_it++)
-      for (size_t s_i = 0; s_i < scene_paths.size (); s_i ++)
+      for (size_t s_i = s_i_start; s_i < scene_paths.size (); s_i ++)
       {
-        //fprintf (stderr, "%sScene %ld out of %ld%s\n", OKCYAN,
-        //  s_it - scene_paths.begin () + 1, scene_paths.size (), ENDC);
-        fprintf (stderr, "%sScene %ld out of %ld%s\n", OKCYAN,
-          s_i + 1, scene_paths.size (), ENDC);
+        //fprintf (stderr, "%sScene [%ld] out of %ld%s\n", OKCYAN,
+        //  s_it - scene_paths.begin (), scene_paths.size (), ENDC);
+        fprintf (stderr, "%sScene [%ld] out of %ld%s\n", OKCYAN,
+          s_i, scene_paths.size (), ENDC);
 
         //std::string scene_path = *s_it;
         std::string scene_path = scene_paths [s_i];
@@ -459,7 +481,10 @@ int main (int argc, char ** argv)
 
         // Make octree to hold point cloud, for raytrace test
         // Ref: http://pointclouds.org/documentation/tutorials/octree.php
-        RayTracer raytracer = RayTracer (cloud_ptr, octree_res, VIS_RAYTRACE,
+        //RayTracer raytracer = RayTracer (cloud_ptr, octree_res, VIS_RAYTRACE,
+        //  &nh);
+        // Testing memory problem, put octree on stack
+        RayTracer raytracer = RayTracer (octree_res, VIS_RAYTRACE,
           &nh);
        
        
@@ -554,7 +579,8 @@ int main (int argc, char ** argv)
           //   endpoints are in the right quadrant, but 2D hot spots are wrong.
           //   So best flip on top of flip I found, is to manually flip 3D
           //   endpoints' x and y here. I don't even know why anymore.
-          bool curr_occluded = raytracer.raytrace_occlusion_test (origin,
+          bool curr_occluded = raytracer.raytrace_occlusion_test (cloud_ptr,
+            origin,
             //endpoints.col (p_i));
             Eigen::Vector3f (-endpoints (0, p_i), -endpoints (1, p_i),
               endpoints (2, p_i)));
@@ -830,6 +856,10 @@ int main (int argc, char ** argv)
             lbls_path.c_str (), ENDC);
         }
       }
+      // Set for all iterations other than the very first one
+      // For objects other than the first one we are picking up from before,
+      //   reset to start at very first item [0].
+      s_i_start = 0;
 
       // Update for next grasp
       curr_contact_start_idx += n_contacts;
@@ -837,12 +867,19 @@ int main (int argc, char ** argv)
       fprintf (stderr, "Elapsed time for this grasp, %ld scenes in it: %ld s\n",
         scene_paths.size (), time (NULL) - start_time_g);
     }
+    // Set for all iterations other than the very first one
+    // For objects other than the first one we are picking up from before,
+    //   reset to start at very first item [0].
+    g_i_start = 0;
 
     fprintf (stderr, "Elapsed time for this object, %d grasps in it: %ld s\n",
       n_grasps, time (NULL) - start_time_o);
 
     fprintf (stderr, "\n");
   }
+  // Set for all iterations other than the very first one
+  // Putting here in case add an outer loop in future.
+  o_i_start = 0;
 
   return 0;
 }

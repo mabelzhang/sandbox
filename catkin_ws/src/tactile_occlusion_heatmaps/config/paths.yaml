@@ -30,3 +30,8 @@ energies: energies
 test_renders: test_renders
 vis: vis
 
+
+# Energy measure. Defined in grasp_collection config_consts.py. Pick the one
+#   you want to generate data for.
+energy_abbrev: gpqe
+

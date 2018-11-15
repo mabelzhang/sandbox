@@ -85,7 +85,7 @@ class GraspIO:
   #   obj_name: os.path.basename (world_fname), where world_fname is
   #     config_consts.worlds [i], e.g. 'dexnet/bar_clamp', file name of
   #     a GraspIt world XML file in GraspIt installation directory $GRASPIT.
-  #   contacts_m: 3 x (nContacts * nGrasps) numpy array, all contacts from all
+  #   contacts_m: (nContacts * nGrasps) x 3 numpy array, all contacts from all
   #     grasps of one EigenGrasp search session of GraspIt.
   #   cmeta: List of integers. Each integer describes number of contacts in
   #     each grasp. A grasp is a graspit_interface.msg.Grasp.
@@ -110,7 +110,7 @@ class GraspIO:
     with open (contacts_fname, 'wb') as contacts_f:
       contacts_writer = csv.writer (contacts_f)
       # Write n x 3, for easier human reading
-      contacts_writer.writerows (contacts_m.T)
+      contacts_writer.writerows (contacts_m)
     print ('%sWritten contacts to file %s%s' % (ansi_colors.OKCYAN,
       contacts_fname, ansi_colors.ENDC))
 

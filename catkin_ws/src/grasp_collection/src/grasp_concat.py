@@ -13,6 +13,9 @@ from grasp_io import GraspIO
 
 def main ():
 
+  # NOTE: Manually name grasp, contact, contact meta, and energy file names to
+  #   have the same prefix, excluding the _meta part and _<energy_abbrev> part.
+
   '''
   innames = ['nozzle_2018-11-14-20-57_52graspsWithContacts',
     'nozzle_2018-11-14-21-18_57graspsWithContacts',
@@ -20,8 +23,6 @@ def main ():
   outname = 'nozzle_concat'
   '''
 
-  # NOTE: Manually name grasp, contact, contact meta, and energy file names to
-  #   have the same prefix, excluding the _meta part and _<energy_abbrev> part.
   #innames = ['part3_a', 'part3_b']
   #outname = 'part3'
 

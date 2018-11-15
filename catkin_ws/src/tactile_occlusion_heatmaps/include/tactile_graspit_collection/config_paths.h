@@ -28,6 +28,8 @@ private:
   std::string contacts_;
   std::string energies_;
 
+  std::string energy_abbrev_;
+
   std::string test_renders_;
   std::string vis_;
 
@@ -68,6 +70,8 @@ public:
     join_paths (root_, config ["test_renders"].as <std::string> (),
       test_renders_);
     join_paths (root_, config ["vis"].as <std::string> (), vis_);
+
+    energy_abbrev_ = config ["energy_abbrev"].as <std::string> ();
   }
 
   void get_root (std::string & path)
@@ -103,6 +107,11 @@ public:
   void get_energies_path (std::string & path)
   {
     path = energies_;
+  }
+
+  void get_energy_abbrev (std::string & abbrev)
+  {
+    abbrev = energy_abbrev_;
   }
 
   void get_vis_path (std::string & path)

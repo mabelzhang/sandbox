@@ -170,9 +170,8 @@ def main ():
 
   start_time = time.time ()
 
-  #objs_to_collect = range (len (worlds))
-  # TODO TEMPORARY generating more grasps for objects with < 100 grasps
-  objs_to_collect = [6, 7]
+  objs_to_collect = range (len (worlds))
+  #objs_to_collect = [6, 7]
   for w_i in objs_to_collect:
 
     # graspit_interface loadWorld automatically looks in worlds/ path under
@@ -321,7 +320,7 @@ def main ():
       #   0 energy?
       GraspIO.write_grasps (os.path.basename (world_fname), final_grasps, SUFFIX)
  
-      GraspIO.write_contacts (os.path.basename (world_fname), contacts_m,
+      GraspIO.write_contacts (os.path.basename (world_fname), contacts_m.T,
         final_cmeta, SUFFIX)
  
       # Write grasp energies to a separate csv file, for easy loading and

@@ -307,6 +307,8 @@ int main (int argc, char ** argv)
   config.get_contacts_path (contacts_dir);
   std::string energies_dir;
   config.get_energies_path (energies_dir);
+  std::string energy_abbrev;
+  config.get_energy_abbrev (energy_abbrev);
   std::string heatmaps_dir;
   config.get_heatmaps_path (heatmaps_dir);
 
@@ -386,7 +388,8 @@ int main (int argc, char ** argv)
       // Load grasp quality
       // 1 x nGrasps
       std::string energies_path;
-      join_paths (energies_dir, obj_name + ".csv", energies_path);
+      join_paths (energies_dir, obj_name + "_" + energy_abbrev + ".csv",
+        energies_path);
       fprintf (stderr, "%sLoading grasp energies for this object %s%s\n",
         OKCYAN, energies_path.c_str (), ENDC);
       quals = load_csv_to_Eigen <Eigen::MatrixXf> (energies_path);

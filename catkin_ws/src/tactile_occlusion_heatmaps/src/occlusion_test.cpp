@@ -10,6 +10,7 @@
 //
 // Usage:
 //   $ rosrun tactile_occlusion_heatmaps occlusion_test [--display] [--vis]
+//       [--object_i #] [--grasp_i #] [--scene_i #]
 //
 
 // C++
@@ -131,7 +132,7 @@ public:
   //     plane, of the image with (height, width) dimensions
   //   visible_img, occluded_img: Return values. Masks with white at uv, black
   //     everywhere else.
-  void create_masks (Eigen::MatrixXf & pts, std::vector <bool> & occluded,
+  bool create_masks (Eigen::MatrixXf & pts, std::vector <bool> & occluded,
     std::vector <bool> & valid_idx,
     int height, int width, Eigen::MatrixXi & uv,
     cv::Mat & visible_img, cv::Mat & occluded_img)
@@ -148,7 +149,10 @@ public:
     for (int i = 0; i < occluded.size (); i ++)
     {
       if (! valid_idx.at (i))
+      {
+        fprintf (stderr, "Invalid contact point [%d], skipping\n", i);
         continue;
+      }
 
       // I(v, u) = depth z
       if (occluded.at (i) == false)
@@ -185,6 +189,14 @@ public:
     cv::cvtColor (visible_ch, visible_img, CV_GRAY2BGR);
     occluded_img = cv::Mat::zeros (height, width, CV_8UC3);
     cv::cvtColor (occluded_ch, occluded_img, CV_GRAY2BGR);
+
+    // If 0 contacts are visible in image, skip the image, do not use it as
+    //   training data, `.` too many such images with empty heatmaps can
+    //   confuse the predictor.
+    if (n_vis + n_occ == 0)
+      return false;
+    else
+      return true;
   }
 
 };
@@ -321,8 +333,10 @@ int main (int argc, char ** argv)
   Eigen::MatrixXf P;
   load_intrinsics (P);
 
+  // For stats at end of program
   size_t start_time_ttl = time (NULL);
   int n_examples_saved = 0;
+  int n_empty_heatmaps = 0;
 
   // scenes.txt file
   // Read text file line by line. Each line is the path to a .pcd scene file
@@ -446,8 +460,8 @@ int main (int argc, char ** argv)
       {
         //fprintf (stderr, "%sScene [%ld] out of %ld%s\n", OKCYAN,
         //  s_it - scene_paths.begin (), scene_paths.size (), ENDC);
-        fprintf (stderr, "%sScene [%ld] out of %ld%s\n", OKCYAN,
-          s_i, scene_paths.size (), ENDC);
+        fprintf (stderr, "%sScene [%ld] out of %ld (of Object [%d], Grasp [%d] out of %d)%s\n", OKCYAN,
+          s_i, scene_paths.size (), o_i, g_i, n_grasps, ENDC);
 
         //std::string scene_path = *s_it;
         std::string scene_path = scene_paths [s_i];
@@ -699,9 +713,9 @@ int main (int argc, char ** argv)
 
         // Indices of (u, v) list that are out of bounds
         Eigen::Matrix <bool, 1, Eigen::Dynamic> u_obod =
-          (uv.row (0).array () >= SCALE_W);
+          (uv.row (0).array () >= SCALE_W || uv.row (0).array () < 0);
         Eigen::Matrix <bool, 1, Eigen::Dynamic> v_obod =
-          (uv.row (1).array () >= SCALE_H);
+          (uv.row (1).array () >= SCALE_H || uv.row (1).array () < 0);
 
         // Set default value to true, for valid
         std::vector <bool> valid_idx (endpoints.cols (), true);
@@ -720,9 +734,16 @@ int main (int argc, char ** argv)
         // Create heatmaps, or masks with white dots at projected 2D points,
         //   black everywhere else.
         cv::Mat vis_crop, occ_crop;
-        separator.create_masks (endpoints, occluded, valid_idx,
+        bool nonempty = separator.create_masks (endpoints, occluded, valid_idx,
           RawDepthScaling::SCALE_H, RawDepthScaling::SCALE_W, uv,
           vis_crop, occ_crop);
+        // Empty heatmaps. Do not include in training examples. Skip scene
+        if (! nonempty)
+        {
+          fprintf (stderr, "%sWARN: Empty heatmaps for both vis and occ, 0 contacts are visible in image. Skipping this scene...%s\n", WARN, ENDC);
+          n_empty_heatmaps += 1;
+          continue;
+        }
 
 
         // Save visible and occluded channels
@@ -890,6 +911,8 @@ int main (int argc, char ** argv)
   o_i_start = 0;
 
   fprintf (stderr, "%d examples written to disk\n", n_examples_saved);
+  fprintf (stderr, "%d examples with all-empty heatmaps were skipped\n",
+    n_empty_heatmaps);
 
   return 0;
 }

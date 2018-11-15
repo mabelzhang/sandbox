@@ -103,6 +103,7 @@ def find_contacts (T_W_O):
 
   print ('%d contacts' % n_contacts)
 
+  # (int, 4 x n)
   return n_contacts, contacts_O
 
 
@@ -127,9 +128,15 @@ def main ():
   UINPUT = args.debug
 
   # Set to False if debugging and don't want to overwrite previously saved data!
-  SAVE_GRASPS = False
+  SAVE_GRASPS = True #False
   print ('%sSAVE_GRASPS is set to %s, make sure this is what you want!%s' % (
     ansi.OKCYAN, str(SAVE_GRASPS), ansi.ENDC))
+
+  # Save trained grasps with a suffix at the end of filename. Useful if you are
+  #   running this script multiple times and then using grasp_concat.py to
+  #   concatenate them; then you would specify a different suffix each time so
+  #   that the runs do not overwrite previous runs' files.
+  SUFFIX = 'b'
 
   print ('%sSearch energy: %s%s' % (ansi.OKCYAN, SEARCH_ENERGY, ansi.ENDC))
 
@@ -149,8 +156,6 @@ def main ():
   #max_steps = 40000  # Quickest without error
   max_steps = 140000
 
-  n_contacts_ttl = 0
-
   # Replaced this with config_consts, because grasps don't need to be
   #   regenerated all the time! It's always about the same for the same object.
   #   Just generate a bunch, and then you never need to generate them again!
@@ -159,13 +164,16 @@ def main ():
   #obj_names = objs [0]
 
 
+  ns_contacts_ttl = []
+  ns_valid_grasps = []
+  ns_planned_grasps = []
+
   start_time = time.time ()
 
-  for w_i in range (len (worlds)):
-  #for w_i in range (len (obj_names)):
-  # TODO TEMPORARY debugging mismatch of contacts btw grasp_collection and grasp_replay
-  #for w_i in [2]:
-  #for w_i in range (3, len (worlds)):
+  #objs_to_collect = range (len (worlds))
+  # TODO TEMPORARY generating more grasps for objects with < 100 grasps
+  objs_to_collect = [6, 7]
+  for w_i in objs_to_collect:
 
     # graspit_interface loadWorld automatically looks in worlds/ path under
     #   GraspIt installation path.
@@ -219,6 +227,7 @@ def main ():
 
     # Loop through each result grasp
     g_i = 0
+    n_contacts_ttl = 0
     rm_grasps = [False] * len (gres.grasps)
     while g_i < len (gres.grasps):
 
@@ -255,14 +264,6 @@ def main ():
           break
  
 
-      # TODO: Newly implemented, test this.
-      if n_contacts == 0:
-        print ('%s0 contacts produced from grasp [%d]. Skipping this grasp, will not save it.%s' % (
-          ansi.OKCYAN, g_i, ansi.ENDC))
-        # Set flag to remove this grasp
-        rm_grasps [g_i] = True
-        continue
-
       cmeta [g_i] = n_contacts
       n_contacts_ttl += n_contacts
 
@@ -271,22 +272,39 @@ def main ():
       contacts_m = np.hstack ((contacts_m, contacts_O [0:3, :]))
 
 
+      # TODO: Newly implemented, test this.
+      if n_contacts == 0:
+        print ('%s0 contacts produced from grasp [%d]. Skipping this grasp, will not save it.%s' % (
+          ansi.OKCYAN, g_i, ansi.ENDC))
+        # Set flag to remove this grasp
+        rm_grasps [g_i] = True
+
       # Open gripper for next grasp
       GraspitCommander.autoOpen ()
       g_i += 1
 
-    # TODO: Newly implemented, test this. Make sure grasps, contacts, and
-    #   energies have the same length after bad grasps are removed.
+
     # Remove grasps that did not produce contacts
+    n_valid_grasps = 0
     final_grasps = []
     final_energies = []
+    final_cmeta = []
     for g_i in range (len (gres.grasps)):
       # If flag says to keep this grasp, add it to final list
       if rm_grasps [g_i] == False:
-        final_grasps.append (gres.grasps [i])
-        final_energies.append (gres.energies [i])
+        final_grasps.append (gres.grasps [g_i])
+        final_energies.append (gres.energies [g_i])
+        final_cmeta.append (cmeta [g_i])
+        n_valid_grasps += 1
 
-    print ('Total %d contacts in %d grasps' % (n_contacts_ttl, n_best_grasps))
+    ns_contacts_ttl.append (n_contacts_ttl)
+    ns_planned_grasps.append (len (gres.grasps))
+    ns_valid_grasps.append (n_valid_grasps)
+
+    print ('Grasps with contact: %d out of %d' % (n_valid_grasps,
+      len (gres.grasps)))
+    print ('%d contacts in %d grasps' % (n_contacts_ttl,
+      len (gres.grasps)))
 
      
     # Save grasps and contact locations to disk. Try to do this just once per
@@ -301,22 +319,28 @@ def main ():
       #   floor, and gripper stops closing. Will save them, as bad grasps.
       #   TODO: Hopefully their energies are low. If not, might overwrite as
       #   0 energy?
-      GraspIO.write_grasps (os.path.basename (world_fname), final_grasps)
+      GraspIO.write_grasps (os.path.basename (world_fname), final_grasps, SUFFIX)
  
-      GraspIO.write_contacts (os.path.basename (world_fname), contacts_m, cmeta)
+      GraspIO.write_contacts (os.path.basename (world_fname), contacts_m,
+        final_cmeta, SUFFIX)
  
       # Write grasp energies to a separate csv file, for easy loading and
       #   inspection.
       # TODO: Should I be using GraspitCommander.computeQuality() after each
       #   grasp instead? What is difference between energy and quality?
       GraspIO.write_energies (os.path.basename (world_fname), final_energies,
-        ENERGY_ABBREV)
+        ENERGY_ABBREV, SUFFIX)
 
   end_time = time.time ()
   print ('Elapsed time: %g seconds' % (end_time - start_time))
 
+  print ('Summary:')
+  for w_i in objs_to_collect:
+    print ('Object %s: %d out of %d grasps had contacts, total %d contacts' % (
+      worlds [w_i], ns_valid_grasps [w_i], ns_planned_grasps [w_i],
+      ns_contacts_ttl [w_i]))
+
 
 if __name__ == '__main__':
-
   main ()
 

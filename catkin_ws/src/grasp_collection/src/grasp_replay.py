@@ -36,11 +36,16 @@ from tactile_occlusion_heatmaps.config_paths import get_vis_path
 from grasp_collection.config_paths import world_subdir
 from grasp_collect import find_contacts
 from grasp_io import GraspIO
+from grasp_collection.config_consts import ENERGY_ABBREV
 
 
 def main ():
 
   terminate = False
+
+  # Whether to visualize in GraspIt GUI
+  # Set to False to just see how many grasps are in each file
+  VIS = False
 
   objs = ConfigReadYAML.read_object_names ()
   # List of strings
@@ -62,18 +67,33 @@ def main ():
     print ('Loading world from %s' % world_fname)
 
     # Load world
-    GraspitCommander.clearWorld ()
-    GraspitCommander.loadWorld (world_fname)
-
-    # T^W_O. Used to transform contact points to be wrt object frame later
-    body = GraspitCommander.getGraspableBody(0).graspable_body
-    T_W_O = matrix_from_Pose (body.pose)
-    # In meters
-    print ('T_W_O:')
-    print (T_W_O)
+    if VIS:
+      GraspitCommander.clearWorld ()
+      GraspitCommander.loadWorld (world_fname)
+     
+      # T^W_O. Used to transform contact points to be wrt object frame later
+      body = GraspitCommander.getGraspableBody(0).graspable_body
+      T_W_O = matrix_from_Pose (body.pose)
+      # In meters
+      print ('T_W_O:')
+      print (T_W_O)
 
     grasps = GraspIO.read_grasps (os.path.basename (world_fname))
     cmeta = GraspIO.read_contact_meta (os.path.basename (world_fname))
+    # For printing for debugging only
+    energies = GraspIO.read_energies (os.path.basename (world_fname),
+      ENERGY_ABBREV)
+
+    print ('%d grasps' % len (grasps))
+    #print ('Contact meta:')
+    #print (cmeta)
+    print ('Energies min %g, max %g' % (np.min (energies), np.max (energies)))
+    # Bad grasps in gpqe measure are positive numbers
+    if np.max (energies) > 0:
+      print (np.array (energies))
+
+    if not VIS:
+      continue
 
 
     # Each object has many scenes. Each grasp is occluded differently in

@@ -120,7 +120,7 @@ void inspect_image (cv::Mat & mat, double & min, double & max)
 //   depth_img: Return value
 void convert_pcd_to_image (RawDepthScaling & scaler,
   pcl::PointCloud <pcl::PointXYZ>::Ptr & cloud_ptr, Eigen::MatrixXf & P,
-  const std::string & depth_path, cv::Mat & depth_img)
+  const std::string & depth_path, cv::Mat & depth_img, bool save_img=true)
 {
   bool DEBUG_CONVERSION = true;
 
@@ -183,9 +183,12 @@ void convert_pcd_to_image (RawDepthScaling & scaler,
 
   // Write converted integers image to file
   // API https://docs.opencv.org/2.4/modules/highgui/doc/reading_and_writing_images_and_video.html#imwrite
-  cv::imwrite (depth_path, depth_img);
-  fprintf (stderr, "%sWritten depth image to %s%s\n", OKCYAN,
-    depth_path.c_str (), ENDC);
+  if (save_img)
+  {
+    cv::imwrite (depth_path, depth_img);
+    fprintf (stderr, "%sWritten depth image to %s%s\n", OKCYAN,
+      depth_path.c_str (), ENDC);
+  }
 
 
   // Sanity check: Make sure can recover RAW depths from images.
@@ -251,6 +254,9 @@ int main (int argc, char ** argv)
       DRY_RUN = true;
   }
 
+  // Set to false to save running time
+  bool SAVE_UNCROP = false;
+
 
   // Get path of this package
   std::string pkg_path = ros::package::getPath ("depth_scene_rendering");
@@ -267,6 +273,8 @@ int main (int argc, char ** argv)
   /////
   // Convert raw depths in pcd to integers to save as images
 
+  size_t start_time = time (NULL);
+
   // Text file with list of .pcd scene names, written by scene_generation.py
   std::string scene_list_path = "";
   join_paths (pkg_path, "config/scenes_noisy.yaml", scene_list_path);
@@ -280,6 +288,7 @@ int main (int argc, char ** argv)
   std::vector <std::string> scene_paths;
   std::vector <std::string> empty_scenes;
   std::vector <std::string> empty_scene_objs;
+  int n_imgs_saved = 0;
   // For each object
   for (int o_i = 0; o_i < scene_list_yaml.get_n_objects (); o_i++)
   {
@@ -337,7 +346,8 @@ int main (int argc, char ** argv)
       std::string depth_path = exts [0] + ".png";
  
       cv::Mat depth_img;
-      convert_pcd_to_image (scaler, cloud_ptr, P, depth_path, depth_img);
+      convert_pcd_to_image (scaler, cloud_ptr, P, depth_path, depth_img,
+        SAVE_UNCROP);
  
  
       // Find object center in image pixels
@@ -369,6 +379,7 @@ int main (int argc, char ** argv)
       cv::imwrite (crop_path, scaled);
       fprintf (stderr, "%sWritten cropped and scaled depth image to %s%s\n", OKCYAN,
         crop_path.c_str (), ENDC);
+      n_imgs_saved += 1;
  
       if (DISPLAY_IMAGES)
       {
@@ -381,13 +392,17 @@ int main (int argc, char ** argv)
     }
   }
 
+  fprintf (stderr, "Elapsed time %ld s\n", time (NULL) - start_time);
+
   fprintf (stderr, "%s%ld point cloud scenes had all points NaNs, you might want to delete these from YAML file, and delete the files altogether:%s\n",
-    OKCYAN, empty_scenes.size (), ENDC);
+    WARN, empty_scenes.size (), ENDC);
   for (int s_i = 0; s_i < empty_scenes.size (); s_i ++)
   {
     fprintf (stderr, "%s: %s\n", empty_scene_objs [s_i].c_str (),
       empty_scenes [s_i].c_str ());
   }
+
+  fprintf (stderr, "%d cropped images saved\n", n_imgs_saved);
 
   return 0;
 }

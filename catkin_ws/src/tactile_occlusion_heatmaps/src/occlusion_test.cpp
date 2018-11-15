@@ -320,6 +320,7 @@ int main (int argc, char ** argv)
   load_intrinsics (P);
 
   size_t start_time_ttl = time (NULL);
+  int n_examples_saved = 0;
 
   // scenes.txt file
   // Read text file line by line. Each line is the path to a .pcd scene file
@@ -394,6 +395,8 @@ int main (int argc, char ** argv)
     //   1 x nScenes training samples.
     else
       n_grasps = 1;
+
+    //fprintf (stderr, "%d grasps\n", n_grasps);
 
 
     // For each grasp of this object
@@ -779,7 +782,9 @@ int main (int argc, char ** argv)
         cv::imwrite (occ_blob_path, occluded_blob);
         fprintf (stderr, "%sWritten occluded blobbed heatmap to %s%s\n", OKCYAN,
           occ_blob_path.c_str (), ENDC);
-       
+
+        n_examples_saved += 1;
+
         /*
         // Debug blob_filter()
         // Convert cv::Mat to std::vector
@@ -880,6 +885,8 @@ int main (int argc, char ** argv)
   // Set for all iterations other than the very first one
   // Putting here in case add an outer loop in future.
   o_i_start = 0;
+
+  fprintf (stderr, "%d examples written to disk\n", n_examples_saved);
 
   return 0;
 }

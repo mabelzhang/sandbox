@@ -421,7 +421,7 @@ if __name__ == '__main__':
   n_objs = len (config_consts.objects)
   #n_objs = 1
   
-  n_camera_poses = 30
+  n_camera_poses = 10
   #n_camera_poses = 1
   # For testing. Set to False for real run.
   # Skips the 1st canonical pose pointing straight down from north pole.

@@ -30,6 +30,7 @@ class GraspIO:
   #     a GraspIt world XML file in GraspIt installation directory $GRASPIT.
   #   grasps: graspit_interface.msg.Grasp[], returned from graspit_interface
   #     action/PlanGrasps.action.
+  #   suffix: e.g. antipd for antipodal, etc
   @staticmethod
   def write_grasps (world_name, grasps, suffix=''):
 
@@ -61,6 +62,22 @@ class GraspIO:
       grasps = pickle.load (grasps_f)
 
     return grasps
+
+
+  # Concatenate multiple files into a new file
+  # Parameters:
+  #   innames: List of full base name of files, excluding file extension.
+  @staticmethod
+  def concat_grasps (innames, outname):
+
+    all_grasps = []
+    for iname in innames:
+      grasps = GraspIO.read_grasps (iname)
+      print ('%d grasps' % len (grasps))
+      all_grasps.extend (grasps)
+
+    GraspIO.write_grasps (outname, all_grasps)
+    print ('%d grasps total' % len (all_grasps))
 
 
   # Used by grasp_collection.py
@@ -151,6 +168,31 @@ class GraspIO:
     return cmeta
 
 
+  # Parameters:
+  #   innames: List of full base name of files, excluding file extension.
+  #     NOTE that meta files must be named with _meta at end of file name, as
+  #     read_contact_meta() assumes this.
+  @staticmethod
+  def concat_contacts (innames, outname):
+
+    all_contacts_m = np.zeros ((0, 3))
+    all_cmeta = []
+    for iname in innames:
+      # n x 3
+      contacts_m = GraspIO.read_contacts (iname)
+      print ('%d contacts' % (contacts_m.shape [0]))
+      all_contacts_m = np.vstack ((all_contacts_m, contacts_m))
+
+      # List of ints
+      cmeta = GraspIO.read_contact_meta (iname)
+      print ('%d contact metas' % (len (cmeta)))
+      all_cmeta.extend (cmeta)
+
+    GraspIO.write_contacts (outname, all_contacts_m, all_cmeta)
+    print ('%d contacts total' % (all_contacts_m.shape [0]))
+    print ('%d contact metas total' % (len (all_cmeta)))
+
+
   # Write grasp energies to csv file
   #   energies: List of floats
   @staticmethod
@@ -164,13 +206,13 @@ class GraspIO:
     energies_np = np.reshape (energies_np, (energies_np.size, 1))
 
     # csv file, of a row of nGrasps elements
-    quals_fname = os.path.join (get_energies_path (),
-      world_name + '_' + energy_abbrev + suffix + '.csv')
-    with open (quals_fname, 'wb') as quals_f:
-      quals_writer = csv.writer (quals_f)
-      quals_writer.writerows (energies_np)
-    print ('%sWritten quals to file %s%s' % (ansi_colors.OKCYAN,
-      quals_fname, ansi_colors.ENDC))
+    ens_fname = os.path.join (get_energies_path (),
+      world_name + suffix + '_' + energy_abbrev + '.csv')
+    with open (ens_fname, 'wb') as ens_f:
+      ens_writer = csv.writer (ens_f)
+      ens_writer.writerows (energies_np)
+    print ('%sWritten energies to file %s%s' % (ansi_colors.OKCYAN,
+      ens_fname, ansi_colors.ENDC))
 
 
   # Returns list of nGrasps floats
@@ -181,20 +223,39 @@ class GraspIO:
       suffix = '_' + suffix
 
     # csv file, of a row of nGrasps elements
-    quals_fname = os.path.join (get_energies_path (),
-      world_name + '_' + energy_abbrev + suffix + '.csv')
-    print ('%sLoading quals from file %s%s' % (ansi_colors.OKCYAN,
-      quals_fname, ansi_colors.ENDC))
+    ens_fname = os.path.join (get_energies_path (),
+      world_name + suffix + '_' + energy_abbrev + '.csv')
+    print ('%sLoading energies from file %s%s' % (ansi_colors.OKCYAN,
+      ens_fname, ansi_colors.ENDC))
 
     energies = []
 
-    with open (quals_fname, 'rb') as quals_f:
-      quals_reader = csv.reader (quals_f)
+    with open (ens_fname, 'rb') as ens_f:
+      ens_reader = csv.reader (ens_f)
       # nGrasps x 1
-      for row in quals_reader:
+      for row in ens_reader:
         # There's only 1 value per row. Convert string to float
         energies.extend ([float (s) for s in row])
       
     # List of nGrasps floats
     return energies
+
+
+  # Parameters:
+  #   innames: List of full base name of files, excluding file extension.
+  #     NOTE that files must be named with _<energy_abbrev> at end of file
+  #     name, as read_energies() assumes this.
+  @staticmethod
+  def concat_energies (innames, outname, energy_abbrev):
+
+    all_energies = []
+    for iname in innames:
+      # List of floats
+      # energy_abbrev already in full file name in innames
+      energies = GraspIO.read_energies (iname, energy_abbrev)
+      print ('%d energies' % (len (energies)))
+      all_energies.extend (energies)
+
+    GraspIO.write_energies (outname, all_energies, energy_abbrev)
+    print ('%d energies total' % (len (all_energies)))
 

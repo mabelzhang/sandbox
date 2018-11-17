@@ -127,7 +127,7 @@ objects:
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-35-45_n.pcd
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-35-52_n.pcd
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-35-59_n.pcd
-    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-36-07_n.pcd
+    #- /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-36-07_n.pcd
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-36-14_n.pcd
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-36-21_n.pcd
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-36-28_n.pcd
@@ -252,9 +252,9 @@ objects:
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-43-31_n.pcd
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-43-38_n.pcd
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-43-44_n.pcd
-    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-43-51_n.pcd
+    #- /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-43-51_n.pcd
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-43-58_n.pcd
-    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-44-04_n.pcd
+    #- /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-44-04_n.pcd
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-44-11_n.pcd
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-44-17_n.pcd
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-44-24_n.pcd
@@ -262,4 +262,4 @@ objects:
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-44-37_n.pcd
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-44-44_n.pcd
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-44-50_n.pcd
-    - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-44-57_n.pcd
+    #- /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-44-57_n.pcd

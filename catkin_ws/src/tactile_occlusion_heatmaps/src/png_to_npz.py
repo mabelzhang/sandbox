@@ -12,6 +12,7 @@
 import os
 import argparse
 import glob
+import time
 
 import numpy as np
 
@@ -19,7 +20,7 @@ import numpy as np
 from util.ansi_colors import ansi_colors as ansi
 from util.image_util import np_from_depth
 from depth_scene_rendering.config_read_yaml import ConfigReadYAML
-from grasp_collection.config_consts import ENERGY_ABBREV
+from grasp_collection.config_consts import ENERGY_ABBREV, THRESH_INVALID_ENERGY
 
 # Local
 from tactile_occlusion_heatmaps.config_paths import get_data_path, \
@@ -93,6 +94,8 @@ def main ():
   lbl_list = []
 
 
+  start_time = time.time ()
+
   # Compile a list of all data samples
 
   # Get all scene names from YAML
@@ -157,6 +160,7 @@ def main ():
   #   the energy in code!!!
   npz_prefix = ['depth', 'vis', 'occ', 'lbl_' + ENERGY_ABBREV]
 
+  glob_time = time.time () - start_time
 
 
   # To scale RGB integers back to raw depths
@@ -186,8 +190,9 @@ def main ():
   NCOLS = {'.png': img.shape [1], '.yaml': 1}
 
   BATCH_SIZE = 1000
-  # TODO: Temporary for testing
-  #BATCH_SIZE = 10
+  #BATCH_SIZE = 10  # For quick testing
+
+  #n_skipped_grasps = 0
 
 
   # Output npz files for each data sample
@@ -214,7 +219,7 @@ def main ():
  
     # Init array to write to file
     # (1000, height, width, 1) for images
-    # (1000, 1, 1, 1) for grasp quality
+    # (1000, 1, 1, 1) for grasp energy
     npz_arr = np.zeros ((BATCH_SIZE, NROWS [ext], NCOLS [ext], 1))
       #dtype=np.float64)  # This doesn't eliminate warning from tensorflow
 
@@ -222,8 +227,8 @@ def main ():
     # Loop through all files in this type
     for png_name in png_list:
  
-      print ('Batch %d, image [%d] out of max %d: %s' % (batches_filled,
-        rows_filled, BATCH_SIZE, png_name))
+      #print ('Batch %d, image [%d] out of max %d: %s' % (batches_filled,
+      #  rows_filled, BATCH_SIZE, png_name))
 
       # Load PNG
       if ext == '.png':
@@ -241,10 +246,20 @@ def main ():
       elif ext == '.yaml':
 
         labels = LabelsIO.read_label (png_name)
-        quality = labels [1]
+        energy = labels [1]
+
+        # TODO: This should really be done in grasp_collect.py. Can't skip
+        #   here, because this only skips the lbls files, not the grasps and
+        #   heatmap files! Would need ot add that if want to skip in this file.
+        # Skip grasps with an energy above an invalid threshold. Invalid grasps
+        #if energy > THRESH_INVALID_ENERGY:
+        #  print ('%sGrasp energy %g, skipping%s' % (
+        #    ansi.WARNING, energy, ansi.ENDC))
+        #  n_skipped_grasps += 1
+        #  continue
 
         # Scalar
-        npz_arr [rows_filled, :, :, 0] = quality
+        npz_arr [rows_filled, :, :, 0] = energy
 
       # Increment AFTER appending
       rows_filled += 1
@@ -256,22 +271,25 @@ def main ():
 
         out_path = os.path.join (out_dir,
           npz_prefix [l_i] + ('_%05d.npz' % batches_filled))
- 
+
         # Write npz. Inspect it with
         #   m = np.load(path);
         #   m['arr_0'].shape;
         #   np.unique (m['arr_0']);
         #   m.close()  # Must close, else can have leakage, per load() API
+        #np.savez_compressed (out_path, np.squeeze (npz_arr))
         np.savez_compressed (out_path, npz_arr)
  
-        print ('%sWritten %d x %d matrix to %s%s' % (ansi.OKCYAN,
-          npz_arr.shape [0], npz_arr.shape [1], out_path, ansi.ENDC))
+        print ('%sWritten %d-row matrix to %s%s' % (ansi.OKCYAN,
+          npz_arr.shape [0], out_path, ansi.ENDC))
  
         # Reset
         npz_arr = np.zeros ((BATCH_SIZE, NROWS [ext], NCOLS [ext], 1))
           #dtype=np.float64)  # This doesn't eliminate warning from tensorflow
         rows_filled = 0
         batches_filled += 1
+
+        print ('Batch %d filled, batch size %d' % (batches_filled, BATCH_SIZE))
  
  
     # Last npz file
@@ -284,13 +302,18 @@ def main ():
       out_path = os.path.join (out_dir,
         npz_prefix [l_i] + ('_%05d.npz' % batches_filled))
  
+      #np.savez_compressed (out_path, np.squeeze (npz_arr))
       np.savez_compressed (out_path, npz_arr)
  
-      print ('%sWritten %d x %d matrix to %s%s' % (ansi.OKCYAN,
-        npz_arr.shape [0], npz_arr.shape [1], out_path, ansi.ENDC))
+      print ('%sWritten %d-row matrix to %s%s' % (ansi.OKCYAN,
+        npz_arr.shape [0], out_path, ansi.ENDC))
 
+  end_time = time.time () - start_time
 
-  print ('%d total examples' % (batches_filled * BATCH_SIZE + rows_filled))
+  print ('%d total examples actually written' % (batches_filled * BATCH_SIZE + rows_filled))
+  #print ('%d skipped and not written' % (n_skipped_grasps))
+  print ('Elapsed time: %g seconds, in which %g seconds was mainly glob() calls' % (
+    end_time, glob_time))
 
 
 if __name__ == '__main__':

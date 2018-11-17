@@ -910,6 +910,8 @@ int main (int argc, char ** argv)
   // Putting here in case add an outer loop in future.
   o_i_start = 0;
 
+  fprintf (stderr, "Elapsed time total: %ld s\n", time (NULL) - start_time_ttl);
+
   fprintf (stderr, "%d examples written to disk\n", n_examples_saved);
   fprintf (stderr, "%d examples with all-empty heatmaps were skipped\n",
     n_empty_heatmaps);

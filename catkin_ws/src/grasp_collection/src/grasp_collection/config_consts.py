@@ -41,3 +41,8 @@ energies_abbrevs = {
 SEARCH_ENERGY = 'GUIDED_POTENTIAL_QUALITY_ENERGY'
 ENERGY_ABBREV = energies_abbrevs [SEARCH_ENERGY]
 
+# Grasps with energy above this value can be skipped when writing training data
+#   in tactile_occlusion_heatmaps png_to_npz.py.
+# Rough observation from gpqe. Positive energy definitely bad.
+THRESH_INVALID_ENERGY = 0
+

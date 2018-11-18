@@ -47,11 +47,17 @@ def main ():
   # Variable number of args http://stackoverflow.com/questions/13219910/argparse-get-undefined-number-of-arguments
   arg_parser.add_argument ('--display', action="store_true",
     help='Specify for debugging one by one. Displays matplotlib plots. This will block program flow and require user interaction to close window to move on to next data sample.')
+  arg_parser.add_argument ('--no-save', action='store_true',
+    help='Specify to NOT save any visualized images.')
+  arg_parser.add_argument ('--uinput', action='store_true',
+    help='Specify to use keyboard interaction, useful for debugging.')
 
   args = arg_parser.parse_args ()
 
 
   DISPLAY_IMAGES = args.display
+  SAVE_IMG = not args.no_save
+  UINPUT = args.uinput
 
   pkg_path = rospkg.RosPack ().get_path ('depth_scene_rendering')
   scene_list_path = os.path.join (pkg_path, "config/scenes_noisy.yaml")
@@ -74,10 +80,6 @@ def main ():
   contacts_dir = get_contacts_path ()
 
 
-  # scenes.txt
-  #for scene_path in scene_list_f:
-
-  # TODO: Should use depth_scene_rendering ConfigReadYAML instead.
   # scenes.yaml
   objs = ConfigReadYAML.read_object_names ()
   # String
@@ -86,6 +88,7 @@ def main ():
   scene_paths = objs [1]
 
   # For each object
+  terminate = False
   for o_i in range (len (obj_names)):
   # TODO: TEMPORARY debugging object 7 only
   #for o_i in [7]:
@@ -100,16 +103,18 @@ def main ():
       for row in obj_meta_reader:
         n_grasps = len (row)
 
-    # For each grasp for this object
-    for g_i in range (n_grasps):
-
-      # For each scene for this object
-      for s_i in range (len (scene_paths [o_i])):
+    skip_obj = False
+    # For each scene for this object
+    for s_i in range (len (scene_paths [o_i])):
      
+      # For each grasp for this object
+      for g_i in range (n_grasps):
+
         scene_path = scene_paths [o_i] [s_i]
         scene_base = os.path.basename (scene_path)
      
-        print ('Loading triplet files for %s' % scene_path)
+        print ('Object [%d], Scene [%d], Grasp [%d], Loading triplet files for %s' % (
+          o_i, s_i, g_i, scene_path))
 
         depth_name = os.path.join (renders_dir,
           os.path.splitext (scene_base) [0] + 'crop.png')
@@ -161,23 +166,43 @@ def main ():
      
         ax = plt.gca ()
         ax.set_aspect (1)
-        dest = os.path.join (vis_dir,
-          get_vis_heatmap_fmt () % (
-            os.path.splitext (os.path.basename (scene_base)) [0], g_i))
-        fig.savefig (dest)
+        if SAVE_IMG:
+          dest = os.path.join (vis_dir,
+            get_vis_heatmap_fmt () % (
+              os.path.splitext (os.path.basename (scene_base)) [0], g_i))
+          fig.savefig (dest)
      
-        # To save individual axis cleanly
-        #extent = ax.get_window_extent ().transformed (fig.dpi_scale_trans.inverted ())
-        #fig.savefig (dest, bbox_inches=extent)
-     
-        print ('%sWritten entire plot to %s%s' % (ansi.OKCYAN, dest,
-          ansi.ENDC))
+          # To save individual axis cleanly
+          #extent = ax.get_window_extent ().transformed (fig.dpi_scale_trans.inverted ())
+          #fig.savefig (dest, bbox_inches=extent)
+       
+          print ('%sWritten entire plot to %s%s' % (ansi.OKCYAN, dest,
+            ansi.ENDC))
      
      
         if DISPLAY_IMAGES:
           plt.show ()
 
         plt.close (fig)
+
+        if UINPUT:
+          uinput = raw_input ('Press s to skip to next scene, o to skip to next objet, q to quit, or anything else to go to next grasp in this scene: ')
+          if uinput.lower () == 's':
+            break
+          elif uinput.lower () == 'o':
+            skip_obj = True
+            break
+          elif uinput.lower () == 'q':
+            terminate = True
+            break
+
+      # Break out of s_i
+      if skip_obj or terminate:
+        break
+
+    # Break out of o_i
+    if terminate:
+      break
 
 
 

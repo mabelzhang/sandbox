@@ -248,6 +248,9 @@ def main ():
         labels = LabelsIO.read_label (png_name)
         energy = labels [1]
 
+        # TODO: Another option, instead of skipping, is to cap them to
+        #   a constant, THRESH_INVALID_ENERGY. Then the example can still be
+        #   used, and simply counted as a bad grasp.
         # TODO: This should really be done in grasp_collect.py. Can't skip
         #   here, because this only skips the lbls files, not the grasps and
         #   heatmap files! Would need ot add that if want to skip in this file.
@@ -256,7 +259,9 @@ def main ():
         #  print ('%sGrasp energy %g, skipping%s' % (
         #    ansi.WARNING, energy, ansi.ENDC))
         #  n_skipped_grasps += 1
-        #  continue
+        #  TODO Just implemented, test it.
+        #  energy = THRESH_INVALID_ENERGY
+        #  #continue
 
         # Scalar
         npz_arr [rows_filled, :, :, 0] = energy

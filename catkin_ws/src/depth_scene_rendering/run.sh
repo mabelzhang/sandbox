@@ -50,7 +50,7 @@ $cmd
 # $ rosrun grasp_collection grasp_replay.py
 
 # Generate npz files
-cmd="rosrun tactile_occlusion_heatmaps png_to_npz.py"
-echo -e "$MAGENTA$cmd$ENDC"
-$cmd
+#cmd="rosrun tactile_occlusion_heatmaps png_to_npz.py"
+#echo -e "$MAGENTA$cmd$ENDC"
+#$cmd
 

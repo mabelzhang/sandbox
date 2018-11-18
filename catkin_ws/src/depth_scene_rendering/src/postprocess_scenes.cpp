@@ -242,7 +242,8 @@ int main (int argc, char ** argv)
 {
   bool DISPLAY_IMAGES = false;
 
-  // Dry run only counts how many point clouds are all NaNs
+  // Dry run only counts how many point clouds are all NaNs, and prints them,
+  //   so they can be manually removed from the scenes YAML file.
   bool DRY_RUN = false;
 
   // Parse cmd line args
@@ -250,7 +251,7 @@ int main (int argc, char ** argv)
   {
     if (! strcmp (argv [i], "--display"))
       DISPLAY_IMAGES = true;
-    if (! strcmp (argv [i], "--dry-run"))
+    else if (! strcmp (argv [i], "--dry-run"))
       DRY_RUN = true;
   }
 

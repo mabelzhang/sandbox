@@ -214,8 +214,6 @@ void generate_random_endpoints (int max_pts, RayTracer & raytracer,
   int nPts = rand () % max_pts + 1;
   fprintf (stderr, "Generating %d random points\n", nPts);
 
-  /* TODO: TEMPORARY commented out, `.` not using GEN_RAND_PTS now, debugging
-  //   memory error, suspecting octree on heap is causing error
   int nVoxels = raytracer.get_n_voxels ();
   // Init to 3 x n, as opposed to n x 3, so that each point is on a column.
   //   Makes indexing run faster. Eigen is column-major by default.
@@ -238,22 +236,22 @@ void generate_random_endpoints (int max_pts, RayTracer & raytracer,
     endpoints.col (i) = noisy_pt + noise;
     //std::cerr << "noisy_pt: " << endpoints.col (i).transpose () << std::endl;
   }
-  */
 }
 
 
 
 int main (int argc, char ** argv)
 {
-  ros::init (argc, argv, "occlusion_test");
-  ros::NodeHandle nh;
-
   bool DEBUG_RAYTRACE = false;
   bool VIS_RAYTRACE = false;
 
   bool GEN_RAND_PTS = false;
 
   bool DISPLAY_IMAGES = false;
+
+  // Dry run only counts how many point clouds are all NaNs, and prints them,
+  //   so they can be manually removed from the scenes YAML file.
+  bool DRY_RUN = false;
 
 
   // Parse cmd line args
@@ -266,6 +264,8 @@ int main (int argc, char ** argv)
       DISPLAY_IMAGES = true;
     else if (! strcmp (argv [i], "--vis"))
       VIS_RAYTRACE = true;
+    else if (! strcmp (argv [i], "--dry-run"))
+      DRY_RUN = true;
     else if (! strcmp (argv [i], "--object_i"))
     {
       o_i_start = atoi (argv [++i]);
@@ -284,6 +284,14 @@ int main (int argc, char ** argv)
       fprintf (stderr, "%sStarting scene_i at %d per cmd line arg%s\n",
         OKCYAN, s_i_start, ENDC);
     }
+  }
+
+  ros::NodeHandle * nh = NULL;
+  // Only need ROS for RViz visualization
+  if (VIS_RAYTRACE)
+  {
+    ros::init (argc, argv, "occlusion_test");
+    nh = new ros::NodeHandle ();
   }
 
 
@@ -337,6 +345,9 @@ int main (int argc, char ** argv)
   size_t start_time_ttl = time (NULL);
   int n_examples_saved = 0;
   int n_empty_heatmaps = 0;
+
+  std::vector <std::string> empty_scenes;
+  std::vector <std::string> empty_scene_objs;
 
   // scenes.txt file
   // Read text file line by line. Each line is the path to a .pcd scene file
@@ -416,102 +427,103 @@ int main (int argc, char ** argv)
     //fprintf (stderr, "%d grasps\n", n_grasps);
 
 
-    // For each grasp of this object
-    int curr_contact_start_idx = 0;
-    for (int g_i = g_i_start; g_i < n_grasps; g_i++)
+    // Get scenes of current object, rendered at different camera angles
+    std::vector <std::string> scene_paths;
+    scene_list_yaml.get_scenes (o_i, scene_paths);
+   
+    // For each rendered scene of this object
+    //for (std::vector <std::string>::iterator s_it = scene_paths.begin ();
+    //  s_it != scene_paths.end (); s_it++)
+    for (size_t s_i = s_i_start; s_i < scene_paths.size (); s_i ++)
     {
-      fprintf (stderr, "%sObject [%d], Grasp [%d] out of %d%s\n", MAGENTA, o_i,
-        g_i, n_grasps, ENDC);
-      size_t start_time_g = time (NULL);
+      size_t start_time_s = time (NULL);
 
-      Eigen::MatrixXf curr_grasp_contacts;
-      int n_contacts = 0;
-      if (! GEN_RAND_PTS)
+      //fprintf (stderr, "%sScene [%ld] out of %ld%s\n", OKCYAN,
+      //  s_it - scene_paths.begin (), scene_paths.size (), ENDC);
+      fprintf (stderr, "%sObject [%d], Scene [%ld] out of %ld%s\n", MAGENTA,
+        o_i, s_i, scene_paths.size (), ENDC);
+
+      //std::string scene_path = *s_it;
+      std::string scene_path = scene_paths [s_i];
+   
+      // Instantiate cloud
+      pcl::PointCloud <pcl::PointXYZ>::Ptr cloud_ptr =
+        pcl::PointCloud <pcl::PointXYZ>::Ptr (
+          new pcl::PointCloud <pcl::PointXYZ> ());
+     
+      // Load scene cloud
+      bool success = load_cloud_file (scene_path, cloud_ptr);
+      if (! success)
       {
-        // Number of contacts in this grasp
-        n_contacts = contacts_meta (g_i);
-
-        // Index contacts for the current grasps.
-        // Syntax block(i, j, rows, cols).
-        // 4 x nContacts. 4 x 0 if no contacts
-        // [:, grasp_start : grasp_start + n_contacts_at_this_grasp]
-        // Coordinates are in object frame. Same points in object frame for
-        //   all camera scenes. Only coordinates in camera frame are different
-        //   across scenes.
-        curr_grasp_contacts = contacts_O4.block (0,
-          curr_contact_start_idx, contacts_O4.rows (), n_contacts);
+        fprintf (stderr, "%sERROR: load_cloud_file() could not load cloud %s."
+          " Skipping this cloud.%s\n", FAIL, scene_path.c_str (), ENDC);
+        continue;
       }
+      // Multiply y and z by -1, to account for Blender camera facing -z.
+      flip_yz (cloud_ptr);
+      //fprintf (stderr, "Cloud size: %ld points\n", cloud_ptr->size ());
+      //fprintf (stderr, "Organized? %s\n",
+      //  cloud_ptr->isOrganized () ? "true" : "false");
 
-      std::cerr << "curr_contact_start_idx: " << curr_contact_start_idx
-        << std::endl;
-      std::cerr << "n_contacts: " << n_contacts << std::endl;
-      std::cerr << "contacts: " << std::endl;
-      std::cerr << curr_grasp_contacts << std::endl;
-
-
-      // Get scenes of current object, rendered at different camera angles
-      std::vector <std::string> scene_paths;
-      scene_list_yaml.get_scenes (o_i, scene_paths);
-     
-      // For each rendered scene of this object
-      //for (std::vector <std::string>::iterator s_it = scene_paths.begin ();
-      //  s_it != scene_paths.end (); s_it++)
-      for (size_t s_i = s_i_start; s_i < scene_paths.size (); s_i ++)
+      // Check how many NaNs are there. Don't actually remove them, `.` then
+      //   the "density of the cloud will be lost". Call the dry run fn.
+      //   Need to keep all the points `.` image width*height structure must
+      //   be preserved in cloud!
+      //   Ref: http://docs.pointclouds.org/trunk/group__filters.html#gac463283a9e9c18a66d3d29b28a575064
+      std::vector <int> notNaNs_idx;
+      pcl::removeNaNFromPointCloud (*cloud_ptr, notNaNs_idx);
+      // Sanity check
+      if (notNaNs_idx.size () == 0)
       {
-        //fprintf (stderr, "%sScene [%ld] out of %ld%s\n", OKCYAN,
-        //  s_it - scene_paths.begin (), scene_paths.size (), ENDC);
-        fprintf (stderr, "%sScene [%ld] out of %ld (of Object [%d], Grasp [%d] out of %d)%s\n", OKCYAN,
-          s_i, scene_paths.size (), o_i, g_i, n_grasps, ENDC);
+        fprintf (stderr, "%sERROR: All points in cloud are NaNs. Rendering does not have object in frame. Skipping this cloud. You might want to remove this scene from YAML scene list.%s\n", FAIL, ENDC);
+        empty_scenes.push_back (scene_path);
+        empty_scene_objs.push_back (scene_list_yaml.get_object_name (o_i));
+        continue;
+      }
+      if (DRY_RUN)
+        continue;
 
-        //std::string scene_path = *s_it;
-        std::string scene_path = scene_paths [s_i];
+      // Make octree to hold point cloud, for raytrace test
+      // Ref: http://pointclouds.org/documentation/tutorials/octree.php
+      RayTracer raytracer = RayTracer (cloud_ptr, octree_res, VIS_RAYTRACE,
+        nh);
      
-        // Instantiate cloud
-        pcl::PointCloud <pcl::PointXYZ>::Ptr cloud_ptr =
-          pcl::PointCloud <pcl::PointXYZ>::Ptr (
-            new pcl::PointCloud <pcl::PointXYZ> ());
-       
-        // Load scene cloud
-        bool success = load_cloud_file (scene_path, cloud_ptr);
-        if (! success)
-        {
-          fprintf (stderr, "%sERROR: load_cloud_file() could not load cloud %s."
-            " Skipping this cloud.%s\n", FAIL, scene_path.c_str (), ENDC);
-          continue;
-        }
-        // Multiply y and z by -1, to account for Blender camera facing -z.
-        flip_yz (cloud_ptr);
-        //fprintf (stderr, "Cloud size: %ld points\n", cloud_ptr->size ());
-        //fprintf (stderr, "Organized? %s\n",
-        //  cloud_ptr->isOrganized () ? "true" : "false");
 
-        // Check how many NaNs are there. Don't actually remove them, `.` then
-        //   the "density of the cloud will be lost". Call the dry run fn.
-        //   Need to keep all the points `.` image width*height structure must
-        //   be preserved in cloud!
-        //   Ref: http://docs.pointclouds.org/trunk/group__filters.html#gac463283a9e9c18a66d3d29b28a575064
-        std::vector <int> notNaNs_idx;
-        pcl::removeNaNFromPointCloud (*cloud_ptr, notNaNs_idx);
-        // Sanity check
-        if (notNaNs_idx.size () == 0)
+      // For each grasp of this object
+      int curr_contact_start_idx = 0;
+      for (int g_i = g_i_start; g_i < n_grasps; g_i++)
+      {
+        fprintf (stderr, "%sGrasp [%d] out of %d (of Object [%d], Scene [%ld] out of %ld)%s\n",
+          OKCYAN, g_i, n_grasps, o_i, s_i, scene_paths.size (), ENDC);
+ 
+        int n_contacts = 0;
+        Eigen::MatrixXf curr_grasp_contacts;
+        if (! GEN_RAND_PTS)
         {
-          fprintf (stderr, "%sERROR: All points in cloud are NaNs. Rendering does not have object in frame. Skipping this cloud. You might want to remove this scene from YAML scene list.%s\n", FAIL, ENDC);
-          continue;
+          // Number of contacts in this grasp
+          n_contacts = contacts_meta (g_i);
+ 
+          // Index contacts for the current grasps.
+          // Syntax block(i, j, rows, cols).
+          // 4 x nContacts. 4 x 0 if no contacts
+          // [:, grasp_start : grasp_start + n_contacts_at_this_grasp]
+          // Coordinates are in object frame. Same points in object frame for
+          //   all camera scenes. Only coordinates in camera frame are different
+          //   across scenes.
+          curr_grasp_contacts = contacts_O4.block (0,
+            curr_contact_start_idx, contacts_O4.rows (), n_contacts);
         }
+ 
+        std::cerr << "curr_contact_start_idx: " << curr_contact_start_idx
+          << std::endl;
+        std::cerr << "n_contacts: " << n_contacts << std::endl;
+        std::cerr << "contacts: " << std::endl;
+        std::cerr << curr_grasp_contacts << std::endl;
 
-        // Make octree to hold point cloud, for raytrace test
-        // Ref: http://pointclouds.org/documentation/tutorials/octree.php
-        //RayTracer raytracer = RayTracer (cloud_ptr, octree_res, VIS_RAYTRACE,
-        //  &nh);
-        // Testing memory problem, put octree on stack
-        RayTracer raytracer = RayTracer (octree_res, VIS_RAYTRACE,
-          &nh);
-       
-       
+
         fprintf (stderr, "Ray-tracing...\n");
         // Origin of ray is always from camera center, 0 0 0.
         Eigen::Vector3f origin (0, 0, 0);
-       
        
         // 1 m along z of camera frame, i.e. straight out of and normal to image
         //   plane.
@@ -522,8 +534,8 @@ int main (int argc, char ** argv)
         Eigen::MatrixXf endpoints;
      
         // Generate random endpoints to raytrace through
-        // These are in camera frame, `.` points are generated by raytracer, which
-        //   comes from pcd point cloud, captured in camera frame.
+        // These are in camera frame, `.` points are generated by raytracer,
+        //   which comes from pcd point cloud, captured in camera frame.
         if (GEN_RAND_PTS)
         {
           generate_random_endpoints (10, raytracer, endpoints);
@@ -547,10 +559,12 @@ int main (int argc, char ** argv)
           // flip
           //T_c_o (0, 3) = -T_c_o (0, 3);
           //T_c_o (1, 3) = -T_c_o (1, 3);
-
+ 
+          // Now such contacts are discarded in grasp_collect.py. Not keeping
+          //   them, because having too many empty heatmaps that result in
+          //   different grasp energies confuses the predictor.
           // No contacts in a grasp means the grasp is terrible, didn't make any
-          //   contact with object. For now, keep them, because simply output
-          //   poor grasp quality. TODO Decide whether to keep for final run
+          //   contact with object.
           Eigen::MatrixXf contacts_C;
           if (n_contacts == 0)
             // 4 x 0
@@ -565,19 +579,19 @@ int main (int argc, char ** argv)
             contacts_C = T_c_o * curr_grasp_contacts;
           }
           endpoints = contacts_C.topRows (3);
-
+ 
           //std::cerr << "Object center in camera frame: " << std::endl;
           Eigen::Vector4f origin;
           origin << 0, 0, 0, 1;
           //std::cerr << T_c_o * origin << std::endl;
         }
-
+ 
         if (DEBUG_RAYTRACE)
         {
           std::cerr << "endpoints in camera frame: " << std::endl;
           std::cerr << endpoints << std::endl;
         }
-
+ 
      
         // Do ray-trace occlusion test for each endpoint, in 3D
         std::vector <bool> occluded;
@@ -586,7 +600,7 @@ int main (int argc, char ** argv)
           if (DEBUG_RAYTRACE)
             std::cerr << "Ray through " << endpoints.col (p_i).transpose ()
               << std::endl;
-
+ 
           // Ray trace
           // Occluded = red arrow drawn in RViz, unoccluded = green
           // Must test endpoints one by one, not an n x 3 matrix, `.` octree
@@ -599,7 +613,7 @@ int main (int argc, char ** argv)
           //   endpoints are in the right quadrant, but 2D hot spots are wrong.
           //   So best flip on top of flip I found, is to manually flip 3D
           //   endpoints' x and y here. I don't even know why anymore.
-          bool curr_occluded = raytracer.raytrace_occlusion_test (cloud_ptr,
+          bool curr_occluded = raytracer.raytrace_occlusion_test (
             origin,
             //endpoints.col (p_i));
             Eigen::Vector3f (-endpoints (0, p_i), -endpoints (1, p_i),
@@ -625,7 +639,7 @@ int main (int argc, char ** argv)
         Eigen::MatrixXi uv;
         separator.project_to_2d (endpoints, P,
           cloud_ptr -> height, cloud_ptr -> width, uv);
-
+ 
        
         // Crop the image, centered at object
         // Find object center in image pixels, using camera extrinsics
@@ -633,7 +647,7 @@ int main (int argc, char ** argv)
         // flip
         calc_object_pose_in_img (scene_path, P, p_obj_2d, cloud_ptr -> height,
           cloud_ptr -> width, true);
-
+ 
         // Now instead of cropping the physical heatmaps, just apply the crop
         //   calculation on the uv's! Then, calculate the uv's for scaling!
         //   Generate the heatmaps at the end. Not only is this faster and
@@ -651,22 +665,22 @@ int main (int argc, char ** argv)
         //  RawDepthScaling::CROP_W, RawDepthScaling::CROP_H, false);
         //crop_image (occluded_img, occ_crop, p_obj_2d[0], p_obj_2d[1],
         //  RawDepthScaling::CROP_W, RawDepthScaling::CROP_H, false);
-
+ 
         // Calculate topleft corner (x, y) coordinates of crop
         int topleftx = -1, toplefty = -1;
         calc_crop_coords (cloud_ptr -> width, cloud_ptr -> height,
           p_obj_2d[0], p_obj_2d[1], topleftx, toplefty,
           RawDepthScaling::CROP_W, RawDepthScaling::CROP_H, false);
-
+ 
         // Apply the crop to the projected 2D coordinates
         // To account for the crop in (u, v) of projected 3D points, simply
         //   subtract by upperleft coordinates (x, y) of crop.
         uv.row (0) = uv.row (0).array () - topleftx;
         uv.row (1) = uv.row (1).array () - toplefty;
-
-
+ 
+ 
         // Apply the scaling to the projected 2D coordinates
-
+ 
         // Rescale (u, v) to target size that image will be scaled
         // 3 x 3
         Eigen::Matrix3f scale = Eigen::Matrix3f::Identity ();
@@ -676,7 +690,7 @@ int main (int argc, char ** argv)
         scale (1, 1) = RawDepthScaling::SCALE_H /
           (float) RawDepthScaling::CROP_H;
         //std::cerr << "scale matrix:" << std::endl << scale << std::endl;
-  
+ 
         // Make uv into homogenous coordinates
         // 3 x n
         //std::cerr << "uv.cols(): " << uv.cols () << std::endl;
@@ -689,34 +703,34 @@ int main (int argc, char ** argv)
           uv_homo << uv.cast <float> (),
             one_row;
         }
-  
+ 
         // Apply scaling onto uv
         Eigen::MatrixXf uv_scaled_homo = scale * uv_homo;
-  
+ 
         // Convert scaled (u, v) to integers, for indexing image pixels
         uv = uv_scaled_homo.topRows (2).cast <int> ();
         //std::cerr << "scaled uv:" << std::endl << uv << std::endl;
-
-
+ 
+ 
         // Mark (u, v) coords that are out of bounds. Sometimes they are in
         //   region cropped out of view. OpenCV wraps them around and they will
         //   still appear in mask, in the wrong places!
-
+ 
         // Non-consts. For some reason, Eigen <= doesn't like the consts
         int SCALE_W = RawDepthScaling::SCALE_W;
         int SCALE_H = RawDepthScaling::SCALE_H;
-
+ 
         //std::cerr << "u out of bounds: " << 
         //  (uv.row (0).array () >= SCALE_W) << std::endl;
         //std::cerr << "v out of bounds: " <<
         //  (uv.row (1).array () >= SCALE_H) << std::endl;
-
+ 
         // Indices of (u, v) list that are out of bounds
         Eigen::Matrix <bool, 1, Eigen::Dynamic> u_obod =
           (uv.row (0).array () >= SCALE_W || uv.row (0).array () < 0);
         Eigen::Matrix <bool, 1, Eigen::Dynamic> v_obod =
           (uv.row (1).array () >= SCALE_H || uv.row (1).array () < 0);
-
+ 
         // Set default value to true, for valid
         std::vector <bool> valid_idx (endpoints.cols (), true);
         // If any of u or v are invalid
@@ -729,8 +743,8 @@ int main (int argc, char ** argv)
               valid_idx.at (obod_i) = false;
           }
         }
-
-
+ 
+ 
         // Create heatmaps, or masks with white dots at projected 2D points,
         //   black everywhere else.
         cv::Mat vis_crop, occ_crop;
@@ -744,13 +758,13 @@ int main (int argc, char ** argv)
           n_empty_heatmaps += 1;
           continue;
         }
-
-
+ 
+ 
         // Save visible and occluded channels
         // basename() returns file name without extension
         std::string scene_base;
         basename (scene_path, scene_base);
-
+ 
         // Optional. Individual non-zero point. Saving because easier to test
         //   different parameters of blob, than to regenerate contact points and
         //   raytracing.
@@ -767,7 +781,7 @@ int main (int argc, char ** argv)
         fprintf (stderr, "%sWritten occluded heatmap to %s%s\n", OKCYAN,
           occluded_path.c_str (), ENDC);
         */
-
+ 
        
         // Blob the visible and occluded images, to create heatmaps. Save to
         //   file.
@@ -783,12 +797,11 @@ int main (int argc, char ** argv)
         int GAUSS_SZ = 7;
         // Pass in 0 to let OpenCV calculating sigma from size
         float GAUSS_SIGMA = 0;
-
+ 
         std::string vis_blob_base = scene_base + "_g" + std::to_string (g_i) +
           "_vis_blob.png";
         std::string vis_blob_path = heatmaps_dir + "/" + vis_blob_base;
-        // This causes seg fault, mem leak, or bus error!!
-        //join_paths (heatmaps_dir, vis_blob_base, vis_blob_path, false);
+        //join_paths (heatmaps_dir, vis_blob_base, vis_blob_path);
         // Operate on the cropped img
         blob_filter (vis_crop, visible_blob, BLOB_EXPAND, GAUSS_SZ, GAUSS_SIGMA);
         cv::imwrite (vis_blob_path, visible_blob);
@@ -798,17 +811,16 @@ int main (int argc, char ** argv)
         std::string occ_blob_base = scene_base + "_g" + std::to_string (g_i) +
           "_occ_blob.png";
         std::string occ_blob_path = heatmaps_dir + "/" + occ_blob_base;
-        // This causes seg fault, mem leak, or bus error!!
-        //join_paths (heatmaps_dir, occ_blob_base, occ_blob_path, false);
+        //join_paths (heatmaps_dir, occ_blob_base, occ_blob_path);
         // Operate on the cropped img
         blob_filter (occ_crop, occluded_blob, BLOB_EXPAND, GAUSS_SZ, 
           GAUSS_SIGMA);
         cv::imwrite (occ_blob_path, occluded_blob);
         fprintf (stderr, "%sWritten occluded blobbed heatmap to %s%s\n", OKCYAN,
           occ_blob_path.c_str (), ENDC);
-
+ 
         n_examples_saved += 1;
-
+ 
         /*
         // Debug blob_filter()
         // Convert cv::Mat to std::vector
@@ -840,8 +852,8 @@ int main (int argc, char ** argv)
         //{
         //  std::cerr << vis_blob_vec.at (i) << std::endl;
         //}
-
-
+ 
+ 
         if (DISPLAY_IMAGES)
         {
           // Display heatmaps to debug
@@ -866,8 +878,8 @@ int main (int argc, char ** argv)
           // Press in the open window to close it
           cv::waitKey (0);
         }
-
-
+ 
+ 
         // Output label file with object name and grasp quality for this scene
         if (! GEN_RAND_PTS) 
         {
@@ -875,34 +887,34 @@ int main (int argc, char ** argv)
           std::string lbls_base = scene_base + "_g" + std::to_string (g_i) +
             "_lbls.yaml";
           std::string lbls_path = heatmaps_dir + "/" + lbls_base;
-          // This causes seg fault, mem leak, or bus error!!
-          //join_paths (heatmaps_dir, lbls_base, lbls_path, false);
-
+          //join_paths (heatmaps_dir, lbls_base, lbls_path);
+ 
           // Pass in object name and integer numeric ID
           LabelsIO::write_label (lbls_path, obj_name, quals (g_i));
-
+ 
           fprintf (stderr, "%sWritten labels to %s%s\n", OKCYAN,
             lbls_path.c_str (), ENDC);
         }
+
+
+        // Update for next grasp
+        curr_contact_start_idx += n_contacts; 
       }
       // Set for all iterations other than the very first one
       // For objects other than the first one we are picking up from before,
       //   reset to start at very first item [0].
-      s_i_start = 0;
+      g_i_start = 0;
 
-      // Update for next grasp
-      curr_contact_start_idx += n_contacts;
-
-      fprintf (stderr, "Elapsed time for this grasp, %ld scenes in it: %ld s\n",
-        scene_paths.size (), time (NULL) - start_time_g);
+      fprintf (stderr, "Elapsed time for this scene, %d grasps in it: %ld s\n",
+        n_grasps, time (NULL) - start_time_s);
     }
     // Set for all iterations other than the very first one
     // For objects other than the first one we are picking up from before,
     //   reset to start at very first item [0].
-    g_i_start = 0;
+    s_i_start = 0;
 
-    fprintf (stderr, "Elapsed time for this object, %d grasps in it: %ld s\n",
-      n_grasps, time (NULL) - start_time_o);
+    fprintf (stderr, "Elapsed time for this object, %ld scenes in it: %ld s\n",
+      scene_paths.size (), time (NULL) - start_time_o);
 
     fprintf (stderr, "\n");
   }
@@ -915,6 +927,17 @@ int main (int argc, char ** argv)
   fprintf (stderr, "%d examples written to disk\n", n_examples_saved);
   fprintf (stderr, "%d examples with all-empty heatmaps were skipped\n",
     n_empty_heatmaps);
+
+  fprintf (stderr, "%s%ld point cloud scenes had all points NaNs, you might want to delete these from YAML file, and delete the files altogether:%s\n",
+    WARN, empty_scenes.size (), ENDC);
+  for (int s_i = 0; s_i < empty_scenes.size (); s_i ++)
+  {
+    fprintf (stderr, "%s: %s\n", empty_scene_objs [s_i].c_str (),
+      empty_scenes [s_i].c_str ());
+  }
+
+  if (nh != NULL)
+    delete nh;
 
   return 0;
 }

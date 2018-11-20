@@ -43,7 +43,8 @@ from util.ansi_colors import ansi_colors as ansi
 from depth_scene_rendering.config_read_yaml import ConfigReadYAML
 
 # Local
-from grasp_collection.config_consts import worlds, SEARCH_ENERGY, ENERGY_ABBREV
+from grasp_collection.config_consts import worlds, \
+  SEARCH_ENERGY, ENERGY_ABBREV, N_POSE_PARAMS
 from grasp_collection.config_paths import world_subdir
 from grasp_io import GraspIO
 
@@ -219,6 +220,9 @@ def main ():
     print (gres.energies)
     print (gres.search_energy)
 
+    # Gripper poses wrt object frame
+    gposes = np.zeros ((len (gres.grasps), N_POSE_PARAMS))
+
     # 3 x (nContacts * nGrasps)
     contacts_m = np.zeros ((3, 0))
     cmeta = [0] * len (gres.grasps)
@@ -251,6 +255,29 @@ def main ():
       n_contacts, contacts_O = find_contacts (T_W_O)
 
 
+      # TODO: Just copied from grasp_pose_extract.py. Test it works in this
+      #   file too
+      # Compute gripper pose wrt object frame
+
+      # Gripper pose wrt GraspIt world frame
+      # 4 x 4
+      gpose_W = matrix_from_Pose (gres.grasps [g_i].pose)
+
+      # 4 x 4, wrt object frame
+      # Transform gripper pose to be wrt object frame
+      # T^O_G = T^O_W * T^W_G
+      gpose_O = np.dot (np.linalg.inv (T_W_O), pose_W)
+
+      # Convert to 7-tuple and append to big matrix
+      if N_POSE_PARAMS == N_PARAMS_QUAT:
+        row_O = _7tuple_from_matrix (gpose_O)
+      else:
+        print ('%sERROR: N_POSE_PARAMS %d not implemented yet. Implement it or choose a different one! Gripper pose parameterization will default to Quaternion for orientation.%s' % (ansi.FAIL, N_POSE_PARAMS, ansi.ENDC))
+        row_O = _7tuple_from_matrix (gpose_O)
+        
+      gposes [g_i, :] = np.array (row_O)
+
+
       # Let user replay current grasp, before accumulating contact count and
       #   matrices, so that if user replays current grasp many times, contacts
       #   from this iteration don't get accumulated more than once!
@@ -271,7 +298,6 @@ def main ():
       contacts_m = np.hstack ((contacts_m, contacts_O [0:3, :]))
 
 
-      # TODO: Newly implemented, test this.
       if n_contacts == 0:
         print ('%s0 contacts produced from grasp [%d]. Skipping this grasp, will not save it.%s' % (
           ansi.OKCYAN, g_i, ansi.ENDC))
@@ -286,12 +312,14 @@ def main ():
     # Remove grasps that did not produce contacts
     n_valid_grasps = 0
     final_grasps = []
+    final_gposes = []
     final_energies = []
     final_cmeta = []
     for g_i in range (len (gres.grasps)):
       # If flag says to keep this grasp, add it to final list
       if rm_grasps [g_i] == False:
         final_grasps.append (gres.grasps [g_i])
+        final_gposes = np.vstack (final_gposes, gposes [g_i, :])
         final_energies.append (gres.energies [g_i])
         final_cmeta.append (cmeta [g_i])
         n_valid_grasps += 1
@@ -315,18 +343,16 @@ def main ():
       # One file per world (object) for now. It contains all grasps obtained in
       #   this world, possibly hundreds of grasps.
       # Some grasps have 0 contacts with object, usually because finger hits
-      #   floor, and gripper stops closing. Will save them, as bad grasps.
-      #   TODO: Hopefully their energies are low. If not, might overwrite as
-      #   0 energy?
+      #   floor, and gripper stops closing. Will save them to use as bad grasps.
       GraspIO.write_grasps (os.path.basename (world_fname), final_grasps, SUFFIX)
+      # TODO: Test this works in this file. Copied from grasp_pose_extract.py
+      GraspIO.write_grasp_poses (os.path.basename (world_fname), final_gposes, SUFFIX)
  
       GraspIO.write_contacts (os.path.basename (world_fname), contacts_m.T,
         final_cmeta, SUFFIX)
  
       # Write grasp energies to a separate csv file, for easy loading and
       #   inspection.
-      # TODO: Should I be using GraspitCommander.computeQuality() after each
-      #   grasp instead? What is difference between energy and quality?
       GraspIO.write_energies (os.path.basename (world_fname), final_energies,
         ENERGY_ABBREV, SUFFIX)
 

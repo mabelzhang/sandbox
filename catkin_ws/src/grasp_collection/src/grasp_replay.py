@@ -61,7 +61,7 @@ def main ():
 
     # graspit_interface loadWorld automatically looks in worlds/ path under
     #   GraspIt installation path.
-    # File name of world XML, one file per object
+    # File name of world XML under $GRASPIT/worlds, one file per object
     world_fname = os.path.join (world_subdir, obj_names [w_i])
 
     print ('Loading world from %s' % world_fname)

@@ -46,3 +46,11 @@ ENERGY_ABBREV = energies_abbrevs [SEARCH_ENERGY]
 # Rough observation from gpqe. Positive energy definitely bad.
 THRESH_INVALID_ENERGY = 0
 
+
+# Number of pose parameters for different orientation parameterizations
+# Quaternions (3 translational + 4 orientational)
+N_PARAMS_QUAT = 7
+# Select the parameteraization to use for gripper pose
+N_POSE_PARAMS = N_PARAMS_QUAT
+
+

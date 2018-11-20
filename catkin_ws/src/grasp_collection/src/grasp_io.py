@@ -23,12 +23,14 @@ from grasp_collection.config_paths import get_grasps_path, get_contacts_path, \
 # One file per object. A file may contain many grasps.
 class GraspIO:
 
+  ################################### Grasps (graspit_interface.msgs.Grasp) ##
+
   # Used by grasp_collection.py
   # Parameters:
   #   obj_name: os.path.basename (world_fname), where world_fname is
   #     config_consts.worlds [i], e.g. 'dexnet/bar_clamp', file name of
   #     a GraspIt world XML file in GraspIt installation directory $GRASPIT.
-  #   grasps: graspit_interface.msg.Grasp[], returned from graspit_interface
+  #   grasps: graspit_interface.msgs.Grasp[], returned from graspit_interface
   #     action/PlanGrasps.action.
   #   suffix: e.g. antipd for antipodal, etc
   @staticmethod
@@ -79,6 +81,78 @@ class GraspIO:
     GraspIO.write_grasps (outname, all_grasps)
     print ('%d grasps total' % len (all_grasps))
 
+
+  ############################################################# Grasp poses ##
+
+  # Used by grasp_collect.py, grasp_pose_extract.py
+  # Parameters:
+  #   obj_name: os.path.basename (world_fname), where world_fname is
+  #     config_consts.worlds [i], e.g. 'dexnet/bar_clamp', file name of
+  #     a GraspIt world XML file in GraspIt installation directory $GRASPIT.
+  #   grasps: graspit_interface.msg.Grasp[], returned from graspit_interface
+  #     action/PlanGrasps.action.
+  #   suffix: e.g. antipd for antipodal, etc
+  @staticmethod
+  def write_grasp_poses (world_name, gposes, suffix=''):
+
+    if len (suffix) > 0 and not suffix.startswith ('_'):
+      suffix = '_' + suffix
+
+    gposes_fname = os.path.join (get_grasps_path (), world_name + suffix + '_poses.csv')
+    with open (gposes_fname, 'wb') as gposes_f:
+      gposes_writer = csv.writer (gposes_f)
+      # Write n x 7, for easier human reading
+      gposes_writer.writerows (gposes)
+    print ('%sWritten %d grasp poses to file %s%s' % (ansi_colors.OKCYAN,
+      len (gposes), gposes_fname, ansi_colors.ENDC))
+
+
+  @staticmethod
+  def read_grasp_poses (world_name, suffix=''):
+
+    if len (suffix) > 0 and not suffix.startswith ('_'):
+      suffix = '_' + suffix
+
+    gposes_fname = os.path.join (get_grasps_path (), world_name + suffix + '_poses.csv')
+    print ('%sLoading gras poseps from file %s%s' % (ansi_colors.OKCYAN,
+      gposes_fname, ansi_colors.ENDC))
+
+    gposes = []
+    with open (gposes_fname, 'rb') as gposes_f:
+      gposes_reader = csv.reader (gposes_f)
+      # n x 7
+      for row in gposes_reader:
+        # 1 x 7. Convert strings to floats
+        gposes.append ([float (s) for s in row])
+
+    return np.array (gposes)
+
+
+  # Parameters:
+  #   innames: List of full base name of files, excluding file extension.
+  #     NOTE that meta files must be named with _poses at end of file name, as
+  #     read_grasp_poses() assumes this.
+  @staticmethod
+  def concat_grasp_poses (innames, outname):
+
+    # Do not initialize to a shape, `.` don't know if data is n x 6 or n x 7
+    all_gposes = None
+    for iname in innames:
+      # n x 7 or n x 6, depends on what parameterization was chosen in
+      #   write_grasp_poses() when file was written
+      gposes = GraspIO.read_grasp_poses (iname)
+      print ('%d grasp poses' % (gposes.shape [0]))
+
+      if all_gposes == None:
+        all_gposes = gposes
+      else:
+        all_gposes = np.vstack ((all_gposes, gposes))
+
+    GraspIO.write_grasp_poses (outname, all_gposes)
+    print ('%d grasp poses total' % (all_gposes.shape [0]))
+
+
+  ################################################################ Contacts ##
 
   # Used by grasp_collection.py
   # Parameters:
@@ -192,6 +266,8 @@ class GraspIO:
     print ('%d contacts total' % (all_contacts_m.shape [0]))
     print ('%d contact metas total' % (len (all_cmeta)))
 
+
+  ################################################################ Energies ##
 
   # Write grasp energies to csv file
   #   energies: List of floats

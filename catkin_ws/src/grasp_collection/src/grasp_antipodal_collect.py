@@ -34,7 +34,6 @@ from graspit_interface.msg import SearchContact, Grasp
 # Custom
 from util.ros_util import matrix_from_Pose
 from util.ansi_colors import ansi_colors as ansi
-from depth_scene_rendering.config_read_yaml import ConfigReadYAML
 
 # Local
 from grasp_collection.config_consts import worlds, SEARCH_ENERGY, ENERGY_ABBREV

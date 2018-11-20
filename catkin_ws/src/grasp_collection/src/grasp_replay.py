@@ -49,9 +49,9 @@ def main ():
 
   objs = ConfigReadYAML.read_object_names ()
   # List of strings
-  obj_names = objs [0]
+  obj_names = objs [ConfigReadYAML.NAME_IDX]
   # List of list of strings, paths to .pcd scene files
-  scene_paths = objs [1]
+  scene_paths = objs [ConfigReadYAML.SCENE_IDX]
 
   # Output path of screenshots of GraspIt
   vis_path = get_vis_path ()

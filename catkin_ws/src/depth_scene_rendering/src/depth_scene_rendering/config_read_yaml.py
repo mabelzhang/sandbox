@@ -17,11 +17,17 @@ import rospkg
 
 class ConfigReadYAML:
 
+  NAME_IDX = 0
+  ID_IDX = 1
+  SCENE_IDX = 2
+
   @staticmethod
   def read_object_names ():
 
     # List of strings
     obj_names = []
+    # List of ints
+    obj_ids = []
     # List of list of strings
     scene_paths = []
 
@@ -34,12 +40,19 @@ class ConfigReadYAML:
       for o_i in range (len (scene_list_yaml ['objects'])):
      
         obj = scene_list_yaml ['objects'] [o_i]
+
         # String
         obj_names.append (obj ['object'])
+        # Int
+        obj_ids.append (obj ['id'])
 
         # List of strings
         scene_paths.append (obj ['scenes'])
 
-    return obj_names, scene_paths
+    retval = [None] * 3
+    retval [ConfigReadYAML.NAME_IDX] = obj_names
+    retval [ConfigReadYAML.ID_IDX] = obj_ids
+    retval [ConfigReadYAML.SCENE_IDX] = scene_paths
+    return retval
 
 

@@ -36,7 +36,7 @@ def main ():
 
   objs = ConfigReadYAML.read_object_names ()
   # List of strings
-  obj_names = objs [0]
+  obj_names = objs [ConfigReadYAML.NAME_IDX]
 
   # For marker color based on grasp quality
   ENERGY_MIN = 0.4

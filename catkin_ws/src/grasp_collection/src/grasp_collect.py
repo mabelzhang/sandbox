@@ -161,7 +161,7 @@ def main ():
   #   Just generate a bunch, and then you never need to generate them again!
   # Read object from YAML file
   #objs = ConfigReadYAML.read_object_names ()
-  #obj_names = objs [0]
+  #obj_names = objs [ConfigReadYAML.NAME_IDX]
 
 
   ns_contacts_ttl = []

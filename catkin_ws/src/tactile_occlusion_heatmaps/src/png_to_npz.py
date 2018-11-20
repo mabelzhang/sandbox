@@ -92,6 +92,7 @@ def main ():
   vis_png_list = []
   occ_png_list = []
   lbl_list = []
+  obj_lbls = []
 
 
   start_time = time.time ()
@@ -101,15 +102,20 @@ def main ():
   # Get all scene names from YAML
   objs = ConfigReadYAML.read_object_names ()
   # String
-  obj_names = objs [0]
+  obj_names = objs [ConfigReadYAML.NAME_IDX]
+  # Int
+  obj_ids = objs [ConfigReadYAML.ID_IDX]
   # List of list of strings, paths to .pcd scene files
-  scene_paths = objs [1]
+  scene_paths = objs [ConfigReadYAML.SCENE_IDX]
 
   # For each object
   for o_i in range (len (obj_names)):
 
     #obj_name = obj_names [o_i]
     #print ('%s' % obj_names [o_i])
+
+    # Number of examples in this object
+    n_obj_examples = 0
 
     # For each .pcd scene for this object
     for s_i in range (len (scene_paths [o_i])):
@@ -126,6 +132,7 @@ def main ():
       #   files easier, and `.` CNN wants all data in a matrix in memory anyway.
       depth_path = os.path.join (renders_dir, depth_fmt % (scene_name))
 
+      # Per-grasp heatmaps and label data
       # Use glob instead of reading contacts file for number of grasps, `.`
       #   glob is safer - won't read any files that don't exist if I skipped it
       #   because of 0 contacts or 0 points in point cloud, and is faster.
@@ -149,7 +156,14 @@ def main ():
          len (occ_sublist) != len (lbl_sublist):
         print ('%sERROR: Wildcard lists for visible heatmap, occluded heatmap, and/or label files are not of the same size! You may have error in correspondence between the outputted npz files.%s' % (ansi.FAIL, ansi.ENDC))
 
+      # Per-scene depth image. Same for all grasps in this scene
       depth_png_list.extend ([depth_path] * len (vis_sublist))
+
+      n_obj_examples += len (vis_sublist)
+
+    # Per-object object-id label. Same for all scenes in this object
+    obj_lbls.extend ([obj_ids [o_i]] * n_obj_examples)
+
 
   print ('%d files' % (len (depth_png_list)))
   in_png_lists = [depth_png_list, vis_png_list, occ_png_list, lbl_list]
@@ -194,6 +208,9 @@ def main ():
 
   #n_skipped_grasps = 0
 
+
+  #####
+  # Output PNG images and grasp scalar float label to .npz files
 
   # Output npz files for each data sample
   # Loop through each type of file
@@ -312,6 +329,60 @@ def main ():
  
       print ('%sWritten %d-row matrix to %s%s' % (ansi.OKCYAN,
         npz_arr.shape [0], out_path, ansi.ENDC))
+
+
+  #####
+  # Output object scalar integer labels to .npz files
+  # Write obj_lbls object labels to a separate npz file, so can evaluate
+  #   per-obj prediction accuracies, to get ideas of how to improve predictions.
+
+  # Number of rows filled in the current batch
+  rows_filled = 0
+  # Number of batches filled
+  batches_filled = 0
+
+  # Same loop structure as above.
+  # NOTE: If change loop structure above, update here accordingly, so that each
+  #   row in the matrix here corresponds to each row in the data written above!
+  npz_arr = np.zeros ((BATCH_SIZE, 1, 1, 1))
+  for lbl in obj_lbls:
+
+    npz_arr [rows_filled, :, :, 0] = lbl
+
+    # Increment AFTER appending
+    rows_filled += 1
+
+    # Batch is full, write to file
+    if rows_filled == BATCH_SIZE:
+
+      out_path = os.path.join (out_dir, 'obj_id_%05d.npz' % batches_filled)
+
+      np.savez_compressed (out_path, npz_arr)
+
+      print ('%sWritten %d-row matrix to %s%s' % (ansi.OKCYAN,
+        npz_arr.shape [0], out_path, ansi.ENDC))
+
+      # Reset
+      npz_arr = np.zeros ((BATCH_SIZE, NROWS [ext], NCOLS [ext], 1))
+      rows_filled = 0
+      batches_filled += 1
+
+      print ('Batch %d filled, batch size %d' % (batches_filled, BATCH_SIZE))
+ 
+  # Last npz file
+  # Remove unfilled rows
+  if rows_filled > 0:
+
+    if rows_filled < 1000:
+      npz_arr = np.delete (npz_arr, np.s_ [rows_filled::], 0)
+
+    out_path = os.path.join (out_dir, 'obj_id_%05d.npz' % batches_filled)
+
+    np.savez_compressed (out_path, npz_arr)
+
+    print ('%sWritten %d-row matrix to %s%s' % (ansi.OKCYAN,
+      npz_arr.shape [0], out_path, ansi.ENDC))
+
 
   end_time = time.time () - start_time
 

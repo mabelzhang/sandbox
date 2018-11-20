@@ -418,11 +418,11 @@ if __name__ == '__main__':
   out_path = get_render_data_path ()
   
   
-  n_objs = len (config_consts.objects)
-  #n_objs = 1
+  #n_objs = len (config_consts.objects)
+  n_objs = 1
   
-  n_camera_poses = 10
-  #n_camera_poses = 1
+  #n_camera_poses = 10
+  n_camera_poses = 1
   # For testing. Set to False for real run.
   # Skips the 1st canonical pose pointing straight down from north pole.
   SKIP_CAM_IDENTITY = True #False
@@ -454,10 +454,12 @@ if __name__ == '__main__':
     load_obj (obj_path)
     #create_cone ()
 
-    # Write object name
+    # Write object name and id
     if SAVE_NOISELESS:
       scene_list_f.write ('  - object: ' + obj_base.replace (obj_suffix, '') + '\n')
+      scene_list_f.write ('    id: ' + str (o_i) + '\n')
     scene_noisy_list_f.write ('  - object: ' + obj_base.replace (obj_suffix, '') + '\n')
+    scene_noisy_list_f.write ('    id: ' + str (o_i) + '\n')
   
     # Set stationary camera pose. Do first shot using this, as reference
     cam_pos = (0.0, 0.0, 1.0)

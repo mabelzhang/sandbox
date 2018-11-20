@@ -1,3 +1,4 @@
+# Not used. scene_generation.py uses ../src/depth_scene_rendering/config_consts.py
 objects:
 - id: 0
   name: bar_clamp

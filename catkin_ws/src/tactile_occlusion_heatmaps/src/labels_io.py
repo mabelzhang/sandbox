@@ -3,7 +3,7 @@
 # Mabel Zhang
 # 23 Oct 2018
 #
-# Python counterpart to ../include/tactile_graspit_collection/labels_io.h.
+# Python counterpart to ../include/tactile_occlusion_heatmaps/labels_io.h.
 #   That file writes, this file reads.
 #
 
@@ -13,7 +13,7 @@ import yaml
 
 class LabelsIO:
 
-  # File is written by ../include/tactile_graspit_collection/labels_io.h,
+  # File is written by ../include/tactile_occlusion_heatmaps/labels_io.h,
   #   called from ./occlusion_test.py
   @staticmethod
   def read_label (path):

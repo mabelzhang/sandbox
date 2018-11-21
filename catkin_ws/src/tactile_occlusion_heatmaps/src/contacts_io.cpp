@@ -24,8 +24,8 @@
 #include <util/ansi_colors.h>
 
 // Local
-#include <tactile_graspit_collection/contacts_io.h>  // ContactsYaml
-#include <tactile_graspit_collection/config_paths.h>  // PathConfigYaml
+#include <tactile_occlusion_heatmaps/contacts_io.h>  // ContactsYaml
+#include <tactile_occlusion_heatmaps/config_paths.h>  // PathConfigYaml
 
 
 int main (int argc, char ** argv)

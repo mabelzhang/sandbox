@@ -3,8 +3,9 @@
 # Mabel Zhang
 # 18 Nov 2018
 #
-# Extract grasp pose from grasps (type graspit_interface.msgs.Grasp) saved
-#   from grasp_collect.py, convert gripper pose to be expressed in camera frame.
+# Extracts gripper pose from n grasps (type graspit_interface.msgs.Grasp) saved
+#   from grasp_collect.py. Transforms them from GraspIt world frame to object
+#   frame, and save as n x N_POSE_PARAMS matrix to .csv files.
 # Part of integration with tactile_occlusion_heatmaps for input into predictor.
 #
 # This file's contents are now in grasp_collect.py. But for grasp pkl files

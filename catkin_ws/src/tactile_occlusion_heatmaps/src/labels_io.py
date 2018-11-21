@@ -23,7 +23,15 @@ class LabelsIO:
       label_yaml = yaml.load (lbl_f)
 
       obj_name = label_yaml ['object_name']
-      quality = label_yaml ['grasp_quality']
+      energy = label_yaml ['grasp_quality']
 
-    return obj_name, quality
+      gpose_yaml = label_yaml ['gripper_pose']
+      # Check parameterization of orientation
+      if 'q_xyz' in gpose_yaml.keys ():
+        # (tx ty tz qx qy qz qw)
+        gpose = gpose_yaml ['t_xyz']
+        gpose.extend (gpose_yaml ['q_xyz'])
+        gpose.append (gpose_yaml ['qw'])
+
+    return obj_name, energy, gpose
 

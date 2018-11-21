@@ -239,8 +239,13 @@ def main ():
     # (1000, 1, 1, 1) for grasp energy
     npz_arr = np.zeros ((BATCH_SIZE, NROWS [ext], NCOLS [ext], 1))
       #dtype=np.float64)  # This doesn't eliminate warning from tensorflow
-
  
+    # Gripper pose wrt object frame.
+    #   List of lists. Each element is a list of floats, e.g.
+    #     [tx ty tz qx qy qz qw]
+    gposes = []
+
+
     # Loop through all files in this type
     for png_name in png_list:
  
@@ -264,6 +269,10 @@ def main ():
 
         labels = LabelsIO.read_label (png_name)
         energy = labels [1]
+
+        # 7-elt list
+        gpose = labels [2]
+        gposes.append (gpose)
 
         # TODO: Another option, instead of skipping, is to cap them to
         #   a constant, THRESH_INVALID_ENERGY. Then the example can still be
@@ -299,15 +308,24 @@ def main ():
         #   m['arr_0'].shape;
         #   np.unique (m['arr_0']);
         #   m.close()  # Must close, else can have leakage, per load() API
-        #np.savez_compressed (out_path, np.squeeze (npz_arr))
         np.savez_compressed (out_path, npz_arr)
- 
-        print ('%sWritten %d-row matrix to %s%s' % (ansi.OKCYAN,
+        print ('%sWritten %d-row data matrix to %s%s' % (ansi.OKCYAN,
           npz_arr.shape [0], out_path, ansi.ENDC))
  
+        # If gripper poses were read, write to npz
+        if len (gposes) > 0:
+          # Write gripper pose to separate .npz file
+          # n x 7 for Quaternion parameterization of orientation
+          gposes = np.array (gposes)
+          gpose_path = os.path.join (out_dir, 'gpose_%05d.npz' % batches_filled)
+          np.savez_compressed (gpose_path, gposes)
+          print ('%sWritten %d-row grasp pose matrix to %s%s' % (
+            ansi.OKCYAN, gposes.shape [0], gpose_path, ansi.ENDC))
+
         # Reset
         npz_arr = np.zeros ((BATCH_SIZE, NROWS [ext], NCOLS [ext], 1))
           #dtype=np.float64)  # This doesn't eliminate warning from tensorflow
+        gposes = []
         rows_filled = 0
         batches_filled += 1
 
@@ -324,11 +342,21 @@ def main ():
       out_path = os.path.join (out_dir,
         npz_prefix [l_i] + ('_%05d.npz' % batches_filled))
  
-      #np.savez_compressed (out_path, np.squeeze (npz_arr))
-      np.savez_compressed (out_path, npz_arr)
- 
+      np.savez_compressed (out_path, npz_arr) 
       print ('%sWritten %d-row matrix to %s%s' % (ansi.OKCYAN,
         npz_arr.shape [0], out_path, ansi.ENDC))
+
+      # If gripper poses were read, write to npz
+      if len (gposes) > 0:
+        gposes = np.array (gposes)
+        gpose_path = os.path.join (out_dir, 'gpose_%05d.npz' % batches_filled)
+        np.savez_compressed (gpose_path, gposes)
+        print ('%sWritten %d-row grasp pose matrix to %s%s' % (
+          ansi.OKCYAN, gposes.shape [0], gpose_path, ansi.ENDC))
+
+      batches_filled += 1
+      print ('Batch %d filled, batch size %d' % (batches_filled, BATCH_SIZE))
+
 
 
   #####
@@ -358,7 +386,6 @@ def main ():
       out_path = os.path.join (out_dir, 'obj_id_%05d.npz' % batches_filled)
 
       np.savez_compressed (out_path, npz_arr)
-
       print ('%sWritten %d-row matrix to %s%s' % (ansi.OKCYAN,
         npz_arr.shape [0], out_path, ansi.ENDC))
 
@@ -379,9 +406,11 @@ def main ():
     out_path = os.path.join (out_dir, 'obj_id_%05d.npz' % batches_filled)
 
     np.savez_compressed (out_path, npz_arr)
-
     print ('%sWritten %d-row matrix to %s%s' % (ansi.OKCYAN,
       npz_arr.shape [0], out_path, ansi.ENDC))
+
+    batches_filled += 1
+    print ('Batch %d filled, batch size %d' % (batches_filled, BATCH_SIZE))
 
 
   end_time = time.time () - start_time

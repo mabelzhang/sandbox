@@ -14,8 +14,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from util.matplotlib_util import truetype, black_background, black_legend, \
-  custom_colormap_neon, mpl_color, plot_line
+  custom_colormap_neon, mpl_color, plot_line, mpl_diagonal_xticks
 from util.ansi_colors import ansi_colors as ansi
+
+from depth_scene_rendering.config_consts import obj_names
 
 
 def main ():
@@ -41,6 +43,9 @@ def main ():
   print (obj_ids)
   print (obj_errs)
 
+  # Replace _ with newline, so longer object names show up pretty on xtick lbls
+  obj_names_ordered = [obj_names [i].replace ('_', '\n') for i in obj_ids]
+
 
   ## Plot
 
@@ -54,13 +59,13 @@ def main ():
   _, title_hdl = plot_line (obj_ids, obj_errs,
     'Per-Object-Class Errors', 'Object', 'Error (%)',
     out_name='',
-    color=color, lbl='', style='bar', grid=True, do_save=False, do_show=False,
-    return_title_hdl=True)
+    color=color, lbl='', style='bar', dots=False, grid=True,
+    do_save=False, do_show=False, return_title_hdl=True)
 
   black_background (title_hdl=title_hdl)
 
   # Limit ticks to object IDs, not the extra columns on left and right
-  plt.gca ().set_xticks (obj_ids)
+  mpl_diagonal_xticks (plt.gca (), obj_ids, obj_names_ordered, rot_degs=0)
 
 
   ## Plot a horizontal line across, at average per-class error

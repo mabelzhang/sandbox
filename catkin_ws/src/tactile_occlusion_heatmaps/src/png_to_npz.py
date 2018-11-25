@@ -272,6 +272,12 @@ def main ():
 
         # 7-elt list
         gpose = labels [2]
+        # Sanity check. Grasps that do not have contacts in camera view are
+        #   skipped
+        if gpose is None:
+          print ('%sNo gripper pose in label file %s. Probably grasp did not have contacts in camera view. Skipping this file.%s' % (ansi.WARNING, png_name, ansi.ENDC))
+          continue
+
         gposes.append (gpose)
 
         # TODO: Another option, instead of skipping, is to cap them to

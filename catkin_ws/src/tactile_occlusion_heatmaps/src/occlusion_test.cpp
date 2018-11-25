@@ -774,6 +774,10 @@ int main (int argc, char ** argv)
         // basename() returns file name without extension
         std::string scene_base;
         basename (scene_path, scene_base);
+
+        std::string heatmaps_subdir;
+        join_paths (heatmaps_dir, scene_base, heatmaps_subdir);
+        create_dir_if_nonexist (heatmaps_subdir);
  
         // Optional. Individual non-zero point. Saving because easier to test
         //   different parameters of blob, than to regenerate contact points and
@@ -807,21 +811,21 @@ int main (int argc, char ** argv)
         int GAUSS_SZ = 7;
         // Pass in 0 to let OpenCV calculating sigma from size
         float GAUSS_SIGMA = 0;
- 
-        std::string vis_blob_base = scene_base + "_g" + std::to_string (g_i) +
+
+        std::string vis_blob_base = "g" + std::to_string (g_i) +
           "_vis_blob.png";
-        std::string vis_blob_path = heatmaps_dir + "/" + vis_blob_base;
-        //join_paths (heatmaps_dir, vis_blob_base, vis_blob_path);
+        std::string vis_blob_path;
+        join_paths (heatmaps_subdir, vis_blob_base, vis_blob_path);
         // Operate on the cropped img
         blob_filter (vis_crop, visible_blob, BLOB_EXPAND, GAUSS_SZ, GAUSS_SIGMA);
         cv::imwrite (vis_blob_path, visible_blob);
         fprintf (stderr, "%sWritten visible blobbed heatmap to %s%s\n", OKCYAN,
           vis_blob_path.c_str (), ENDC);
        
-        std::string occ_blob_base = scene_base + "_g" + std::to_string (g_i) +
+        std::string occ_blob_base = "g" + std::to_string (g_i) +
           "_occ_blob.png";
-        std::string occ_blob_path = heatmaps_dir + "/" + occ_blob_base;
-        //join_paths (heatmaps_dir, occ_blob_base, occ_blob_path);
+        std::string occ_blob_path;
+        join_paths (heatmaps_subdir, occ_blob_base, occ_blob_path);
         // Operate on the cropped img
         blob_filter (occ_crop, occluded_blob, BLOB_EXPAND, GAUSS_SZ, 
           GAUSS_SIGMA);
@@ -894,10 +898,10 @@ int main (int argc, char ** argv)
         if (! GEN_RAND_PTS) 
         {
           // Output file path
-          std::string lbls_base = scene_base + "_g" + std::to_string (g_i) +
+          std::string lbls_base = "g" + std::to_string (g_i) +
             "_lbls.yaml";
-          std::string lbls_path = heatmaps_dir + "/" + lbls_base;
-          //join_paths (heatmaps_dir, lbls_base, lbls_path);
+          std::string lbls_path;
+          join_paths (heatmaps_subdir, lbls_base, lbls_path);
  
 
           // TODO: Grasp poses. Implemented, runs, but not verified whether

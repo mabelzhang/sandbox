@@ -22,16 +22,30 @@ class LabelsIO:
 
       label_yaml = yaml.load (lbl_f)
 
-      obj_name = label_yaml ['object_name']
-      energy = label_yaml ['grasp_quality']
+      try:
+        obj_name = label_yaml ['object_name']
+      except KeyError:
+        print ('ERROR: Key object_name not found in YAML file %s' % (path))
+        obj_name = None
 
-      gpose_yaml = label_yaml ['gripper_pose']
-      # Check parameterization of orientation
-      if 'q_xyz' in gpose_yaml.keys ():
-        # (tx ty tz qx qy qz qw)
-        gpose = gpose_yaml ['t_xyz']
-        gpose.extend (gpose_yaml ['q_xyz'])
-        gpose.append (gpose_yaml ['qw'])
+      try:
+        energy = label_yaml ['grasp_quality']
+      except KeyError:
+        print ('ERROR: Key grasp_quality not found in YAML file %s' % (path))
+        energy = None
+
+      try:
+        gpose_yaml = label_yaml ['gripper_pose']
+        # Check parameterization of orientation
+        if 'q_xyz' in gpose_yaml.keys ():
+          # (tx ty tz qx qy qz qw)
+          gpose = gpose_yaml ['t_xyz']
+          gpose.extend (gpose_yaml ['q_xyz'])
+          gpose.append (gpose_yaml ['qw'])
+
+      except KeyError:
+        print ('ERROR: Key gripper_pose not found in YAML file %s' % (path))
+        gpose = None
 
     return obj_name, energy, gpose
 

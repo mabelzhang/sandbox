@@ -21,8 +21,9 @@ public:
 
   // Parameters:
   //   gpose: 1 x 7 row vector if orientation is parameterized by Quaternion
+  //   gpose: 1 x 2 row vector, gripper pose in image coordinates (u, v)
   static void write_label (const std::string path, const std::string obj_name,
-    float quality, Eigen::VectorXf & gpose)
+    float quality, Eigen::VectorXf & gpose, Eigen::Vector2i & gpose_uv)
   {
     YAML::Emitter writer;
 
@@ -40,6 +41,8 @@ public:
 
     writer << YAML::Key << "gripper_pose";
 
+      // 3D gripper pose representation (tx ty tz qx qy qz qw)
+
       writer << YAML::BeginMap;
       writer << YAML::Key << "t_xyz";
       writer << YAML::Value << YAML::Flow << YAML::BeginSeq << gpose (0) << gpose (1) << gpose (2) << YAML::EndSeq;
@@ -49,6 +52,11 @@ public:
  
       writer << YAML::Key << "qw";
       writer << YAML::Value << gpose (6);
+
+      // 2D gripper position representation, (u, v) in 2D, z from 3D depth
+
+      writer << YAML::Key << "t_uvz";
+      writer << YAML::Value << YAML::Flow << YAML::BeginSeq << gpose_uv (0) << gpose_uv (1) << gpose (2) << YAML::EndSeq;
 
     writer << YAML::EndMap;
 

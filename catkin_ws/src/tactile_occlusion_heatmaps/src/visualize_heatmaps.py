@@ -134,6 +134,7 @@ def main ():
 
         # Calculate raw depths from the integers in image
         depth_im = scaler.scale_ints_to_depths (depth_im)
+        # TODO 2018 11 26: This is a bug. Tactile heatmaps shouldn't be scaled the same way as depth images!!! They should be in range 0 to 1, not the depth ranges!
         vis_im = scaler.scale_ints_to_depths (vis_im)
         occ_im = scaler.scale_ints_to_depths (occ_im)
      

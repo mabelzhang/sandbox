@@ -37,19 +37,24 @@ $cmd
 cmd="rosrun tactile_occlusion_heatmaps occlusion_test"
 echo -e "$MAGENTA$cmd$ENDC"
 $cmd
+# Flags available:
+# rosrun tactile_occlusion_heatmaps occlusion_test [--display] [--vis]
+#   [--scale-heatmaps] [--object_i #] [--grasp_i #] [--scene_i #]
 
 
 
-# Visualize visible and occluded contact heat maps:
+# (Optional) Visualize visible and occluded contact heat maps:
 #cmd="rosrun tactile_occlusion_heatmaps visualize_heatmaps.py --display"
 #cmd="rosrun tactile_occlusion_heatmaps visualize_heatmaps.py"
 #echo -e "$MAGENTA$cmd$ENDC"
 #$cmd
 
-# At the same time, visualize GraspIt saved grasps:
+# (Optional) At the same time, visualize GraspIt saved grasps:
 # $ rosrun grasp_collection grasp_replay.py
 
+
 # Generate npz files
+#   Flags available: --scale-heatmaps
 #cmd="rosrun tactile_occlusion_heatmaps png_to_npz.py"
 #echo -e "$MAGENTA$cmd$ENDC"
 #$cmd

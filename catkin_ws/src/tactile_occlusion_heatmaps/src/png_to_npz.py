@@ -37,6 +37,8 @@ def main ():
   # Variable number of args http://stackoverflow.com/questions/13219910/argparse-get-undefined-number-of-arguments
   arg_parser.add_argument ('--path', type=str,
     help='Path containing PNG files to convert. All PNG files in the directory will be converted to .npz (withOUT removing original files), in a subdirectory npz/')
+  arg_parser.add_argument ('--scale-heatmaps', action='store_true',
+    help='Scale heatmaps to min/max depth values')
 
   # NOTE Assume all images are depth images, will take a single channel
   #arg_parser.add_argument ('--single-channel', action='store_true',
@@ -75,6 +77,8 @@ def main ():
     os.makedirs (out_dir)
 
   print ('Reading from %s' % os.path.dirname (heatmaps_dir))
+
+  SCALE_HEATMAPS = args.scale_heatmaps
 
 
 
@@ -256,10 +260,30 @@ def main ():
       if ext == '.png':
 
         img = np_from_depth (png_name)
+         
+        # Rescale depth images from RGB integers to raw depth floats in correct
+        #   (min, max) range.
+        if npz_prefix [l_i] == 'depth':
+          # Calculate raw depths from the integers in image
+          img = scaler.scale_ints_to_depths (img)
 
-        # Calculate raw depths from the integers in image
-        img = scaler.scale_ints_to_depths (img)
-       
+# TODO  Bug: this scales all the tactile heatmaps to 0.7 and 1 too, but they shouldn't be scaled at all!!!! The if-conditional needs to be more discriminating than .png.
+        
+        # Tactile heatmaps don't need rescaling. Take the raw image in range
+        #   (0, 1)
+        else:
+
+          if SCALE_HEATMAPS:
+            # Calculate raw depths from the integers in image
+            img = scaler.scale_ints_to_depths (img)
+          else:
+            # Rescale RGB integer values in range [0, 255] to raw heatmap range
+            #   [0, 1]
+            img = img.astype (np.float32) / 255.0
+
+            #print (np.min (img))
+            #print (np.max (img))
+
         # Append to last row of array
         # Assumption: All channels are the same. Take just a single channel
         npz_arr [rows_filled, :, :, 0] = img [:, :, 0]
@@ -421,7 +445,8 @@ def main ():
 
   end_time = time.time () - start_time
 
-  print ('%d total examples actually written' % (batches_filled * BATCH_SIZE + rows_filled))
+  print ('%d total examples actually written' % (
+    (batches_filled - 1) * BATCH_SIZE + rows_filled))
   #print ('%d skipped and not written' % (n_skipped_grasps))
   print ('Elapsed time: %g seconds, in which %g seconds was mainly glob() calls' % (
     end_time, glob_time))

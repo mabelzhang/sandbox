@@ -10,7 +10,7 @@
 //
 // Usage:
 //   $ rosrun tactile_occlusion_heatmaps occlusion_test [--display] [--vis]
-//       [--object_i #] [--grasp_i #] [--scene_i #]
+//       [--scale-heatmaps] [--object_i #] [--grasp_i #] [--scene_i #]
 //
 
 // C++
@@ -30,7 +30,7 @@
 #include <opencv2/opencv.hpp>
 
 // Custom packages
-#include <util/io_util.h>  // join_paths ()
+#include <util/io_util.h>  // join_paths(), create_dir_if_nonexist()
 #include <util/pcd_util.h>
 #include <util/pcl_raytrace_util.h>  // RayTracer
 #include <util/ansi_colors.h>
@@ -136,7 +136,7 @@ public:
   bool create_masks (Eigen::MatrixXf & pts, std::vector <bool> & occluded,
     std::vector <bool> & valid_idx,
     int height, int width, Eigen::MatrixXi & uv,
-    cv::Mat & visible_img, cv::Mat & occluded_img)
+    cv::Mat & visible_img, cv::Mat & occluded_img, bool SCALE_HEATMAPS=true)
   {
     // Instantiate empty heat maps
     cv::Mat visible_f = cv::Mat::zeros (height, width, CV_32F);
@@ -179,10 +179,22 @@ public:
     cv::Mat visible_ch = cv::Mat::zeros (height, width, CV_8UC1);
     cv::Mat occluded_ch = cv::Mat::zeros (height, width, CV_8UC1);
 
+// TODO 2018 11 26 design mistake - these shouldn't be scaled to depth, but to [0, 1] range! ... which I think they are already in. So actually just shouldn't be scaled at all!!!
     // Scale raw depths by camera max depth, so scaled values are consistent
     //   across all images in the dataset.
-    scaler_.scale_depths_to_ints (visible_f, visible_ch);
-    scaler_.scale_depths_to_ints (occluded_f, occluded_ch);
+    if (SCALE_HEATMAPS)
+    {
+      scaler_.scale_depths_to_ints (visible_f, visible_ch);
+      scaler_.scale_depths_to_ints (occluded_f, occluded_ch);
+    }
+    else
+    {
+      // TODO: Scale [0, 1] range to [0, 255] range for RGB integers
+      // Ref: https://stackoverflow.com/questions/12023958/what-does-cvnormalize-src-dst-0-255-norm-minmax-cv-8uc1
+      //   API https://docs.opencv.org/2.4/modules/core/doc/operations_on_arrays.html#normalize
+      cv::normalize (visible_f, visible_ch, 0, 255, cv::NORM_MINMAX, CV_8UC1);
+      cv::normalize (occluded_f, occluded_ch, 0, 255, cv::NORM_MINMAX, CV_8UC1);
+    }
 
     // Duplicate the channel to 3 channels, to fit image formats for saving
     // Ref: https://stackoverflow.com/questions/3614163/convert-single-channle-image-to-3-channel-image-c-opencv
@@ -254,6 +266,11 @@ int main (int argc, char ** argv)
   //   so they can be manually removed from the scenes YAML file.
   bool DRY_RUN = false;
 
+  // Whether to scale blobs in heatmaps to a quantity that means something,
+  //   e.g. depth.
+  // If false, heatmap will have values in range [0, 1].
+  bool SCALE_HEATMAPS = false;
+
 
   // Parse cmd line args
   int o_i_start = 0;
@@ -267,6 +284,11 @@ int main (int argc, char ** argv)
       VIS_RAYTRACE = true;
     else if (! strcmp (argv [i], "--dry-run"))
       DRY_RUN = true;
+    else if (! strcmp (argv [i], "--scale-heatmaps"))
+    {
+      SCALE_HEATMAPS = true;
+      fprintf (stderr, "%sSetting SCALE_HEATMAPS = true, to scale heatmaps by depth values%s\n", OKCYAN, ENDC);
+    }
     else if (! strcmp (argv [i], "--object_i"))
     {
       o_i_start = atoi (argv [++i]);
@@ -637,8 +659,8 @@ int main (int argc, char ** argv)
           //std::cerr << "Press any character, then press enter: ";
           //std::cin >> enter;
         }
-       
-       
+
+
         // Separate endpoints into visible and occluded, in pixel coordinates
         //Eigen::MatrixXf visible_uv, occluded_uv;
        
@@ -649,7 +671,73 @@ int main (int argc, char ** argv)
         Eigen::MatrixXi uv;
         separator.project_to_2d (endpoints, P,
           cloud_ptr -> height, cloud_ptr -> width, uv);
- 
+
+
+        // Calculate 3D gripper pose
+
+        Eigen::VectorXf gpose_C;
+        Eigen::Vector2i gpose_uv;
+        if (! GEN_RAND_PTS)
+        {
+          // TODO: Implemented, runs, but not verified whether
+          //   final gripper poses wrt camera are correct in 3D space. However,
+          //   T_C_O has been used above and produced correct results in
+          //   heatmap blob positions.
+          //   Still, unsure what orientation GraspIt gripper is in, whether z
+          //   of frame is approach direction. There is separate approach field
+          //   from GraspIt, could consider using that.
+          // Two ways to parameterize, both in camera frame.
+          //   1. 3D in camera frame.
+          //   2. 3D in orientation and depth, 2D in x and y in image plane.
+
+          if (gposes.cols () == 7)
+          {
+            // Create 4 x 4 matrix from 7-tuple pose
+            Eigen::Matrix4f gpose_O_mat;
+            // Extract exactly 7 elements, to pass specific template type to fn
+            Eigen::Matrix <float, 1, 7> gposes_7 =
+              gposes.row (g_i).block <1, 7> (0, 0);
+            matrix_from_7tuple (gposes_7, gpose_O_mat);
+
+            // Transform gripper pose from object frame to camera frame
+            // T^C_g = T^C_O * T^O_g
+            // TODO T_C_O is now Eigen::MatrixXf. Should really use Matrix4f,
+            //   but the function in postprocess_scenes.h is used by too many
+            //   files (2), don't have time to fix all files right now. Didn't
+            //   work with something in the past so won't spend time on it now.
+            //   So using block<4,4> to enforce Matrix4f of other vars here.
+            Eigen::Matrix4f gpose_C_mat = T_C_O.block <4, 4> (0, 0) * 
+              gpose_O_mat;
+
+            Eigen::Matrix <float, 1, 7> gpose_C_quat;
+            _7tuple_from_matrix (gpose_C_mat, gpose_C_quat);
+
+            gpose_C = gpose_C_quat;
+          }
+          else
+          {
+            fprintf (stderr, "%sERROR: Gripper pose of %ld parameters not implemented yet. Implement it or choose a different one! Will output ALL ZEROS for gripper pose label.%s\n", FAIL, gposes.cols (), ENDC);
+          }
+
+
+          // Calculate gripper pose in 2D image coordinates (u, v)
+
+          // TODO I think there's a better way to do this
+          // Convert 3-vector to 3 x 1 matrix to pass to fn, which assumes 3 x n
+          Eigen::MatrixXf gpose_C_mat = Eigen::MatrixXf::Zero (3, 1);
+          gpose_C_mat << gpose_C (0), gpose_C (1), gpose_C (2);
+          // Do the same for 2-vector to 2 x 1 matrix
+          Eigen::MatrixXi gpose_uv_mat = Eigen::MatrixXi::Zero (2, 1);
+
+          // Project 3D gripper pose in camera frame to image plane
+          separator.project_to_2d (gpose_C_mat, P,
+            cloud_ptr -> height, cloud_ptr -> width, gpose_uv_mat);
+
+          // Convert 2 x 1 matrix back to 2-vector
+          gpose_uv (0) = gpose_uv_mat (0, 0);
+          gpose_uv (1) = gpose_uv_mat (1, 0);
+        }
+
        
         // Crop the image, centered at object
         // Find object center in image pixels, using camera extrinsics
@@ -687,6 +775,10 @@ int main (int argc, char ** argv)
         //   subtract by upperleft coordinates (x, y) of crop.
         uv.row (0) = uv.row (0).array () - topleftx;
         uv.row (1) = uv.row (1).array () - toplefty;
+
+        // Do same for gripper pose uv
+        gpose_uv (0) = gpose_uv (0) - topleftx;
+        gpose_uv (1) = gpose_uv (1) - toplefty;
  
  
         // Apply the scaling to the projected 2D coordinates
@@ -720,6 +812,17 @@ int main (int argc, char ** argv)
         // Convert scaled (u, v) to integers, for indexing image pixels
         uv = uv_scaled_homo.topRows (2).cast <int> ();
         //std::cerr << "scaled uv:" << std::endl << uv << std::endl;
+
+        // Do same for gripper pose uv, which is just 2-elt vector. Can use
+        //   simple scalar operations
+        // Values for this will look a bit awkward, as they are wrt upper-left
+        //   corner of the CROPPED image, not the original image. They can be
+        //   out of bounds of the crop, because the crop is so small.
+        Eigen::Vector3f gpose_uv_homo;
+        gpose_uv_homo << (float) gpose_uv (0), (float) gpose_uv (1), 1.0f;
+        Eigen::Vector3f gpose_uv_scaled_homo = scale * gpose_uv_homo;
+        gpose_uv (0) = (int) round (gpose_uv_scaled_homo (0));
+        gpose_uv (1) = (int) round (gpose_uv_scaled_homo (1));
  
  
         // Mark (u, v) coords that are out of bounds. Sometimes they are in
@@ -753,6 +856,14 @@ int main (int argc, char ** argv)
               valid_idx.at (obod_i) = false;
           }
         }
+
+        // TODO later: IF use heatmap for 2D gripper pose, then need to check
+        //   obod for it as well, just copy the above. Then use create_masks()
+        //   to create gripper pose heatmap.
+        //   For now, even if gpose_uv is negative or beyond height or width of
+        //   image, still output to labels file. It might still mean something
+        //   to the predictor, `.` they are just coordinates and indicate
+        //   location.
  
  
         // Create heatmaps, or masks with white dots at projected 2D points,
@@ -760,7 +871,7 @@ int main (int argc, char ** argv)
         cv::Mat vis_crop, occ_crop;
         bool nonempty = separator.create_masks (endpoints, occluded, valid_idx,
           RawDepthScaling::SCALE_H, RawDepthScaling::SCALE_W, uv,
-          vis_crop, occ_crop);
+          vis_crop, occ_crop, SCALE_HEATMAPS);
         // Empty heatmaps. Do not include in training examples. Skip scene
         if (! nonempty)
         {
@@ -815,7 +926,7 @@ int main (int argc, char ** argv)
         std::string vis_blob_base = "g" + std::to_string (g_i) +
           "_vis_blob.png";
         std::string vis_blob_path;
-        join_paths (heatmaps_subdir, vis_blob_base, vis_blob_path);
+        join_paths (heatmaps_subdir, vis_blob_base, vis_blob_path, false);
         // Operate on the cropped img
         blob_filter (vis_crop, visible_blob, BLOB_EXPAND, GAUSS_SZ, GAUSS_SIGMA);
         cv::imwrite (vis_blob_path, visible_blob);
@@ -825,7 +936,7 @@ int main (int argc, char ** argv)
         std::string occ_blob_base = "g" + std::to_string (g_i) +
           "_occ_blob.png";
         std::string occ_blob_path;
-        join_paths (heatmaps_subdir, occ_blob_base, occ_blob_path);
+        join_paths (heatmaps_subdir, occ_blob_base, occ_blob_path, false);
         // Operate on the cropped img
         blob_filter (occ_crop, occluded_blob, BLOB_EXPAND, GAUSS_SZ, 
           GAUSS_SIGMA);
@@ -901,55 +1012,11 @@ int main (int argc, char ** argv)
           std::string lbls_base = "g" + std::to_string (g_i) +
             "_lbls.yaml";
           std::string lbls_path;
-          join_paths (heatmaps_subdir, lbls_base, lbls_path);
+          join_paths (heatmaps_subdir, lbls_base, lbls_path, false);
  
-
-          // TODO: Grasp poses. Implemented, runs, but not verified whether
-          //   final gripper poses wrt camera are correct in 3D space. However,
-          //   T_C_O has been used above and produced correct results in
-          //   heatmap blob positions.
-          //   Still, unsure what orientation GraspIt gripper is in, whether z
-          //   of frame is approach direction. There is separate approach field
-          //   from GraspIt, could consider using that.
-          // Two ways to parameterize, both in camera frame.
-          //   1. 3D in camera frame.
-          //   2. 3D in orientation and depth, 2D in x and y in image plane.
-          // Try #1 first.
-
-          Eigen::VectorXf gpose_C;
-          if (gposes.cols () == 7)
-          {
-            // Create 4 x 4 matrix from 7-tuple pose
-            Eigen::Matrix4f gpose_O_mat;
-            // Extract exactly 7 elements, to pass specific template type to fn
-            Eigen::Matrix <float, 1, 7> gposes_7 =
-              gposes.row (g_i).block <1, 7> (0, 0);
-            matrix_from_7tuple (gposes_7, gpose_O_mat);
-
-            // Transform gripper pose from object frame to camera frame
-            // T^C_g = T^C_O * T^O_g
-            // TODO T_C_O is now Eigen::MatrixXf. Should really use Matrix4f,
-            //   but the function in postprocess_scenes.h is used by too many
-            //   files (2), don't have time to fix all files right now. Didn't
-            //   work with something in the past so won't spend time on it now.
-            //   So using block<4,4> to enforce Matrix4f of other vars here.
-            Eigen::Matrix4f gpose_C_mat = T_C_O.block <4, 4> (0, 0) * 
-              gpose_O_mat;
-
-            Eigen::Matrix <float, 1, 7> gpose_C_quat;
-            _7tuple_from_matrix (gpose_C_mat, gpose_C_quat);
-
-            gpose_C = gpose_C_quat;
-          }
-          else
-          {
-            fprintf (stderr, "%sERROR: Gripper pose of %ld parameters not implemented yet. Implement it or choose a different one! Will output ALL ZEROS for gripper pose label.%s\n", FAIL, gposes.cols (), ENDC);
-          }
-
-
           // Pass in object name and integer numeric ID
           LabelsIO::write_label (lbls_path, obj_name, energies (g_i),
-            gpose_C);
+            gpose_C, gpose_uv);
  
           fprintf (stderr, "%sWritten labels to %s%s\n", OKCYAN,
             lbls_path.c_str (), ENDC);

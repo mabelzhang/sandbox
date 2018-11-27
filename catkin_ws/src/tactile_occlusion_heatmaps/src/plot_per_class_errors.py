@@ -105,12 +105,21 @@ def main ():
 
   # Dashed line
   # API https://matplotlib.org/api/_as_gen/matplotlib.axes.Axes.axhline.html
-  plt.gca ().axhline (y=np.mean (obj_errs), linewidth=1, color='w',
+  mean_err = np.mean (obj_errs)
+  plt.gca ().axhline (y=mean_err, linewidth=1, color='w',
     linestyle='--', label='Mean per-class')
+  mean_err_obj = plt.text (0, mean_err + 0.01, '%.3f' % mean_err, color='w')
 
   if len (lbls_by_class) > 0:
-    plt.gca ().axhline (y=np.min (lbls_by_class) / float (np.sum(lbls_by_class)),
-      linewidth=1, color='r', linestyle='--', label='Labels portion')
+    smaller_proportion = np.min (lbls_by_class) / float (np.sum(lbls_by_class))
+    plt.gca ().axhline (y=smaller_proportion, linewidth=1, color='r',
+      linestyle='--', label='Labels portion')
+    plt.text (0, smaller_proportion + 0.01, '%.3f' % smaller_proportion,
+      color='r')
+
+    # Positive is good, negative is bad
+    mean_err_obj.set_text (mean_err_obj.get_text () + \
+      ' (%.3f lower)' % (smaller_proportion - mean_err))
 
   legend_hdl = plt.legend ()
   black_legend (legend_hdl)

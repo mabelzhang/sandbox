@@ -34,7 +34,7 @@ def get_label_fmt ():
   return '%s/g%d_lbls.yaml'
 
 
-def get_root ():
+def get_data_root ():
 
   # Get directory of current file
   this_dir = os.path.dirname (os.path.realpath (__file__))
@@ -50,7 +50,7 @@ def get_root ():
 
 def get_data_path ():
 
-  path = os.path.join (get_root (), 'data')
+  path = os.path.join (get_data_root (), 'data')
 
   if not os.path.exists (path):
     os.makedirs (path)
@@ -83,7 +83,7 @@ def get_heatmaps_data_path ():
 
 def get_vis_path ():
 
-  path = os.path.join (get_root (), 'vis')
+  path = os.path.join (get_data_root (), 'vis')
 
   if not os.path.exists (path):
     os.makedirs (path)
@@ -105,6 +105,18 @@ def get_vis_3d_fmt ():
   #   os.path.splitext (os.path.basename (scene_path)) [0]
   # Integer is grasp number from grasp_collect.py, g_i
   return ('%s_g%d_3d.png')
+
+
+def get_analyses_path ():
+
+  root = get_data_root ()
+  path = os.path.join (root, 'analyses')
+
+  if not os.path.exists (path):
+    os.makedirs (path)
+
+  return path
+
 
 
 # NOTE: Called by scene_generation.py, which runs in Blender Python.

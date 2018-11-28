@@ -74,7 +74,7 @@ public:
     energy_abbrev_ = config ["energy_abbrev"].as <std::string> ();
   }
 
-  void get_root (std::string & path)
+  void get_data_root (std::string & path)
   {
     path = root_;
   }

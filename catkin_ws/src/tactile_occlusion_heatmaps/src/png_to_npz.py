@@ -248,6 +248,7 @@ def main ():
     #   List of lists. Each element is a list of floats, e.g.
     #     [tx ty tz qx qy qz qw]
     gposes = []
+    gposes2d = []
 
 
     # Loop through all files in this type
@@ -304,6 +305,9 @@ def main ():
 
         gposes.append (gpose)
 
+        gpose2d = labels [3]
+        gposes2d.append (gpose2d)
+
         # TODO: Another option, instead of skipping, is to cap them to
         #   a constant, THRESH_INVALID_ENERGY. Then the example can still be
         #   used, and simply counted as a bad grasp.
@@ -352,10 +356,17 @@ def main ():
           print ('%sWritten %d-row grasp pose matrix to %s%s' % (
             ansi.OKCYAN, gposes.shape [0], gpose_path, ansi.ENDC))
 
+          gposes2d = np.array (gposes2d)
+          gpose2d_path = os.path.join (out_dir, 'gpose2d_%05d.npz' % batches_filled)
+          np.savez_compressed (gpose2d_path, gposes2d)
+          print ('%sWritten %d-row 2D grasp pose matrix to %s%s' % (
+            ansi.OKCYAN, gposes2d.shape [0], gpose2d_path, ansi.ENDC))
+
         # Reset
         npz_arr = np.zeros ((BATCH_SIZE, NROWS [ext], NCOLS [ext], 1))
           #dtype=np.float64)  # This doesn't eliminate warning from tensorflow
         gposes = []
+        gposes2d = []
         rows_filled = 0
         batches_filled += 1
 
@@ -383,6 +394,12 @@ def main ():
         np.savez_compressed (gpose_path, gposes)
         print ('%sWritten %d-row grasp pose matrix to %s%s' % (
           ansi.OKCYAN, gposes.shape [0], gpose_path, ansi.ENDC))
+
+        gposes2d = np.array (gposes2d)
+        gpose2d_path = os.path.join (out_dir, 'gpose2d_%05d.npz' % batches_filled)
+        np.savez_compressed (gpose2d_path, gposes2d)
+        print ('%sWritten %d-row 2D grasp pose matrix to %s%s' % (
+          ansi.OKCYAN, gposes2d.shape [0], gpose2d_path, ansi.ENDC))
 
       batches_filled += 1
       print ('Batch %d filled, batch size %d' % (batches_filled, BATCH_SIZE))

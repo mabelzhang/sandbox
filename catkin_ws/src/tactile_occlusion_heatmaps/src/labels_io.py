@@ -43,9 +43,13 @@ class LabelsIO:
           gpose.extend (gpose_yaml ['q_xyz'])
           gpose.append (gpose_yaml ['qw'])
 
+          # (u v tz)
+          gpose2d = gpose_yaml ['t_uvz']
+          gpose2d.append (gpose_yaml ['t_xyz'] [2])
+
       except KeyError:
         print ('ERROR: Key gripper_pose not found in YAML file %s' % (path))
         gpose = None
 
-    return obj_name, energy, gpose
+    return obj_name, energy, gpose, gpose2d
 

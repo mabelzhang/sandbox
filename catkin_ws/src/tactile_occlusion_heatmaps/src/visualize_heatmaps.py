@@ -85,7 +85,7 @@ def main ():
   # String
   obj_names = objs [0]
   # List of list of strings, paths to .pcd scene files
-  scene_paths = objs [1]
+  scene_paths = objs [2]
 
   # For each object
   terminate = False

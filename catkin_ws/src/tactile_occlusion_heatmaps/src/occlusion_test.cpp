@@ -918,8 +918,8 @@ int main (int argc, char ** argv)
         //   definitely <=15), 7 for cropped 64x64.
         //int BLOB_EXPAND = 9;
         //int GAUSS_SZ = 9;
-        int BLOB_EXPAND = 15; //7;
-        int GAUSS_SZ = 15; //7;
+        int BLOB_EXPAND = 9; //7;
+        int GAUSS_SZ = 9; //7;
         // Pass in 0 to let OpenCV calculating sigma from size
         float GAUSS_SIGMA = 0;
 

@@ -32,6 +32,12 @@ from labels_io import LabelsIO
 
 def main ():
 
+  # User-specified parameters
+
+  # Generate 2D gripper poses
+  GEN_2D_POSE = False
+
+
   arg_parser = argparse.ArgumentParser ()
 
   # Variable number of args http://stackoverflow.com/questions/13219910/argparse-get-undefined-number-of-arguments
@@ -305,8 +311,9 @@ def main ():
 
         gposes.append (gpose)
 
-        gpose2d = labels [3]
-        gposes2d.append (gpose2d)
+        if GEN_2D_POSE:
+          gpose2d = labels [3]
+          gposes2d.append (gpose2d)
 
         # TODO: Another option, instead of skipping, is to cap them to
         #   a constant, THRESH_INVALID_ENERGY. Then the example can still be
@@ -356,11 +363,12 @@ def main ():
           print ('%sWritten %d-row grasp pose matrix to %s%s' % (
             ansi.OKCYAN, gposes.shape [0], gpose_path, ansi.ENDC))
 
-          gposes2d = np.array (gposes2d)
-          gpose2d_path = os.path.join (out_dir, 'gpose2d_%05d.npz' % batches_filled)
-          np.savez_compressed (gpose2d_path, gposes2d)
-          print ('%sWritten %d-row 2D grasp pose matrix to %s%s' % (
-            ansi.OKCYAN, gposes2d.shape [0], gpose2d_path, ansi.ENDC))
+          if GEN_2D_POSE:
+            gposes2d = np.array (gposes2d)
+            gpose2d_path = os.path.join (out_dir, 'gpose2d_%05d.npz' % batches_filled)
+            np.savez_compressed (gpose2d_path, gposes2d)
+            print ('%sWritten %d-row 2D grasp pose matrix to %s%s' % (
+              ansi.OKCYAN, gposes2d.shape [0], gpose2d_path, ansi.ENDC))
 
         # Reset
         npz_arr = np.zeros ((BATCH_SIZE, NROWS [ext], NCOLS [ext], 1))
@@ -395,11 +403,12 @@ def main ():
         print ('%sWritten %d-row grasp pose matrix to %s%s' % (
           ansi.OKCYAN, gposes.shape [0], gpose_path, ansi.ENDC))
 
-        gposes2d = np.array (gposes2d)
-        gpose2d_path = os.path.join (out_dir, 'gpose2d_%05d.npz' % batches_filled)
-        np.savez_compressed (gpose2d_path, gposes2d)
-        print ('%sWritten %d-row 2D grasp pose matrix to %s%s' % (
-          ansi.OKCYAN, gposes2d.shape [0], gpose2d_path, ansi.ENDC))
+        if GEN_2D_POSE:
+          gposes2d = np.array (gposes2d)
+          gpose2d_path = os.path.join (out_dir, 'gpose2d_%05d.npz' % batches_filled)
+          np.savez_compressed (gpose2d_path, gposes2d)
+          print ('%sWritten %d-row 2D grasp pose matrix to %s%s' % (
+            ansi.OKCYAN, gposes2d.shape [0], gpose2d_path, ansi.ENDC))
 
       batches_filled += 1
       print ('Batch %d filled, batch size %d' % (batches_filled, BATCH_SIZE))

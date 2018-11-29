@@ -38,13 +38,13 @@ from graspit_interface.srv import LoadWorld
 from graspit_interface.msg import SearchContact
 
 # Custom
-from util.ros_util import matrix_from_Pose
+from util.ros_util import matrix_from_Pose, _7tuple_from_matrix
 from util.ansi_colors import ansi_colors as ansi
 from depth_scene_rendering.config_read_yaml import ConfigReadYAML
 
 # Local
 from grasp_collection.config_consts import worlds, \
-  SEARCH_ENERGY, ENERGY_ABBREV, N_POSE_PARAMS
+  SEARCH_ENERGY, ENERGY_ABBREV, N_POSE_PARAMS, N_PARAMS_QUAT
 from grasp_collection.config_paths import world_subdir
 from grasp_io import GraspIO
 
@@ -122,6 +122,8 @@ def main ():
   # Variable number of args http://stackoverflow.com/questions/13219910/argparse-get-undefined-number-of-arguments
   arg_parser.add_argument ('--debug', type=str,
     help='Specify for debugging one by one. Waits for user input to move onto displaying next grasp. Note that if you skip grasps, the contacts will NOT be saved!!')
+  arg_parser.add_argument ('--suffix', type=str, default='temp',
+    help='Suffix for saving files, so that new ones do not overwrite existing ones. Combine them using grasp_concat.py.')
 
   args = arg_parser.parse_args ()
 
@@ -130,14 +132,22 @@ def main ():
 
   # Set to False if debugging and don't want to overwrite previously saved data!
   SAVE_GRASPS = True #False
-  print ('%sSAVE_GRASPS is set to %s, make sure this is what you want!%s' % (
+  print ('%sSAVE_GRASPS is set to %s. Make sure this is what you want!%s' % (
     ansi.OKCYAN, str(SAVE_GRASPS), ansi.ENDC))
+
+  # Set to True to only write grasps below this threshold to disk
+  FILTER_BY_ENERGY = True
+  ENERGY_THRESH = -0.52
+  print ('%sFILTER_BY_ENERGY is set to %s, to only save grasps with energy below %g. Make sure this is what you want!%s' % (
+    ansi.OKCYAN, str(FILTER_BY_ENERGY), ENERGY_THRESH, ansi.ENDC))
 
   # Save trained grasps with a suffix at the end of filename. Useful if you are
   #   running this script multiple times and then using grasp_concat.py to
   #   concatenate them; then you would specify a different suffix each time so
   #   that the runs do not overwrite previous runs' files.
-  SUFFIX = 'b'
+  SUFFIX = args.suffix
+  print ('%sSUFFIX for saving files so that existing ones do not get overwritten (if empty string, will be overwritten!): %s%s' % (
+    ansi.OKCYAN, SUFFIX, ansi.ENDC))
 
   print ('%sSearch energy: %s%s' % (ansi.OKCYAN, SEARCH_ENERGY, ansi.ENDC))
 
@@ -172,7 +182,7 @@ def main ():
   start_time = time.time ()
 
   objs_to_collect = range (len (worlds))
-  #objs_to_collect = [6, 7]
+  objs_to_collect = [2, 4]
   for w_i in objs_to_collect:
 
     # graspit_interface loadWorld automatically looks in worlds/ path under
@@ -255,8 +265,6 @@ def main ():
       n_contacts, contacts_O = find_contacts (T_W_O)
 
 
-      # TODO: Just copied from grasp_pose_extract.py. Test it works in this
-      #   file too
       # Compute gripper pose wrt object frame
 
       # Gripper pose wrt GraspIt world frame
@@ -266,7 +274,7 @@ def main ():
       # 4 x 4, wrt object frame
       # Transform gripper pose to be wrt object frame
       # T^O_G = T^O_W * T^W_G
-      gpose_O = np.dot (np.linalg.inv (T_W_O), pose_W)
+      gpose_O = np.dot (np.linalg.inv (T_W_O), gpose_W)
 
       # Convert to 7-tuple and append to big matrix
       if N_POSE_PARAMS == N_PARAMS_QUAT:
@@ -304,6 +312,22 @@ def main ():
         # Set flag to remove this grasp
         rm_grasps [g_i] = True
 
+      # Further check whether need to remove this grasp
+      if not rm_grasps [g_i] and FILTER_BY_ENERGY:
+        # Smaller the energy, the better the grasp. Remove grasps larger than
+        #   threshold (bad grasps).
+        if gres.energies [g_i] > ENERGY_THRESH:
+
+          # Remove ALL remaining grasps. `.` planned grasps are returned in
+          #   ascending order. If this grasp exceeds threshold, subsequent ones
+          #   will be even worse. Don't need to go through them, saves time.
+          for r_i in range (g_i, len (gres.grasps)):
+            rm_grasps [r_i] = True
+
+          # Skip all remaining 
+          break
+
+
       # Open gripper for next grasp
       GraspitCommander.autoOpen ()
       g_i += 1
@@ -312,14 +336,14 @@ def main ():
     # Remove grasps that did not produce contacts
     n_valid_grasps = 0
     final_grasps = []
-    final_gposes = []
+    final_gposes = np.zeros ((0, gposes.shape [1]))
     final_energies = []
     final_cmeta = []
     for g_i in range (len (gres.grasps)):
       # If flag says to keep this grasp, add it to final list
       if rm_grasps [g_i] == False:
         final_grasps.append (gres.grasps [g_i])
-        final_gposes = np.vstack (final_gposes, gposes [g_i, :])
+        final_gposes = np.vstack ([final_gposes, gposes [g_i, :]])
         final_energies.append (gres.energies [g_i])
         final_cmeta.append (cmeta [g_i])
         n_valid_grasps += 1
@@ -338,14 +362,13 @@ def main ():
     #   world file, `.` file I/O is expensive. But don't wait till end of
     #   program, `.` may leave it running for hours, don't want to lose all the
     #   work!
-    if SAVE_GRASPS:
+    if SAVE_GRASPS and len (final_grasps) > 0:
 
       # One file per world (object) for now. It contains all grasps obtained in
       #   this world, possibly hundreds of grasps.
       # Some grasps have 0 contacts with object, usually because finger hits
       #   floor, and gripper stops closing. Will save them to use as bad grasps.
       GraspIO.write_grasps (os.path.basename (world_fname), final_grasps, SUFFIX)
-      # TODO: Test this works in this file. Copied from grasp_pose_extract.py
       GraspIO.write_grasp_poses (os.path.basename (world_fname), final_gposes, SUFFIX)
  
       GraspIO.write_contacts (os.path.basename (world_fname), contacts_m.T,
@@ -360,10 +383,10 @@ def main ():
   print ('Elapsed time: %g seconds' % (end_time - start_time))
 
   print ('Summary:')
-  for w_i in objs_to_collect:
+  for i in range (len (objs_to_collect)):
     print ('Object %s: %d out of %d grasps had contacts, total %d contacts' % (
-      worlds [w_i], ns_valid_grasps [w_i], ns_planned_grasps [w_i],
-      ns_contacts_ttl [w_i]))
+      worlds [objs_to_collect [i]], ns_valid_grasps [i], ns_planned_grasps [i],
+      ns_contacts_ttl [i]))
 
 
 if __name__ == '__main__':

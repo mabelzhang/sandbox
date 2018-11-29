@@ -5,5 +5,10 @@ Launch GraspIt GUI with ROS interface:
 $ roslaunch graspit_interface_custom graspit_interface.launch
 
 Run grasp collection:
-$ rosrun grasp_collection grasp_collection.py
+$ rosrun grasp_collection grasp_collect.py
+
+Auto-pilot a batch of grasp collection, which simply runs grasp_collect.py for
+  specified number of times (edit script loop index), with different suffixes
+  in each run:
+$ rosrun grasp_collection batch_grasp_collect.sh 
 

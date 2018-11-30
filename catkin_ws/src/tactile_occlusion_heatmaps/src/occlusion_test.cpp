@@ -8,6 +8,8 @@
 //   point in the point cloud, it is considered occluded (behind). Otherwise,
 //   (ray is in free space), it is unoccluded.
 //
+// Outputs are generated in heatmaps/ directory.
+//
 // Usage:
 //   $ rosrun tactile_occlusion_heatmaps occlusion_test [--display] [--vis]
 //       [--scale-heatmaps] [--object_i #] [--grasp_i #] [--scene_i #]

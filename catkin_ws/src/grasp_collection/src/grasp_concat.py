@@ -36,13 +36,16 @@ def main ():
   #innames = ['vase_a', 'vase_b']
   #outname = 'vase'
 
-  suffixes = ['', '_c', '_d'] + ['_%d' % i for i in range (1, 15)]
+  #suffixes = ['', '_c', '_d'] + ['_%d' % i for i in range (1, 15)]
   # nozzle, nozzle_c, nozzle_d, nozzle_1, ..., nozzle_14
   #innames = ['nozzle%s' % s for s in suffixes]
   #outname = 'nozzle_concat'
   # part3, part3_c, part3_d, part3_1, ..., part3_14
-  innames = ['part3%s' % s for s in suffixes]
-  outname = 'part3_concat'
+  #innames = ['part3%s' % s for s in suffixes]
+  #outname = 'part3_concat'
+
+  innames = ['pawn', 'pawn_temp', 'pawn_temp2']
+  outname = 'pawn_concat'
 
   GraspIO.concat_grasps (innames, outname)
   print ('')

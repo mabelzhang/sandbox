@@ -5,6 +5,8 @@
 #
 # Convert PNG images to .npz format
 #
+# Outputs are in npz/ directory
+#
 # Usage:
 #   $ rosrun tactile_occlusion_heatmaps png_to_npz.py [--path <path>] --single-channel
 #

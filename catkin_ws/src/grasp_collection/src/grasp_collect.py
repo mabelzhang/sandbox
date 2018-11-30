@@ -137,8 +137,13 @@ def main ():
   # Set to True to only write grasps below this threshold to disk
   FILTER_BY_ENERGY = True
   ENERGY_THRESH = -0.52
-  print ('%sFILTER_BY_ENERGY is set to %s, to only save grasps with energy below %g. Make sure this is what you want!%s' % (
-    ansi.OKCYAN, str(FILTER_BY_ENERGY), ENERGY_THRESH, ansi.ENDC))
+  # Choose whether to keep grasps > threshold, or < threshold.
+  # True for removing bad ones, keeping good ones (to collect positive example).
+  # False for removing good ones, keeping bad ones (negative examples).
+  REMOVE_BAD = False
+  print ('%sFILTER_BY_ENERGY is set to %s, for threshold %g. REMOVE_BAD = %s. Make sure this is what you want!%s' % (
+    ansi.OKCYAN, str(FILTER_BY_ENERGY), ENERGY_THRESH, str(REMOVE_BAD),
+    ansi.ENDC))
 
   # Save trained grasps with a suffix at the end of filename. Useful if you are
   #   running this script multiple times and then using grasp_concat.py to
@@ -181,7 +186,7 @@ def main ():
   start_time = time.time ()
 
   objs_to_collect = range (len (worlds))
-  #objs_to_collect = [2, 4]
+  #objs_to_collect = [5]
   for w_i in objs_to_collect:
 
     # graspit_interface loadWorld automatically looks in worlds/ path under
@@ -305,19 +310,29 @@ def main ():
       contacts_m = np.hstack ((contacts_m, contacts_O [0:3, :]))
 
 
-      # Further check whether need to remove this grasp
-      # Smaller the energy, the better the grasp. Remove grasps larger than
-      #   threshold (bad grasps).
-      if FILTER_BY_ENERGY and gres.energies [g_i] > ENERGY_THRESH:
+      if FILTER_BY_ENERGY:
+        # To collect only good grasps
+        # Smaller the energy, the better the grasp. Remove grasps larger than
+        #   threshold (bad grasps).
+        # Use > to collect good grasps (remove bad ones, high value)
+        if REMOVE_BAD:
+          if gres.energies [g_i] > ENERGY_THRESH:
+         
+            # Remove ALL remaining grasps. `.` planned grasps are returned in
+            #   ascending order. If this grasp exceeds threshold, subsequent
+            #   ones are even worse. Don't need to go through them, saves time.
+            for r_i in range (g_i, len (gres.grasps)):
+              rm_grasps [r_i] = True
+         
+            # Skip all remaining 
+            break
 
-        # Remove ALL remaining grasps. `.` planned grasps are returned in
-        #   ascending order. If this grasp exceeds threshold, subsequent ones
-        #   will be even worse. Don't need to go through them, saves time.
-        for r_i in range (g_i, len (gres.grasps)):
-          rm_grasps [r_i] = True
+        # To collect only bad grasps
+        # Use < to collect bad grasps (remove good ones, low value)
+        else:
+          if gres.energies [g_i] < ENERGY_THRESH:
+            rm_grasps [g_i] = True
 
-        # Skip all remaining 
-        break
 
       # If energy threshold hasn't removed this grasp yet, check number of
       #   contacts

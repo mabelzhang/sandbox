@@ -20,7 +20,6 @@
 import os
 import re  # Regular expressions
 import cPickle as pickle
-import csv
 import yaml
 import argparse
 import time
@@ -306,26 +305,27 @@ def main ():
       contacts_m = np.hstack ((contacts_m, contacts_O [0:3, :]))
 
 
-      if n_contacts == 0:
+      # Further check whether need to remove this grasp
+      # Smaller the energy, the better the grasp. Remove grasps larger than
+      #   threshold (bad grasps).
+      if FILTER_BY_ENERGY and gres.energies [g_i] > ENERGY_THRESH:
+
+        # Remove ALL remaining grasps. `.` planned grasps are returned in
+        #   ascending order. If this grasp exceeds threshold, subsequent ones
+        #   will be even worse. Don't need to go through them, saves time.
+        for r_i in range (g_i, len (gres.grasps)):
+          rm_grasps [r_i] = True
+
+        # Skip all remaining 
+        break
+
+      # If energy threshold hasn't removed this grasp yet, check number of
+      #   contacts
+      if not rm_grasps [g_i] and n_contacts == 0:
         print ('%s0 contacts produced from grasp [%d]. Skipping this grasp, will not save it.%s' % (
           ansi.OKCYAN, g_i, ansi.ENDC))
         # Set flag to remove this grasp
         rm_grasps [g_i] = True
-
-      # Further check whether need to remove this grasp
-      if not rm_grasps [g_i] and FILTER_BY_ENERGY:
-        # Smaller the energy, the better the grasp. Remove grasps larger than
-        #   threshold (bad grasps).
-        if gres.energies [g_i] > ENERGY_THRESH:
-
-          # Remove ALL remaining grasps. `.` planned grasps are returned in
-          #   ascending order. If this grasp exceeds threshold, subsequent ones
-          #   will be even worse. Don't need to go through them, saves time.
-          for r_i in range (g_i, len (gres.grasps)):
-            rm_grasps [r_i] = True
-
-          # Skip all remaining 
-          break
 
 
       # Open gripper for next grasp

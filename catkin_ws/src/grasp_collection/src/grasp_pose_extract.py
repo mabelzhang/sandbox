@@ -35,9 +35,12 @@ def main ():
 
   objs = ConfigReadYAML.read_object_names ()
   # List of strings
-  obj_names = objs [ConfigReadYAML.NAME_IDX]
+  #obj_names = objs [ConfigReadYAML.NAME_IDX]
+  obj_names = ['nozzle', 'part3']
   # List of list of strings, paths to .pcd scene files
   scene_paths = objs [ConfigReadYAML.SCENE_IDX]
+
+  SUFFIX = 'd'
 
 
   # For each object world
@@ -57,7 +60,7 @@ def main ():
 
 
     # Read grasps written by grasp_collect.py, wrt GraspIt world frame
-    grasps = GraspIO.read_grasps (os.path.basename (world_fname))
+    grasps = GraspIO.read_grasps (os.path.basename (world_fname), SUFFIX)
 
     # n x 7
     gposes_O = np.zeros ((len (grasps), N_POSE_PARAMS))
@@ -82,7 +85,7 @@ def main ():
         row_O = _7tuple_from_matrix (pose_O)
       gposes_O [g_i, :] = np.array (row_O)
 
-    GraspIO.write_grasp_poses (os.path.basename (world_fname), gposes_O)
+    GraspIO.write_grasp_poses (os.path.basename (world_fname), gposes_O, SUFFIX)
 
 
 if __name__ == '__main__':

@@ -143,7 +143,7 @@ class GraspIO:
       gposes = GraspIO.read_grasp_poses (iname)
       print ('%d grasp poses' % (gposes.shape [0]))
 
-      if all_gposes == None:
+      if all_gposes is None:
         all_gposes = gposes
       else:
         all_gposes = np.vstack ((all_gposes, gposes))

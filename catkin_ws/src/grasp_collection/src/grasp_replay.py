@@ -47,10 +47,10 @@ def main ():
   # Set to False to just see how many grasps are in each file
   VIS = False
 
-  #SUFFIXES = ['']
+  SUFFIXES = ['']
   # Replay more than 1 set of collections. Useful for while grasp_collect.py is
   #   running, to know how many total grasps have been collected
-  SUFFIXES = [str(i) for i in range (1, 15)]
+  #SUFFIXES = [str(i) for i in range (1, 15)]
 
 
   objs = ConfigReadYAML.read_object_names ()

@@ -35,12 +35,13 @@ def main ():
 
   objs = ConfigReadYAML.read_object_names ()
   # List of strings
-  #obj_names = objs [ConfigReadYAML.NAME_IDX]
-  obj_names = ['nozzle', 'part3']
+  obj_names = objs [ConfigReadYAML.NAME_IDX]
+  #obj_names = ['nozzle', 'part3']
   # List of list of strings, paths to .pcd scene files
   scene_paths = objs [ConfigReadYAML.SCENE_IDX]
 
-  SUFFIX = 'd'
+  SUFFIX = ''
+  #SUFFIX = 'd'
 
 
   # For each object world

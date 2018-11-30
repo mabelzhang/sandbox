@@ -181,7 +181,7 @@ def main ():
   start_time = time.time ()
 
   objs_to_collect = range (len (worlds))
-  objs_to_collect = [2, 4]
+  #objs_to_collect = [2, 4]
   for w_i in objs_to_collect:
 
     # graspit_interface loadWorld automatically looks in worlds/ path under

@@ -17,11 +17,12 @@
             <!-- Rotate 90 degs wrt x, to offset the axis rotation in .obj -->
             <!-- Rotate further 180 degs wrt x or z, to put flat part of object on bottom -->
             <!--fullTransform>(-0.70710678 0.70710678 0 0)[0 0 +25]</fullTransform-->
-            <fullTransform>(1 0 0 0)[0 0 +25]</fullTransform>
+            <fullTransform>(1 0 0 0)[0 0 +25.3]</fullTransform>
         </transform>
     </graspableBody>
     <robot>
-        <filename>models/robots/RobotIQ/RobotIQ.xml</filename>
+        <!--filename>models/robots/RobotIQ/RobotIQ.xml</filename-->
+        <filename>models/robots/HumanHand/HumanHand16DOF.xml</filename>
         <dofValues>0 0 +0 +0 0 +0 +0 0 +0 +0</dofValues>
         <transform>
             <fullTransform>(+1 0 0 0)[+200 -200 +200]</fullTransform>

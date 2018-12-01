@@ -119,7 +119,7 @@ def main ():
   arg_parser = argparse.ArgumentParser ()
 
   # Variable number of args http://stackoverflow.com/questions/13219910/argparse-get-undefined-number-of-arguments
-  arg_parser.add_argument ('--debug', type=str,
+  arg_parser.add_argument ('--debug', action='store_true',
     help='Specify for debugging one by one. Waits for user input to move onto displaying next grasp. Note that if you skip grasps, the contacts will NOT be saved!!')
   arg_parser.add_argument ('--suffix', type=str, default='temp',
     help='Suffix for saving files, so that new ones do not overwrite existing ones. Combine them using grasp_concat.py.')
@@ -136,11 +136,12 @@ def main ():
 
   # Set to True to only write grasps below this threshold to disk
   FILTER_BY_ENERGY = True
-  ENERGY_THRESH = -0.52
+  #ENERGY_THRESH = -0.52  # Robotiq
+  ENERGY_THRESH = -1.2  # HumanHand, not sure what is good, just using a number that gives even split of grasps collected into 50/50 good and bad
   # Choose whether to keep grasps > threshold, or < threshold.
   # True for removing bad ones, keeping good ones (to collect positive example).
   # False for removing good ones, keeping bad ones (negative examples).
-  REMOVE_BAD = False
+  REMOVE_BAD = True
   print ('%sFILTER_BY_ENERGY is set to %s, for threshold %g. REMOVE_BAD = %s. Make sure this is what you want!%s' % (
     ansi.OKCYAN, str(FILTER_BY_ENERGY), ENERGY_THRESH, str(REMOVE_BAD),
     ansi.ENDC))
@@ -167,6 +168,7 @@ def main ():
   # Default 70000, takes 30 seconds. Set to small number for testing. Usually
   #   there are grasps ranking in top 20 from 30000s. Time is not linear wrt
   #   steps, so setting to 30000 will take a lot shorter time than 70000.
+  # Bigger number gets better grasps
   #max_steps = 70000
   #max_steps = 40000  # Quickest without error
   max_steps = 140000
@@ -185,8 +187,9 @@ def main ():
 
   start_time = time.time ()
 
-  objs_to_collect = range (len (worlds))
-  #objs_to_collect = [5]
+  #objs_to_collect = range (len (worlds))
+  #objs_to_collect = range (3, len (worlds))
+  objs_to_collect = [2, 4]
   for w_i in objs_to_collect:
 
     # graspit_interface loadWorld automatically looks in worlds/ path under
@@ -257,13 +260,25 @@ def main ():
       # There is /graspit/moveDOFToContacts, but where are the contacts? They
       #   seem to be at the blue lines in the GUI, but are they exposed?
       # /graspit/toggleAllCollisions, what does this do?
-     
+
+      # This moves the approach axis toward contact, not fingers
       # /graspit/approachToContact
       #GraspitCommander.approachToContact ()
      
+      # This just moves HumanHand in a straight line, not even toward the object
       #GraspitCommander.findInitialContact ()
+
+      # This simply keeps the hand open completely, doesn't work on HumanHand
+      #GraspitCommander.dynamicAutoGraspComplete ()
+
+      # Try this here, it gets more contacts than here in grasp_replay.py, see if get more contacts here too.
+      # This gets a lot more contacts!!! the Warning below prints every
+      #   time, always more than the number saved!!!
+      GraspitCommander.moveDOFToContacts (gres.grasps [g_i].dofs,
+        [10] * len (gres.grasps [g_i].dofs), False)
      
-      # This gives contacts!
+      # This gives contacts! But not very many. Typically 2-3 for Robotiq,
+      #   1-2 for HumanHand.
       GraspitCommander.autoGrasp ()
 
       n_contacts, contacts_O = find_contacts (T_W_O)
@@ -287,8 +302,6 @@ def main ():
         print ('%sERROR: N_POSE_PARAMS %d not implemented yet. Implement it or choose a different one! Gripper pose parameterization will default to Quaternion for orientation.%s' % (ansi.FAIL, N_POSE_PARAMS, ansi.ENDC))
         row_O = _7tuple_from_matrix (gpose_O)
         
-      gposes [g_i, :] = np.array (row_O)
-
 
       # Let user replay current grasp, before accumulating contact count and
       #   matrices, so that if user replays current grasp many times, contacts
@@ -301,14 +314,6 @@ def main ():
         elif uinput.lower () == 'q':
           break
  
-
-      cmeta [g_i] = n_contacts
-      n_contacts_ttl += n_contacts
-
-      # One list item per grasp. List item is a matrix 4 x n of n contacts
-      # Take top 3 rows, skip bottom homogeneous coordinate row, all 1s
-      contacts_m = np.hstack ((contacts_m, contacts_O [0:3, :]))
-
 
       if FILTER_BY_ENERGY:
         # To collect only good grasps
@@ -343,6 +348,23 @@ def main ():
         rm_grasps [g_i] = True
 
 
+      # NOTE Population of arrays should be AFTER any decisions to break or
+      #   continue, i.e. skip this iteration!! Do not collect data from this
+      #   iteration if choose to skip it!!!
+
+      # Populate data, after decided to keep data from this iteration
+      # Populate in index g_i. The indices with rm_grasps[g_i]==True will be 0s
+      if not rm_grasps [g_i]:
+        gposes [g_i, :] = np.array (row_O)
+       
+        cmeta [g_i] = n_contacts
+        n_contacts_ttl += n_contacts
+       
+        # One list item per grasp. List item is a matrix 4 x n of n contacts
+        # Take top 3 rows, skip bottom homogeneous coordinate row, all 1s
+        contacts_m = np.hstack ((contacts_m, contacts_O [0:3, :]))
+
+
       # Open gripper for next grasp
       GraspitCommander.autoOpen ()
       g_i += 1
@@ -356,7 +378,7 @@ def main ():
     final_cmeta = []
     for g_i in range (len (gres.grasps)):
       # If flag says to keep this grasp, add it to final list
-      if rm_grasps [g_i] == False:
+      if not rm_grasps [g_i]:
         final_grasps.append (gres.grasps [g_i])
         final_gposes = np.vstack ([final_gposes, gposes [g_i, :]])
         final_energies.append (gres.energies [g_i])

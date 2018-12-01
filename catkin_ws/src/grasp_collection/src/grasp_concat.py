@@ -44,8 +44,16 @@ def main ():
   #innames = ['part3%s' % s for s in suffixes]
   #outname = 'part3_concat'
 
-  innames = ['pawn', 'pawn_temp', 'pawn_temp2']
-  outname = 'pawn_concat'
+  #innames = ['pawn', 'pawn_temp', 'pawn_temp2']
+  #outname = 'pawn_concat'
+
+  # HumanHand
+  #innames = ['nozzle', 'nozzle_good', 'nozzle_good2', 'nozzle_good3', 'nozzle_good4', 'nozzle_good5']
+  #outname = 'nozzle'
+  innames = ['part3', 'part3_good2', 'part3_good3', 'part3_good4', 'part3_good5']
+  outname = 'part3'
+  #innames = ['pawn', 'pawn_e']
+  #outname = 'pawn'
 
   GraspIO.concat_grasps (innames, outname)
   print ('')

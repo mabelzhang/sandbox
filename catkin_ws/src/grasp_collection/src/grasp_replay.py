@@ -45,7 +45,7 @@ def main ():
 
   # Whether to visualize in GraspIt GUI
   # Set to False to just see how many grasps are in each file
-  VIS = False
+  VIS = True #False
 
   SUFFIXES = ['']
   # Replay more than 1 set of collections. Useful for while grasp_collect.py is
@@ -188,13 +188,18 @@ def main ():
   
           print ('Grasp %d, %d contacts' % (g_i, cmeta [g_i]))
           GraspitCommander.setRobotPose (grasps [g_i].pose)
-          # Must set dofs to loaded ones, otherwise fingers won't close half of the
-          #   time, and won't reproduce the recorded contacts!!
-          GraspitCommander.forceRobotDof (grasps [g_i].dofs)
+          # Must set dofs to loaded ones, otherwise fingers won't close half of
+          #   the time, and won't reproduce the recorded contacts!!
+          #GraspitCommander.forceRobotDof (grasps [g_i].dofs)
           print (grasps [g_i].pose)
           print (grasps [g_i].dofs)
-          GraspitCommander.autoGrasp ()
+
+          # This gets a lot more contacts!!! the Warning below prints every
+          #   time, always more than the number saved!!!
+          GraspitCommander.moveDOFToContacts (grasps [g_i].dofs,
+            [10] * len (grasps [g_i].dofs), False)
   
+          GraspitCommander.autoGrasp ()
           contacts = find_contacts (T_W_O)
           if contacts [0] != cmeta [g_i]:
             print ('%sWARN: Number of contacts loaded in replay (%d) != number of contacts in original grasp collection (%d)!%s' % (

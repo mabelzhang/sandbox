@@ -8,7 +8,7 @@
 # Outputs are in npz/ directory
 #
 # Usage:
-#   $ rosrun tactile_occlusion_heatmaps png_to_npz.py [--path <path>] --single-channel
+#   $ rosrun tactile_occlusion_heatmaps png_to_npz.py [--path <path>] --scale-heatmaps
 #
 
 import os
@@ -39,6 +39,9 @@ def main ():
   # Generate 2D gripper poses
   GEN_2D_POSE = False
 
+  # Load merged heatmaps instead of separate vis and occ ones
+  MERGE_HEATMAPS = False
+
 
   arg_parser = argparse.ArgumentParser ()
 
@@ -46,7 +49,9 @@ def main ():
   arg_parser.add_argument ('--path', type=str,
     help='Path containing PNG files to convert. All PNG files in the directory will be converted to .npz (withOUT removing original files), in a subdirectory npz/')
   arg_parser.add_argument ('--scale-heatmaps', action='store_true',
-    help='Scale heatmaps to min/max depth values')
+    help='Specify the flag if it was specified to occlusion_test.cpp to generate the heatmaps. Rescale heatmaps back to min/max depth values.')
+  arg_parser.add_argument ('--merge-heatmaps', action='store_true',
+    help='Load merged heatmaps instead of separate vis and occ ones')
 
   # NOTE Assume all images are depth images, will take a single channel
   #arg_parser.add_argument ('--single-channel', action='store_true',
@@ -87,6 +92,7 @@ def main ():
   print ('Reading from %s' % os.path.dirname (heatmaps_dir))
 
   SCALE_HEATMAPS = args.scale_heatmaps
+  MERGE_HEATMAPS = args.merge_heatmaps
 
 
 
@@ -96,6 +102,7 @@ def main ():
   heatmap_fmts = get_heatmap_blob_fmt ()
   vis_heatmap_fmt = heatmap_fmts [0]
   occ_heatmap_fmt = heatmap_fmts [1]
+  mge_heatmap_fmt = heatmap_fmts [2]
 
   lbl_fmt = get_label_fmt ()
 
@@ -103,6 +110,7 @@ def main ():
   depth_png_list = []
   vis_png_list = []
   occ_png_list = []
+  mge_png_list = []
   lbl_list = []
   obj_lbls = []
 
@@ -144,47 +152,68 @@ def main ():
       #   files easier, and `.` CNN wants all data in a matrix in memory anyway.
       depth_path = os.path.join (renders_dir, depth_fmt % (scene_name))
 
-      # Per-grasp heatmaps and label data
-      # Use glob instead of reading contacts file for number of grasps, `.`
-      #   glob is safer - won't read any files that don't exist if I skipped it
-      #   because of 0 contacts or 0 points in point cloud, and is faster.
-      # Replace the %d formatting for grasp number with *, to get all grasps
-      vis_wildcard = vis_heatmap_fmt.replace ('%d', '*')
-      vis_wildcard = vis_wildcard % scene_name
-      vis_sublist = glob.glob (os.path.join (heatmaps_dir, vis_wildcard))
-      vis_png_list.extend (vis_sublist)
-
-      occ_wildcard = occ_heatmap_fmt.replace ('%d', '*')
-      occ_wildcard = occ_wildcard % scene_name
-      occ_sublist = glob.glob (os.path.join (heatmaps_dir, occ_wildcard))
-      occ_png_list.extend (occ_sublist)
-
       lbl_wildcard = lbl_fmt.replace ('%d', '*')
       lbl_wildcard = lbl_wildcard % scene_name
       lbl_sublist = glob.glob (os.path.join (heatmaps_dir, lbl_wildcard))
       lbl_list.extend (lbl_sublist)
 
-      if len (vis_sublist) != len (occ_sublist) or \
-         len (occ_sublist) != len (lbl_sublist):
-        print ('%sERROR: Wildcard lists for visible heatmap, occluded heatmap, and/or label files are not of the same size! You may have error in correspondence between the outputted npz files.%s' % (ansi.FAIL, ansi.ENDC))
+      if MERGE_HEATMAPS:
+
+        mge_wildcard = mge_heatmap_fmt.replace ('%d', '*')
+        mge_wildcard = mge_wildcard % scene_name
+        mge_sublist = glob.glob (os.path.join (heatmaps_dir, mge_wildcard))
+        mge_png_list.extend (mge_sublist)
+
+        if len (mge_sublist) != len (lbl_sublist):
+          print ('%sERROR: Wildcard lists for merged heatmap and label files are not of the same size! You may have error in correspondence between the outputted npz files.%s' % (ansi.FAIL, ansi.ENDC))
+
+        n_scene_heatmaps = len (mge_sublist)
+
+      else:
+        # Per-grasp heatmaps and label data
+        # Use glob instead of reading contacts file for number of grasps, `.`
+        #   glob is safer - won't read any files that don't exist if I skipped it
+        #   because of 0 contacts or 0 points in point cloud, and is faster.
+        # Replace the %d formatting for grasp number with *, to get all grasps
+        vis_wildcard = vis_heatmap_fmt.replace ('%d', '*')
+        vis_wildcard = vis_wildcard % scene_name
+        vis_sublist = glob.glob (os.path.join (heatmaps_dir, vis_wildcard))
+        vis_png_list.extend (vis_sublist)
+       
+        occ_wildcard = occ_heatmap_fmt.replace ('%d', '*')
+        occ_wildcard = occ_wildcard % scene_name
+        occ_sublist = glob.glob (os.path.join (heatmaps_dir, occ_wildcard))
+        occ_png_list.extend (occ_sublist)
+       
+        if len (vis_sublist) != len (occ_sublist) or \
+           len (occ_sublist) != len (lbl_sublist):
+          print ('%sERROR: Wildcard lists for visible heatmap, occluded heatmap, and/or label files are not of the same size! You may have error in correspondence between the outputted npz files.%s' % (ansi.FAIL, ansi.ENDC))
+
+        n_scene_heatmaps = len (vis_sublist)
 
       # Per-scene depth image. Same for all grasps in this scene
-      depth_png_list.extend ([depth_path] * len (vis_sublist))
+      depth_png_list.extend ([depth_path] * n_scene_heatmaps)
 
-      n_obj_examples += len (vis_sublist)
+      n_obj_examples += n_scene_heatmaps
 
     # Per-object object-id label. Same for all scenes in this object
     obj_lbls.extend ([obj_ids [o_i]] * n_obj_examples)
 
 
   print ('%d files' % (len (depth_png_list)))
-  in_png_lists = [depth_png_list, vis_png_list, occ_png_list, lbl_list]
 
   # TODO: ENERGY_ABBREV should be read from the file name of the energy csv
   #   file (new code, haven't trained yet, need to rerun GraspIt training).
   #   otherwise no way to keep track of which file used which energy if I change
   #   the energy in code!!!
-  npz_prefix = ['depth', 'vis', 'occ', 'lbl_' + ENERGY_ABBREV]
+  npz_prefix = ['depth', 'lbl_' + ENERGY_ABBREV]
+  in_png_lists = [depth_png_list, lbl_list]
+  if MERGE_HEATMAPS:
+    npz_prefix.append ('mge')
+    in_png_lists.append (mge_png_list)
+  else:
+    npz_prefix.extend (['vis', 'occ'])
+    in_png_lists.extend ([vis_png_list, occ_png_list])
 
   glob_time = time.time () - start_time
 
@@ -204,7 +233,10 @@ def main ():
     if len (png_list) == 0:
       continue
 
-    img = np_from_depth (vis_png_list [0])
+    if MERGE_HEATMAPS:
+      img = np_from_depth (mge_png_list [0])
+    else:
+      img = np_from_depth (vis_png_list [0])
     break
 
   # If still nothing loaded, there is no files in the list
@@ -276,8 +308,6 @@ def main ():
           # Calculate raw depths from the integers in image
           img = scaler.scale_ints_to_depths (img)
 
-# TODO  Bug: this scales all the tactile heatmaps to 0.7 and 1 too, but they shouldn't be scaled at all!!!! The if-conditional needs to be more discriminating than .png.
-        
         # Tactile heatmaps don't need rescaling. Take the raw image in range
         #   (0, 1)
         else:
@@ -448,7 +478,7 @@ def main ():
         npz_arr.shape [0], out_path, ansi.ENDC))
 
       # Reset
-      npz_arr = np.zeros ((BATCH_SIZE, NROWS [ext], NCOLS [ext], 1))
+      npz_arr = np.zeros ((BATCH_SIZE, 1, 1, 1))
       rows_filled = 0
       batches_filled += 1
 

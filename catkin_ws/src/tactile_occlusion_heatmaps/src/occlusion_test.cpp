@@ -12,7 +12,8 @@
 //
 // Usage:
 //   $ rosrun tactile_occlusion_heatmaps occlusion_test [--display] [--vis]
-//       [--scale-heatmaps] [--object_i #] [--grasp_i #] [--scene_i #]
+//       [--scale-heatmaps] [--merge-heatmaps]
+//       [--object_i #] [--grasp_i #] [--scene_i #]
 //
 
 // C++
@@ -181,17 +182,23 @@ public:
     cv::Mat visible_ch = cv::Mat::zeros (height, width, CV_8UC1);
     cv::Mat occluded_ch = cv::Mat::zeros (height, width, CV_8UC1);
 
-// TODO 2018 11 26 design mistake - these shouldn't be scaled to depth, but to [0, 1] range! ... which I think they are already in. So actually just shouldn't be scaled at all!!!
-    // Scale raw depths by camera max depth, so scaled values are consistent
-    //   across all images in the dataset.
+    // Scale raw depths by camera min/max depth range, so scaled values are
+    //   consistent across all images in the dataset.
+    // Disadvantage: If min/max depth range is small, this puts heatmap values
+    //   in a tight range, which could be disadvantageous for the predictor to
+    //   learn anything.
     if (SCALE_HEATMAPS)
     {
       scaler_.scale_depths_to_ints (visible_f, visible_ch);
       scaler_.scale_depths_to_ints (occluded_f, occluded_ch);
     }
+    // Do not rescale heatmaps to depth values. Rescale to RGB values directly.
+    // Advantage: They are kept in raw [0, 1] range once rescale back to raw
+    //   values, which is more customary to heatmaps and probabilities,
+    //   potentially advantageous for predictor to learn.
     else
     {
-      // TODO: Scale [0, 1] range to [0, 255] range for RGB integers
+      // Scale [0, 1] range to [0, 255] range for RGB integers
       // Ref: https://stackoverflow.com/questions/12023958/what-does-cvnormalize-src-dst-0-255-norm-minmax-cv-8uc1
       //   API https://docs.opencv.org/2.4/modules/core/doc/operations_on_arrays.html#normalize
       cv::normalize (visible_f, visible_ch, 0, 255, cv::NORM_MINMAX, CV_8UC1);
@@ -273,6 +280,9 @@ int main (int argc, char ** argv)
   // If false, heatmap will have values in range [0, 1].
   bool SCALE_HEATMAPS = false;
 
+  // Merge vis and occ heatmaps into one
+  bool MERGE_HEATMAPS = false;
+
 
   // Parse cmd line args
   int o_i_start = 0;
@@ -286,6 +296,8 @@ int main (int argc, char ** argv)
       VIS_RAYTRACE = true;
     else if (! strcmp (argv [i], "--dry-run"))
       DRY_RUN = true;
+    else if (! strcmp (argv [i], "--merge-heatmaps"))
+      MERGE_HEATMAPS = true;
     else if (! strcmp (argv [i], "--scale-heatmaps"))
     {
       SCALE_HEATMAPS = true;
@@ -925,26 +937,44 @@ int main (int argc, char ** argv)
         // Pass in 0 to let OpenCV calculating sigma from size
         float GAUSS_SIGMA = 0;
 
-        std::string vis_blob_base = "g" + std::to_string (g_i) +
-          "_vis_blob.png";
-        std::string vis_blob_path;
-        join_paths (heatmaps_subdir, vis_blob_base, vis_blob_path, false);
         // Operate on the cropped img
-        blob_filter (vis_crop, visible_blob, BLOB_EXPAND, GAUSS_SZ, GAUSS_SIGMA);
-        cv::imwrite (vis_blob_path, visible_blob);
-        fprintf (stderr, "%sWritten visible blobbed heatmap to %s%s\n", OKCYAN,
-          vis_blob_path.c_str (), ENDC);
-       
-        std::string occ_blob_base = "g" + std::to_string (g_i) +
-          "_occ_blob.png";
-        std::string occ_blob_path;
-        join_paths (heatmaps_subdir, occ_blob_base, occ_blob_path, false);
-        // Operate on the cropped img
+        blob_filter (vis_crop, visible_blob, BLOB_EXPAND, GAUSS_SZ,
+          GAUSS_SIGMA);
         blob_filter (occ_crop, occluded_blob, BLOB_EXPAND, GAUSS_SZ, 
           GAUSS_SIGMA);
-        cv::imwrite (occ_blob_path, occluded_blob);
-        fprintf (stderr, "%sWritten occluded blobbed heatmap to %s%s\n", OKCYAN,
-          occ_blob_path.c_str (), ENDC);
+
+        // If merge heatmaps, take max of them, save to one file
+        if (MERGE_HEATMAPS)
+        {
+          cv::Mat merge_blob = cv::max (visible_blob, occluded_blob);
+
+          std::string mge_blob_base = "g" + std::to_string (g_i) +
+            "_mge_blob.png";
+          std::string mge_blob_path;
+          join_paths (heatmaps_subdir, mge_blob_base, mge_blob_path, false);
+          cv::imwrite (mge_blob_path, merge_blob);
+          fprintf (stderr, "%sWritten merged blobbed heatmap to %s%s\n",
+            OKCYAN, mge_blob_path.c_str (), ENDC);
+        }
+        // Else, save heatmaps to separate files
+        else
+        {
+          std::string vis_blob_base = "g" + std::to_string (g_i) +
+            "_vis_blob.png";
+          std::string vis_blob_path;
+          join_paths (heatmaps_subdir, vis_blob_base, vis_blob_path, false);
+          cv::imwrite (vis_blob_path, visible_blob);
+          fprintf (stderr, "%sWritten visible blobbed heatmap to %s%s\n",
+            OKCYAN, vis_blob_path.c_str (), ENDC);
+
+          std::string occ_blob_base = "g" + std::to_string (g_i) +
+            "_occ_blob.png";
+          std::string occ_blob_path;
+          join_paths (heatmaps_subdir, occ_blob_base, occ_blob_path, false);
+          cv::imwrite (occ_blob_path, occluded_blob);
+          fprintf (stderr, "%sWritten occluded blobbed heatmap to %s%s\n",
+            OKCYAN, occ_blob_path.c_str (), ENDC);
+        }
  
         n_examples_saved += 1;
  

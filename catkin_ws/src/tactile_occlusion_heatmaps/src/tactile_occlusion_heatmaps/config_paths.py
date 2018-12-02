@@ -17,16 +17,16 @@ def get_depth_fmt ():
   return '%scrop.png'
 
 
-def get_heatmap_raw_fmt ():
+#def get_heatmap_raw_fmt ():
 
   # %s is timestamp from depth_scene_rendering scene_generation.py
   # g%d is grasp number from grasp_collection grasp_collect.py
-  return ('%s/g%d_vis.png', '%s/g%d_occ.png')
+  #return ('%s/g%d_vis.png', '%s/g%d_occ.png')
 
 
 def get_heatmap_blob_fmt ():
 
-  return ('%s/g%d_vis_blob.png', '%s/g%d_occ_blob.png')
+  return ('%s/g%d_vis_blob.png', '%s/g%d_occ_blob.png', '%s/g%d_mge_blob.png')
 
 
 def get_label_fmt ():

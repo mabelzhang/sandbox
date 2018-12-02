@@ -33,7 +33,7 @@ from depth_scene_rendering.config_read_yaml import ConfigReadYAML
 
 # Local
 from tactile_occlusion_heatmaps.config_paths import \
-  get_heatmap_raw_fmt, get_heatmap_blob_fmt, \
+  get_heatmap_blob_fmt, \
   get_renders_data_path, get_heatmaps_data_path, \
   get_vis_path, get_vis_heatmap_fmt
 from depth_to_image import RawDepthScaling
@@ -66,8 +66,9 @@ def main ():
   renders_dir = get_renders_data_path ()
   heatmaps_dir = get_heatmaps_data_path ()
 
-  vis_fmt, occ_fmt = get_heatmap_blob_fmt ()
-  #vis_fmt, occ_fmt = get_heatmap_raw_fmt ()
+  heatmap_fmts = get_heatmap_blob_fmt ()
+  vis_fmt = heatmap_fmts [0]
+  occ_fmt = heatmap_fmts [1]
 
   scaler = RawDepthScaling ()
   success, depth_range = scaler.load_depth_range ()

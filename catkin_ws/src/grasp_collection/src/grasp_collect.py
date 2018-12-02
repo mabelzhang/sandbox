@@ -135,7 +135,7 @@ def main ():
     ansi.OKCYAN, str(SAVE_GRASPS), ansi.ENDC))
 
   # Set to True to only write grasps below this threshold to disk
-  FILTER_BY_ENERGY = True
+  FILTER_BY_ENERGY = False
   #ENERGY_THRESH = -0.52  # Robotiq
   ENERGY_THRESH = -1.2  # HumanHand, not sure what is good, just using a number that gives even split of grasps collected into 50/50 good and bad
   # Choose whether to keep grasps > threshold, or < threshold.
@@ -187,9 +187,9 @@ def main ():
 
   start_time = time.time ()
 
-  #objs_to_collect = range (len (worlds))
+  objs_to_collect = range (len (worlds))
   #objs_to_collect = range (3, len (worlds))
-  objs_to_collect = [2, 4]
+  #objs_to_collect = [2, 4]
   for w_i in objs_to_collect:
 
     # graspit_interface loadWorld automatically looks in worlds/ path under

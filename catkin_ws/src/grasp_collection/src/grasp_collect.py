@@ -163,6 +163,10 @@ def main ():
   # To not set a target, simply set both to 0s
   TARGET_N_GOODS = 100
   TARGET_N_BADS = 100
+  # Set to true for objects that are too easy or too difficult to grasp.
+  #   If true, once there are enough of good/bad grasps, stop collecting that
+  #   category, only collect the other category.
+  TARGET_STRICT = True
 
   # Save trained grasps with a suffix at the end of filename. Useful if you are
   #   running this script multiple times and then using grasp_concat.py to
@@ -187,9 +191,9 @@ def main ():
   #   there are grasps ranking in top 20 from 30000s. Time is not linear wrt
   #   steps, so setting to 30000 will take a lot shorter time than 70000.
   # Bigger number gets better grasps
-  max_steps = 70000
+  #max_steps = 70000
   #max_steps = 40000  # Quickest without error
-  #max_steps = 140000
+  max_steps = 140000
 
   # Replaced this with config_consts, because grasps don't need to be
   #   regenerated all the time! It's always about the same for the same object.
@@ -201,9 +205,9 @@ def main ():
 
   start_time = time.time ()
 
-  #objs_to_collect = range (len (worlds))
+  objs_to_collect = range (len (worlds))
   #objs_to_collect = range (3, len (worlds))
-  objs_to_collect = [7]
+  #objs_to_collect = [4]
 
   ns_contacts_ttl = [0] * len (objs_to_collect)
   ns_valid_grasps = [0] * len (objs_to_collect)
@@ -255,6 +259,18 @@ def main ():
 
     while n_good_grasps_saved < TARGET_N_GOODS or \
       n_bad_grasps_saved < TARGET_N_BADS:
+
+      if TARGET_STRICT:
+        # If collected enough good grasps, stop collecting good ones, remove them
+        if n_good_grasps_saved >= TARGET_N_GOODS:
+          FILTER_BY_ENERGY = True
+          REMOVE_BAD = False
+          print ('%sStopping to collect good grasps%s' % (ansi.OKCYAN, ansi.ENDC))
+        # If collected enough bad grasps, stop collecting bad ones
+        if n_bad_grasps_saved >= TARGET_N_BADS:
+          FILTER_BY_ENERGY = True
+          REMOVE_BAD = True
+
 
       # Plan Eigengrasps
      

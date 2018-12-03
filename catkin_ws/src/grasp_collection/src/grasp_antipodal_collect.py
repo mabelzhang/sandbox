@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# This file is not being used.
+
+'''
 # Mabel Zhang
 # 8 Nov 2018
 #
@@ -142,7 +145,9 @@ def main ():
 
       energies.append (GraspitCommander.computeEnergy (SEARCH_ENERGY))
  
-      n_contacts, contacts_O = find_contacts (T_W_O)
+      contacts_fnd = find_contacts (T_W_O)
+      n_contacts = contacts_fnd [0]
+      contacts_O = contacts_fnd [1]
  
  
       # Let user replay current grasp, before accumulating contact count and
@@ -187,8 +192,8 @@ def main ():
       GraspIO.write_grasps (os.path.basename (world_fname), grasps,
         suffix='antipd')
  
-      GraspIO.write_contacts (os.path.basename (world_fname), contacts_m, cmeta,
-        suffix='antipd')
+      GraspIO.write_contacts (os.path.basename (world_fname), contacts_m,
+        None, cmeta, suffix='antipd')
  
       # Write grasp energies to a separate csv file, for easy loading and
       #   inspection.
@@ -203,4 +208,5 @@ def main ():
 if __name__ == '__main__':
 
   main ()
+'''
 

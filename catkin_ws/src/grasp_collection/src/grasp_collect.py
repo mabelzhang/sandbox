@@ -66,6 +66,7 @@ def find_contacts (T_W_O):
 
   n_contacts = 0
   contacts_W = np.zeros ((4, len (rres.robot.contacts)))
+  normals_W = np.zeros ((4, len (rres.robot.contacts)))
   for contact in rres.robot.contacts:
     # Skip self-contacts and contacts with floor
     if contact.body1 == 'Base' or contact.body2 == 'Base' or \
@@ -88,11 +89,18 @@ def find_contacts (T_W_O):
     contacts_W [:, n_contacts] = np.dot (matrix_from_Pose (contact.ps.pose),
       [0, 0, 0, 1])
 
+    # Multiply by z-axis, to get endpoint of normal. Checked in grasp_replay.py
+    #   and visualize_contacts.py to make sure this is the axis to multiply.
+    normals_W [:, n_contacts] = np.dot (matrix_from_Pose (contact.ps.pose),
+      [0, 0, 1, 1]) - contacts_W [:, n_contacts]
+    print (np.linalg.norm (normals_W [:, n_contacts]))
+
     # Increment AFTER index has been used in matrix
     n_contacts += 1
 
   # Delete unused columns
   contacts_W = contacts_W [:, 0:n_contacts]
+  normals_W = normals_W [:, 0:n_contacts]
 
   # 4 x n, wrt object frame
   # Transform contact points to be wrt object frame
@@ -101,10 +109,14 @@ def find_contacts (T_W_O):
   print ('contacts_O:')
   print (contacts_O)
 
+  normals_O = np.dot (np.linalg.inv (T_W_O), normals_W)
+  #print ('normals_O:')
+  #print (normals_O)
+
   print ('%d contacts' % n_contacts)
 
   # (int, 4 x n)
-  return n_contacts, contacts_O
+  return n_contacts, contacts_O, normals_O
 
 
 
@@ -130,7 +142,7 @@ def main ():
   UINPUT = args.debug
 
   # Set to False if debugging and don't want to overwrite previously saved data!
-  SAVE_GRASPS = True #False
+  SAVE_GRASPS = True
   print ('%sSAVE_GRASPS is set to %s. Make sure this is what you want!%s' % (
     ansi.OKCYAN, str(SAVE_GRASPS), ansi.ENDC))
 
@@ -170,8 +182,8 @@ def main ():
   #   steps, so setting to 30000 will take a lot shorter time than 70000.
   # Bigger number gets better grasps
   #max_steps = 70000
-  #max_steps = 40000  # Quickest without error
-  max_steps = 140000
+  max_steps = 40000  # Quickest without error
+  #max_steps = 140000
 
   # Replaced this with config_consts, because grasps don't need to be
   #   regenerated all the time! It's always about the same for the same object.
@@ -187,9 +199,9 @@ def main ():
 
   start_time = time.time ()
 
-  objs_to_collect = range (len (worlds))
+  #objs_to_collect = range (len (worlds))
   #objs_to_collect = range (3, len (worlds))
-  #objs_to_collect = [2, 4]
+  objs_to_collect = [0]
   for w_i in objs_to_collect:
 
     # graspit_interface loadWorld automatically looks in worlds/ path under
@@ -243,6 +255,8 @@ def main ():
     # 3 x (nContacts * nGrasps)
     contacts_m = np.zeros ((3, 0))
     cmeta = [0] * len (gres.grasps)
+    # Normal vector of each contact point
+    normals_m = np.zeros ((3, 0))
 
 
     # Loop through each result grasp
@@ -281,7 +295,10 @@ def main ():
       #   1-2 for HumanHand.
       GraspitCommander.autoGrasp ()
 
-      n_contacts, contacts_O = find_contacts (T_W_O)
+      contacts_fnd = find_contacts (T_W_O)
+      n_contacts = contacts_fnd [0]
+      contacts_O = contacts_fnd [1]
+      normals_O = contacts_fnd [2]
 
 
       # Compute gripper pose wrt object frame
@@ -363,6 +380,7 @@ def main ():
         # One list item per grasp. List item is a matrix 4 x n of n contacts
         # Take top 3 rows, skip bottom homogeneous coordinate row, all 1s
         contacts_m = np.hstack ((contacts_m, contacts_O [0:3, :]))
+        normals_m = np.hstack ((normals_m, normals_O [0:3, :]))
 
 
       # Open gripper for next grasp
@@ -409,7 +427,7 @@ def main ():
       GraspIO.write_grasp_poses (os.path.basename (world_fname), final_gposes, SUFFIX)
  
       GraspIO.write_contacts (os.path.basename (world_fname), contacts_m.T,
-        final_cmeta, SUFFIX)
+        normals_m.T, final_cmeta, SUFFIX)
  
       # Write grasp energies to a separate csv file, for easy loading and
       #   inspection.

@@ -45,9 +45,16 @@ def main ():
 
   # Whether to visualize in GraspIt GUI
   # Set to False to just see how many grasps are in each file
-  VIS = True #False
+  VIS = True
+  UINPUT = True #False
 
-  SUFFIXES = ['']
+  # Used to save normals for legacy files that did not have contact normals
+  #   saved from grasp_collect.py
+  # This does not work well, because moveDOFToContact() doesn't always get the
+  #   same number of contacts as grasp_collect.py! Not sure why.
+  SAVE_NORMALS = False
+
+  SUFFIXES = ['temp']
   # Replay more than 1 set of collections. Useful for while grasp_collect.py is
   #   running, to know how many total grasps have been collected
   #SUFFIXES = [str(i) for i in range (1, 15)]
@@ -55,8 +62,9 @@ def main ():
 
   objs = ConfigReadYAML.read_object_names ()
   # List of strings
-  obj_names = objs [ConfigReadYAML.NAME_IDX]
+  #obj_names = objs [ConfigReadYAML.NAME_IDX]
   #obj_names = ['nozzle', 'part3']
+  obj_names = ['bar_clamp']
   # List of list of strings, paths to .pcd scene files
   scene_paths = objs [ConfigReadYAML.SCENE_IDX]
 
@@ -67,6 +75,8 @@ def main ():
 
 
   for w_i in range (len (obj_names)):
+
+    normals_m = np.zeros ((3, 0))
 
     for u_i in range (len (SUFFIXES)):
 
@@ -200,10 +210,12 @@ def main ():
             [10] * len (grasps [g_i].dofs), False)
   
           GraspitCommander.autoGrasp ()
-          contacts = find_contacts (T_W_O)
-          if contacts [0] != cmeta [g_i]:
+          contacts_fnd = find_contacts (T_W_O)
+          if contacts_fnd [0] != cmeta [g_i]:
             print ('%sWARN: Number of contacts loaded in replay (%d) != number of contacts in original grasp collection (%d)!%s' % (
-              ansi.WARNING, contacts[0], cmeta[g_i], ansi.ENDC))
+              ansi.WARNING, contacts_fnd[0], cmeta[g_i], ansi.ENDC))
+          normals_O = contacts_fnd [2]
+          normals_m = np.hstack ((normals_m, normals_O [0:3, :]))
  
           # Same file naming convention as tactile_occlusion_heatmaps
           #   visualize_heatmaps.py
@@ -212,14 +224,15 @@ def main ():
           #    os.path.splitext (os.path.basename (scene_path)) [0], g_i))
           #GraspitCommander.saveImage (img_path)
  
-          uinput = raw_input ('Press enter to go to next grasp, b to go back to previous, r to repeat current, or q to quit: ')
-          if uinput.lower () == 'b':
-            g_i -= 2
-          if uinput.lower () == 'r':
-            g_i -= 1
-          elif uinput.lower () == 'q':
-            terminate = True
-            break
+          if UINPUT:
+            uinput = raw_input ('Press enter to go to next grasp, b to go back to previous, r to repeat current, or q to quit: ')
+            if uinput.lower () == 'b':
+              g_i -= 2
+            if uinput.lower () == 'r':
+              g_i -= 1
+            elif uinput.lower () == 'q':
+              terminate = True
+              break
   
           # Open gripper for next grasp
           GraspitCommander.autoOpen ()
@@ -228,7 +241,15 @@ def main ():
           if g_i < 0:
             g_i = 0
   
-  
+
+        # TODO TEMPORARY save normals for debugging, before implementing normals
+        #   in grasp_collect.py
+        if SAVE_NORMALS:
+          # Write only normals, do not overwrite the existing contacts and cmeta
+          #   files.
+          GraspIO.write_contacts (os.path.basename (world_fname), None,
+            normals_m.T, None, SUFFIXES [u_i])
+
         if terminate:
           break
  
@@ -237,6 +258,7 @@ def main ():
 
     if terminate:
       break
+
 
   for w_i in range (len (obj_names)):
 

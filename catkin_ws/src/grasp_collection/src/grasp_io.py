@@ -164,7 +164,7 @@ class GraspIO:
   #   cmeta: List of integers. Each integer describes number of contacts in
   #     each grasp. A grasp is a graspit_interface.msg.Grasp.
   @staticmethod
-  def write_contacts (world_name, contacts_m, cmeta, suffix=''):
+  def write_contacts (world_name, contacts_m, normals_m, cmeta, suffix=''):
 
     '''
     # pickle file, of a list of matrices, one list item per grasp
@@ -179,23 +179,35 @@ class GraspIO:
     if len (suffix) > 0 and not suffix.startswith ('_'):
       suffix = '_' + suffix
 
-    # csv file, of a large matrix of nContactsPerGrasp * nGrasps.
-    contacts_fname = os.path.join (get_contacts_path (), world_name + suffix + '.csv')
-    with open (contacts_fname, 'wb') as contacts_f:
-      contacts_writer = csv.writer (contacts_f)
-      # Write n x 3, for easier human reading
-      contacts_writer.writerows (contacts_m)
-    print ('%sWritten contacts to file %s%s' % (ansi_colors.OKCYAN,
-      contacts_fname, ansi_colors.ENDC))
+    # Contacts csv file, of a large matrix of nContactsPerGrasp * nGrasps.
+    if contacts_m is not None:
+      contacts_fname = os.path.join (get_contacts_path (), world_name + suffix + '.csv')
+      with open (contacts_fname, 'wb') as contacts_f:
+        contacts_writer = csv.writer (contacts_f)
+        # Write n x 3, for easier human reading
+        contacts_writer.writerows (contacts_m)
+      print ('%sWritten contacts to file %s%s' % (ansi_colors.OKCYAN,
+        contacts_fname, ansi_colors.ENDC))
+
+    # Normals csv file, of a large matrix of nContactsPerGrasp * nGrasps.
+    if normals_m is not None:
+      normals_fname = os.path.join (get_contacts_path (), world_name + suffix + '_norms.csv')
+      with open (normals_fname, 'wb') as normals_f:
+        normals_writer = csv.writer (normals_f)
+        # Write n x 3, for easier human reading
+        normals_writer.writerows (normals_m)
+      print ('%sWritten normals to file %s%s' % (ansi_colors.OKCYAN,
+        normals_fname, ansi_colors.ENDC))
 
     # Meta csv file, records how many contacts there are in each grasp. Used
     #   for indexing the big contacts matrix by grasp.
-    cmeta_fname = os.path.join (get_contacts_path (), world_name + suffix + '_meta.csv')
-    with open (cmeta_fname, 'wb') as cmeta_f:
-      cmeta_writer = csv.writer (cmeta_f)
-      cmeta_writer.writerow (cmeta)
-    print ('%sWritten contacts meta to file %s%s' % (ansi_colors.OKCYAN,
-      cmeta_fname, ansi_colors.ENDC))
+    if cmeta is not None:
+      cmeta_fname = os.path.join (get_contacts_path (), world_name + suffix + '_meta.csv')
+      with open (cmeta_fname, 'wb') as cmeta_f:
+        cmeta_writer = csv.writer (cmeta_f)
+        cmeta_writer.writerow (cmeta)
+      print ('%sWritten contacts meta to file %s%s' % (ansi_colors.OKCYAN,
+        cmeta_fname, ansi_colors.ENDC))
 
 
   @staticmethod
@@ -208,9 +220,7 @@ class GraspIO:
     contacts_fname = os.path.join (get_contacts_path (), world_name + suffix + '.csv')
     print ('%sLoading contacts from file %s%s' % (ansi_colors.OKCYAN,
       contacts_fname, ansi_colors.ENDC))
-
     contacts_m = []
-
     with open (contacts_fname, 'rb') as contacts_f:
       contacts_reader = csv.reader (contacts_f)
       # n x 3
@@ -218,8 +228,20 @@ class GraspIO:
         # 1 x 3. Convert strings to floats
         contacts_m.append ([float (s) for s in row])
 
+    # Normals csv file, of a large matrix of nContactsPerGrasp * nGrasps.
+    normals_fname = os.path.join (get_contacts_path (), world_name + suffix + '_norms.csv')
+    print ('%sLoading normals from file %s%s' % (ansi_colors.OKCYAN,
+      normals_fname, ansi_colors.ENDC))
+    normals_m = []
+    with open (normals_fname, 'rb') as normals_f:
+      normals_reader = csv.reader (normals_f)
+      # n x 3
+      for row in normals_reader:
+        # 1 x 3. Convert strings to floats
+        normals_m.append ([float (s) for s in row])
+
     # n x 3
-    return np.array (contacts_m)
+    return (np.array (contacts_m), np.array (normals_m))
 
 
   @staticmethod
@@ -250,19 +272,21 @@ class GraspIO:
   def concat_contacts (innames, outname):
 
     all_contacts_m = np.zeros ((0, 3))
+    all_normals_m = np.zeros ((0, 3))
     all_cmeta = []
     for iname in innames:
       # n x 3
-      contacts_m = GraspIO.read_contacts (iname)
+      contacts_m, normals_m = GraspIO.read_contacts (iname)
       print ('%d contacts' % (contacts_m.shape [0]))
       all_contacts_m = np.vstack ((all_contacts_m, contacts_m))
+      all_normals_m = np.vstack ((all_normals_m, normals_m))
 
       # List of ints
       cmeta = GraspIO.read_contact_meta (iname)
       print ('%d contact metas' % (len (cmeta)))
       all_cmeta.extend (cmeta)
 
-    GraspIO.write_contacts (outname, all_contacts_m, all_cmeta)
+    GraspIO.write_contacts (outname, all_contacts_m, all_normals_m, all_cmeta)
     print ('%d contacts total' % (all_contacts_m.shape [0]))
     print ('%d contact metas total' % (len (all_cmeta)))
 

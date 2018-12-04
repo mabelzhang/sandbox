@@ -1,5 +1,6 @@
 objects:
   - object: bar_clamp
+    id: 0
     scenes:
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-27-27_n.pcd
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-27-34_n.pcd
@@ -21,6 +22,7 @@ objects:
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-29-30_n.pcd
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-29-38_n.pcd
   - object: gearbox
+    id: 1
     scenes:
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-29-45_n.pcd
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-29-52_n.pcd
@@ -42,6 +44,7 @@ objects:
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-31-46_n.pcd
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-31-53_n.pcd
   - object: nozzle
+    id: 2
     scenes:
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-32-01_n.pcd
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-32-08_n.pcd
@@ -63,6 +66,7 @@ objects:
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-34-03_n.pcd
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-34-11_n.pcd
   - object: part1
+    id: 3
     scenes:
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-34-18_n.pcd
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-34-25_n.pcd
@@ -84,6 +88,7 @@ objects:
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-36-21_n.pcd
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-36-28_n.pcd
   - object: part3
+    id: 4
     scenes:
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-36-35_n.pcd
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-36-42_n.pcd
@@ -105,6 +110,7 @@ objects:
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-38-32_n.pcd
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-38-38_n.pcd
   - object: pawn
+    id: 5
     scenes:
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-38-45_n.pcd
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-38-52_n.pcd
@@ -126,6 +132,7 @@ objects:
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-40-37_n.pcd
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-40-44_n.pcd
   - object: turbine_housing
+    id: 6
     scenes:
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-40-51_n.pcd
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-40-58_n.pcd
@@ -147,6 +154,7 @@ objects:
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-42-44_n.pcd
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-42-51_n.pcd
   - object: vase
+    id: 7
     scenes:
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-42-58_n.pcd
     - /media/master/Data_Ubuntu/courses/research/graspingRepo/train/visuotactile_grasping/data/renders/2018-11-09-22-43-05_n.pcd

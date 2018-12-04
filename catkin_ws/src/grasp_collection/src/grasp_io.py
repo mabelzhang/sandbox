@@ -13,7 +13,7 @@ import csv
 import numpy as np
 
 # Custom
-from util.ansi_colors import ansi_colors
+from util.ansi_colors import ansi_colors as ansi
 
 # Local
 from grasp_collection.config_paths import get_grasps_path, get_contacts_path, \
@@ -46,8 +46,8 @@ class GraspIO:
     grasps_fname = os.path.join (get_grasps_path (), world_name + suffix + '.pkl')
     with open (grasps_fname, 'wb') as grasps_f:
       pickle.dump (grasps, grasps_f, pickle.HIGHEST_PROTOCOL)
-    print ('%sWritten grasps to file %s%s' % (ansi_colors.OKCYAN,
-      grasps_fname, ansi_colors.ENDC))
+    print ('%sWritten grasps to file %s%s' % (ansi.OKCYAN,
+      grasps_fname, ansi.ENDC))
 
 
   @staticmethod
@@ -57,8 +57,8 @@ class GraspIO:
       suffix = '_' + suffix
 
     grasps_fname = os.path.join (get_grasps_path (), world_name + suffix + '.pkl')
-    print ('%sLoading grasps from file %s%s' % (ansi_colors.OKCYAN,
-      grasps_fname, ansi_colors.ENDC))
+    print ('%sLoading grasps from file %s%s' % (ansi.OKCYAN,
+      grasps_fname, ansi.ENDC))
 
     with open (grasps_fname, 'rb') as grasps_f:
       grasps = pickle.load (grasps_f)
@@ -103,8 +103,8 @@ class GraspIO:
       gposes_writer = csv.writer (gposes_f)
       # Write n x 7, for easier human reading
       gposes_writer.writerows (gposes)
-    print ('%sWritten %d grasp poses to file %s%s' % (ansi_colors.OKCYAN,
-      len (gposes), gposes_fname, ansi_colors.ENDC))
+    print ('%sWritten %d grasp poses to file %s%s' % (ansi.OKCYAN,
+      len (gposes), gposes_fname, ansi.ENDC))
 
 
   @staticmethod
@@ -114,8 +114,8 @@ class GraspIO:
       suffix = '_' + suffix
 
     gposes_fname = os.path.join (get_grasps_path (), world_name + suffix + '_poses.csv')
-    print ('%sLoading gras poseps from file %s%s' % (ansi_colors.OKCYAN,
-      gposes_fname, ansi_colors.ENDC))
+    print ('%sLoading gras poseps from file %s%s' % (ansi.OKCYAN,
+      gposes_fname, ansi.ENDC))
 
     gposes = []
     with open (gposes_fname, 'rb') as gposes_f:
@@ -186,8 +186,8 @@ class GraspIO:
         contacts_writer = csv.writer (contacts_f)
         # Write n x 3, for easier human reading
         contacts_writer.writerows (contacts_m)
-      print ('%sWritten contacts to file %s%s' % (ansi_colors.OKCYAN,
-        contacts_fname, ansi_colors.ENDC))
+      print ('%sWritten contacts to file %s%s' % (ansi.OKCYAN,
+        contacts_fname, ansi.ENDC))
 
     # Normals csv file, of a large matrix of nContactsPerGrasp * nGrasps.
     if normals_m is not None:
@@ -196,8 +196,8 @@ class GraspIO:
         normals_writer = csv.writer (normals_f)
         # Write n x 3, for easier human reading
         normals_writer.writerows (normals_m)
-      print ('%sWritten normals to file %s%s' % (ansi_colors.OKCYAN,
-        normals_fname, ansi_colors.ENDC))
+      print ('%sWritten normals to file %s%s' % (ansi.OKCYAN,
+        normals_fname, ansi.ENDC))
 
     # Meta csv file, records how many contacts there are in each grasp. Used
     #   for indexing the big contacts matrix by grasp.
@@ -206,8 +206,8 @@ class GraspIO:
       with open (cmeta_fname, 'wb') as cmeta_f:
         cmeta_writer = csv.writer (cmeta_f)
         cmeta_writer.writerow (cmeta)
-      print ('%sWritten contacts meta to file %s%s' % (ansi_colors.OKCYAN,
-        cmeta_fname, ansi_colors.ENDC))
+      print ('%sWritten contacts meta to file %s%s' % (ansi.OKCYAN,
+        cmeta_fname, ansi.ENDC))
 
 
   @staticmethod
@@ -218,8 +218,8 @@ class GraspIO:
 
     # csv file, of a large matrix of nContactsPerGrasp * nGrasps.
     contacts_fname = os.path.join (get_contacts_path (), world_name + suffix + '.csv')
-    print ('%sLoading contacts from file %s%s' % (ansi_colors.OKCYAN,
-      contacts_fname, ansi_colors.ENDC))
+    print ('%sLoading contacts from file %s%s' % (ansi.OKCYAN,
+      contacts_fname, ansi.ENDC))
     contacts_m = []
     with open (contacts_fname, 'rb') as contacts_f:
       contacts_reader = csv.reader (contacts_f)
@@ -230,8 +230,8 @@ class GraspIO:
 
     # Normals csv file, of a large matrix of nContactsPerGrasp * nGrasps.
     normals_fname = os.path.join (get_contacts_path (), world_name + suffix + '_norms.csv')
-    print ('%sLoading normals from file %s%s' % (ansi_colors.OKCYAN,
-      normals_fname, ansi_colors.ENDC))
+    print ('%sLoading normals from file %s%s' % (ansi.OKCYAN,
+      normals_fname, ansi.ENDC))
     normals_m = []
     with open (normals_fname, 'rb') as normals_f:
       normals_reader = csv.reader (normals_f)
@@ -251,8 +251,8 @@ class GraspIO:
       suffix = '_' + suffix
 
     cmeta_fname = os.path.join (get_contacts_path (), world_name + suffix + '_meta.csv')
-    print ('%sLoading contacts meta from file %s%s' % (ansi_colors.OKCYAN,
-      cmeta_fname, ansi_colors.ENDC))
+    print ('%sLoading contacts meta from file %s%s' % (ansi.OKCYAN,
+      cmeta_fname, ansi.ENDC))
 
     with open (cmeta_fname, 'rb') as cmeta_f:
       cmeta_reader = csv.reader (cmeta_f)
@@ -311,8 +311,8 @@ class GraspIO:
     with open (ens_fname, 'wb') as ens_f:
       ens_writer = csv.writer (ens_f)
       ens_writer.writerows (energies_np)
-    print ('%sWritten energies to file %s%s' % (ansi_colors.OKCYAN,
-      ens_fname, ansi_colors.ENDC))
+    print ('%sWritten energies to file %s%s' % (ansi.OKCYAN,
+      ens_fname, ansi.ENDC))
 
 
   # Returns list of nGrasps floats
@@ -325,8 +325,8 @@ class GraspIO:
     # csv file, of a row of nGrasps elements
     ens_fname = os.path.join (get_energies_path (),
       world_name + suffix + '_' + energy_abbrev + '.csv')
-    print ('%sLoading energies from file %s%s' % (ansi_colors.OKCYAN,
-      ens_fname, ansi_colors.ENDC))
+    print ('%sLoading energies from file %s%s' % (ansi.OKCYAN,
+      ens_fname, ansi.ENDC))
 
     energies = []
 

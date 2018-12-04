@@ -60,7 +60,7 @@ def main ():
   #SUFFIXES = [str(i) for i in range (1, 15)]
 
 
-  objs = ConfigReadYAML.read_object_names ()
+  objs = ConfigReadYAML.read_scene_paths ()
   # List of strings
   #obj_names = objs [ConfigReadYAML.NAME_IDX]
   #obj_names = ['nozzle', 'part3']

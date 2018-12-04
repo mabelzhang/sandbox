@@ -82,7 +82,7 @@ def main ():
 
 
   # scenes.yaml
-  objs = ConfigReadYAML.read_object_names ()
+  objs = ConfigReadYAML.read_scene_paths ()
   # String
   obj_names = objs [0]
   # List of list of strings, paths to .pcd scene files

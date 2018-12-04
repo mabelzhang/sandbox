@@ -132,7 +132,7 @@ def main ():
   # Compile a list of all data samples
 
   # Get all scene names from YAML
-  objs = ConfigReadYAML.read_object_names ()
+  objs = ConfigReadYAML.read_scene_paths ()
   # String
   obj_names = objs [ConfigReadYAML.NAME_IDX]
   # Int

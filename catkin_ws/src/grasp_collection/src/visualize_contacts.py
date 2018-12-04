@@ -41,7 +41,7 @@ def main ():
     queue_size=5)
 
 
-  objs = ConfigReadYAML.read_object_names ()
+  objs = ConfigReadYAML.read_scene_paths ()
   # List of strings
   obj_names = objs [ConfigReadYAML.NAME_IDX]
 

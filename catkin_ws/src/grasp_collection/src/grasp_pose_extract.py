@@ -33,7 +33,7 @@ from grasp_collection.config_consts import N_POSE_PARAMS, N_PARAMS_QUAT
 
 def main ():
 
-  objs = ConfigReadYAML.read_object_names ()
+  objs = ConfigReadYAML.read_scene_paths ()
   # List of strings
   obj_names = objs [ConfigReadYAML.NAME_IDX]
   #obj_names = ['nozzle', 'part3']

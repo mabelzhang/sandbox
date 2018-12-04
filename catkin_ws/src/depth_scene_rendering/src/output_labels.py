@@ -52,6 +52,7 @@ def main ():
   print (yaml_str)
 
   lbls_f.write (yaml_str)
+  lbls_f.close ()
   print ('%sWritten object labels YAML to %s%s' % (ansi.OKCYAN, lbls_path,
     ansi.ENDC))
 

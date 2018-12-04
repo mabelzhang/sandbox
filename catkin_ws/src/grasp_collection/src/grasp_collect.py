@@ -20,7 +20,6 @@
 import os
 import re  # Regular expressions
 import cPickle as pickle
-import yaml
 import argparse
 import time
 
@@ -199,7 +198,7 @@ def main ():
   #   regenerated all the time! It's always about the same for the same object.
   #   Just generate a bunch, and then you never need to generate them again!
   # Read object from YAML file
-  #objs = ConfigReadYAML.read_object_names ()
+  #objs = ConfigReadYAML.read_scene_paths ()
   #obj_names = objs [ConfigReadYAML.NAME_IDX]
 
 

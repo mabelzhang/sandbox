@@ -26,7 +26,8 @@ def get_depth_fmt ():
 
 def get_heatmap_blob_fmt ():
 
-  return ('%s/g%d_vis_blob.png', '%s/g%d_occ_blob.png', '%s/g%d_mge_blob.png')
+  return ('%s/g%d_vis_blob.png', '%s/g%d_occ_blob.png', '%s/g%d_mge_blob.png',
+    '%s/g%d_norm_blob.png')
 
 
 def get_label_fmt ():

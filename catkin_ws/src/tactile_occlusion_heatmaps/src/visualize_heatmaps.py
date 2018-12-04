@@ -91,7 +91,6 @@ def main ():
   # For each object
   terminate = False
   for o_i in range (len (obj_names)):
-  # TODO: TEMPORARY debugging object 7 only
   #for o_i in [7]:
 
     obj_name = obj_names [o_i]

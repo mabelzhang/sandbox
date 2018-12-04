@@ -40,7 +40,9 @@ def main ():
   GEN_2D_POSE = False
 
   # Load merged heatmaps instead of separate vis and occ ones
-  MERGE_HEATMAPS = False
+  VIS_OCC = 0
+  MERGE_HEATMAPS = 1  # Merge vis and occ
+  NORM_HEATMAPS = 2
 
 
   arg_parser = argparse.ArgumentParser ()
@@ -52,6 +54,8 @@ def main ():
     help='Specify the flag if it was specified to occlusion_test.cpp to generate the heatmaps. Rescale heatmaps back to min/max depth values.')
   arg_parser.add_argument ('--merge-heatmaps', action='store_true',
     help='Load merged heatmaps instead of separate vis and occ ones')
+  arg_parser.add_argument ('--norm-heatmaps', action='store_true',
+    help='Load heatmaps with contact normals')
 
   # NOTE Assume all images are depth images, will take a single channel
   #arg_parser.add_argument ('--single-channel', action='store_true',
@@ -92,7 +96,13 @@ def main ():
   print ('Reading from %s' % os.path.dirname (heatmaps_dir))
 
   SCALE_HEATMAPS = args.scale_heatmaps
-  MERGE_HEATMAPS = args.merge_heatmaps
+
+  if args.merge_heatmaps:
+    HEATMAP_MODE = MERGE_HEATMAPS
+  elif args.norm_heatmaps:
+    HEATMAP_MODE = NORM_HEATMAPS
+  else:
+    HEATMAP_MODE = VIS_OCC
 
 
 
@@ -103,6 +113,7 @@ def main ():
   vis_heatmap_fmt = heatmap_fmts [0]
   occ_heatmap_fmt = heatmap_fmts [1]
   mge_heatmap_fmt = heatmap_fmts [2]
+  norm_heatmap_fmt = heatmap_fmts [3]
 
   lbl_fmt = get_label_fmt ()
 
@@ -111,6 +122,7 @@ def main ():
   vis_png_list = []
   occ_png_list = []
   mge_png_list = []
+  norm_png_list = []
   lbl_list = []
   obj_lbls = []
 
@@ -157,7 +169,7 @@ def main ():
       lbl_sublist = glob.glob (os.path.join (heatmaps_dir, lbl_wildcard))
       lbl_list.extend (lbl_sublist)
 
-      if MERGE_HEATMAPS:
+      if HEATMAP_MODE == MERGE_HEATMAPS:
 
         mge_wildcard = mge_heatmap_fmt.replace ('%d', '*')
         mge_wildcard = mge_wildcard % scene_name
@@ -168,6 +180,18 @@ def main ():
           print ('%sERROR: Wildcard lists for merged heatmap and label files are not of the same size! You may have error in correspondence between the outputted npz files.%s' % (ansi.FAIL, ansi.ENDC))
 
         n_scene_heatmaps = len (mge_sublist)
+
+      elif HEATMAP_MODE == NORM_HEATMAPS:
+
+        norm_wildcard = norm_heatmap_fmt.replace ('%d', '*')
+        norm_wildcard = norm_wildcard % scene_name
+        norm_sublist = glob.glob (os.path.join (heatmaps_dir, norm_wildcard))
+        norm_png_list.extend (norm_sublist)
+
+        if len (norm_sublist) != len (lbl_sublist):
+          print ('%sERROR: Wildcard lists for contact normals heatmap and label files are not of the same size! You may have error in correspondence between the outputted npz files.%s' % (ansi.FAIL, ansi.ENDC))
+
+        n_scene_heatmaps = len (norm_sublist)
 
       else:
         # Per-grasp heatmaps and label data
@@ -208,9 +232,12 @@ def main ():
   #   the energy in code!!!
   npz_prefix = ['depth', 'lbl_' + ENERGY_ABBREV]
   in_png_lists = [depth_png_list, lbl_list]
-  if MERGE_HEATMAPS:
+  if HEATMAP_MODE == MERGE_HEATMAPS:
     npz_prefix.append ('mge')
     in_png_lists.append (mge_png_list)
+  elif HEATMAP_MODE == NORM_HEATMAPS:
+    npz_prefix.extend (['norm'])
+    in_png_lists.extend ([norm_png_list])
   else:
     npz_prefix.extend (['vis', 'occ'])
     in_png_lists.extend ([vis_png_list, occ_png_list])
@@ -233,8 +260,10 @@ def main ():
     if len (png_list) == 0:
       continue
 
-    if MERGE_HEATMAPS:
+    if HEATMAP_MODE == MERGE_HEATMAPS:
       img = np_from_depth (mge_png_list [0])
+    elif HEATMAP_MODE == NORM_HEATMAPS:
+      img = np_from_depth (norm_png_list [0])
     else:
       img = np_from_depth (vis_png_list [0])
     break

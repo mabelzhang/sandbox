@@ -162,12 +162,20 @@ public:
       if (occluded.at (i) == false)
       {
         n_vis += 1;
-        visible_f.at <float> (uv (1, i), uv (0, i)) = pts (2, i); 
+        // Set to depth value
+        if (SCALE_HEATMAPS)
+          visible_f.at <float> (uv (1, i), uv (0, i)) = pts (2, i);
+        //Set to constant 1
+        else
+          visible_f.at <float> (uv (1, i), uv (0, i)) = 1;
       }
       else
       {
         n_occ += 1;
-        occluded_f.at <float> (uv (1, i), uv (0, i)) = pts (2, i); 
+        if (SCALE_HEATMAPS)
+          occluded_f.at <float> (uv (1, i), uv (0, i)) = pts (2, i);
+        else
+          occluded_f.at <float> (uv (1, i), uv (0, i)) = 1;
       }
 
       if (DEBUG_PROJECT)
@@ -221,6 +229,17 @@ public:
       return true;
   }
 
+  bool create_normal_masks (Eigen::MatrixXf & pts,
+    std::vector <bool> & valid_idx,
+    int height, int width, Eigen::MatrixXi & uv,
+    cv::Mat & nx_img, cv::Mat & ny_img, cv::Mat & nz_img)
+  {
+    // TODO: Implement this
+    //   Could just take one cv::Mat and treat each channel as xyz, that is
+    //   more compact in code.
+
+
+  }
 };
 
 
@@ -281,7 +300,11 @@ int main (int argc, char ** argv)
   bool SCALE_HEATMAPS = false;
 
   // Merge vis and occ heatmaps into one
-  bool MERGE_HEATMAPS = false;
+  int VIS_OCC = 0;
+  int MERGE_HEATMAPS = 1;
+  // TODO: Not fully implemented yet!!
+  int NORM_HEATMAPS = 2;
+  int HEATMAP_MODE = VIS_OCC;
 
 
   // Parse cmd line args
@@ -296,8 +319,12 @@ int main (int argc, char ** argv)
       VIS_RAYTRACE = true;
     else if (! strcmp (argv [i], "--dry-run"))
       DRY_RUN = true;
+    // Assumption: --merge and --norm are not both specified. Else the later
+    //   one will take effect
     else if (! strcmp (argv [i], "--merge-heatmaps"))
-      MERGE_HEATMAPS = true;
+      HEATMAP_MODE = MERGE_HEATMAPS;
+    else if (! strcmp (argv [i], "--norm-heatmaps"))
+      HEATMAP_MODE = NORM_HEATMAPS;
     else if (! strcmp (argv [i], "--scale-heatmaps"))
     {
       SCALE_HEATMAPS = true;
@@ -411,6 +438,8 @@ int main (int argc, char ** argv)
     // Load contact points for this object
     Eigen::MatrixXf contacts_O;
     Eigen::MatrixXf contacts_O4;
+    Eigen::MatrixXf normals_O;
+    Eigen::MatrixXf normals_O4;
     Eigen::MatrixXf contacts_meta;
     Eigen::MatrixXf energies;
     Eigen::MatrixXf gposes;
@@ -433,6 +462,23 @@ int main (int argc, char ** argv)
       // 4 x n
       contacts_O4 = temp.transpose ();
 
+      if (HEATMAP_MODE == NORM_HEATMAPS)
+      {
+        std::string obj_norm_path;
+        join_paths (contacts_dir, scene_list_yaml.get_object_name (o_i) +
+          "_norms.csv", obj_norm_path);
+
+        fprintf (stderr, "%sLoading object contact normals %s%s\n", OKCYAN,
+          obj_norm_path.c_str (), ENDC);
+        // n x 3. T^o, in object frame
+        Eigen::MatrixXf normals_O = load_csv_to_Eigen <Eigen::MatrixXf> (
+          obj_norm_path);
+        // n x 4. Must use temp var, A = A.transpose() gets runtime error
+        Eigen::MatrixXf temp;
+        append_homogeneous_col (normals_O, temp);
+        // 4 x n
+        normals_O4 = temp.transpose ();
+      }
 
       // Load contacts per individual grasp.  _meta.csv tells how many elements
       //   to index the contacts_O matrix for each individual grasp, i.e.
@@ -491,7 +537,7 @@ int main (int argc, char ** argv)
 
       //std::string scene_path = *s_it;
       std::string scene_path = scene_paths [s_i];
-   
+  
       // Instantiate cloud
       pcl::PointCloud <pcl::PointXYZ>::Ptr cloud_ptr =
         pcl::PointCloud <pcl::PointXYZ>::Ptr (
@@ -533,6 +579,14 @@ int main (int argc, char ** argv)
       // Ref: http://pointclouds.org/documentation/tutorials/octree.php
       RayTracer raytracer = RayTracer (cloud_ptr, octree_res, VIS_RAYTRACE,
         nh);
+
+      // basename() returns file name without extension
+      std::string scene_base;
+      basename (scene_path, scene_base);
+
+      std::string heatmaps_subdir;
+      join_paths (heatmaps_dir, scene_base, heatmaps_subdir);
+      create_dir_if_nonexist (heatmaps_subdir);
      
 
       // For each grasp of this object
@@ -544,6 +598,7 @@ int main (int argc, char ** argv)
  
         int n_contacts = 0;
         Eigen::MatrixXf curr_grasp_contacts;
+        Eigen::MatrixXf curr_grasp_normals;
         if (! GEN_RAND_PTS)
         {
           // Number of contacts in this grasp
@@ -558,6 +613,12 @@ int main (int argc, char ** argv)
           //   across scenes.
           curr_grasp_contacts = contacts_O4.block (0,
             curr_contact_start_idx, contacts_O4.rows (), n_contacts);
+
+          if (HEATMAP_MODE == NORM_HEATMAPS)
+          {
+            curr_grasp_normals = normals_O4.block (0,
+              curr_contact_start_idx, normals_O4.rows (), n_contacts);
+          }
         }
  
         std::cerr << "curr_contact_start_idx: " << curr_contact_start_idx
@@ -578,6 +639,7 @@ int main (int argc, char ** argv)
        
         // 3 x n, in camera frame
         Eigen::MatrixXf endpoints;
+        Eigen::MatrixXf normals;
         // 4 x 4
         Eigen::MatrixXf T_C_O;
 
@@ -612,9 +674,14 @@ int main (int argc, char ** argv)
           // No contacts in a grasp means the grasp is terrible, didn't make any
           //   contact with object.
           Eigen::MatrixXf contacts_C;
+          Eigen::MatrixXf normals_C;
           if (n_contacts == 0)
+          {
             // 4 x 0
             contacts_C = curr_grasp_contacts;
+            if (HEATMAP_MODE == NORM_HEATMAPS)
+              normals_C = curr_grasp_normals;
+          }
           else
           { 
             // Transform contacts from object frame to camera frame, using
@@ -623,8 +690,12 @@ int main (int argc, char ** argv)
             //     = (T^o_c)^-1 * T_o
             // 4 x n = (4 x 4) * (4 x n)
             contacts_C = T_C_O * curr_grasp_contacts;
+            if (HEATMAP_MODE == NORM_HEATMAPS)
+              normals_C = T_C_O * curr_grasp_normals;
           }
           endpoints = contacts_C.topRows (3);
+          if (HEATMAP_MODE == NORM_HEATMAPS)
+            normals = normals_C.topRows (3);
  
           //std::cerr << "Object center in camera frame: " << std::endl;
           Eigen::Vector4f origin;
@@ -879,55 +950,7 @@ int main (int argc, char ** argv)
         //   to the predictor, `.` they are just coordinates and indicate
         //   location.
  
- 
-        // Create heatmaps, or masks with white dots at projected 2D points,
-        //   black everywhere else.
-        cv::Mat vis_crop, occ_crop;
-        bool nonempty = separator.create_masks (endpoints, occluded, valid_idx,
-          RawDepthScaling::SCALE_H, RawDepthScaling::SCALE_W, uv,
-          vis_crop, occ_crop, SCALE_HEATMAPS);
-        // Empty heatmaps. Do not include in training examples. Skip scene
-        if (! nonempty)
-        {
-          fprintf (stderr, "%sWARN: Empty heatmaps for both vis and occ, 0 contacts are visible in image. Skipping this scene...%s\n", WARN, ENDC);
-          n_empty_heatmaps += 1;
-          continue;
-        }
- 
- 
-        // Save visible and occluded channels
-        // basename() returns file name without extension
-        std::string scene_base;
-        basename (scene_path, scene_base);
 
-        std::string heatmaps_subdir;
-        join_paths (heatmaps_dir, scene_base, heatmaps_subdir);
-        create_dir_if_nonexist (heatmaps_subdir);
- 
-        // Optional. Individual non-zero point. Saving because easier to test
-        //   different parameters of blob, than to regenerate contact points and
-        //   raytracing.
-        /*
-        std::string visible_path = heatmaps_prefix;
-        visible_path += "_g" + std::to_string (g_i) + "_vis.png";
-        cv::imwrite (visible_path, vis_crop);  //visible_img);
-        fprintf (stderr, "%sWritten visible heatmap to %s%s\n", OKCYAN,
-          visible_path.c_str (), ENDC);
-       
-        std::string occluded_path = heatmaps_prefix;
-        occluded_path += "_g" + std::to_string (g_i) + "_occ.png";
-        cv::imwrite (occluded_path, occ_crop);  //occluded_img);
-        fprintf (stderr, "%sWritten occluded heatmap to %s%s\n", OKCYAN,
-          occluded_path.c_str (), ENDC);
-        */
- 
-       
-        // Blob the visible and occluded images, to create heatmaps. Save to
-        //   file.
-        // In my visualize_dataset.py on adv_synth of dexnet, used
-        //   BLOB_EXPAND=2, BLOB_GAUSS=0.5, for 32 x 32 images. Python gaussian
-        //   function doesn't have size, only sigma.
-        cv::Mat visible_blob, occluded_blob;
         // Use 31 for uncropped 640x480, 9 for cropped 100x100 (
         //   definitely <=15), 7 for cropped 64x64.
         //int BLOB_EXPAND = 9;
@@ -936,105 +959,185 @@ int main (int argc, char ** argv)
         int GAUSS_SZ = 7; //7;
         // Pass in 0 to let OpenCV calculating sigma from size
         float GAUSS_SIGMA = 0;
-
-        // Operate on the cropped img
-        blob_filter (vis_crop, visible_blob, BLOB_EXPAND, GAUSS_SZ,
-          GAUSS_SIGMA);
-        blob_filter (occ_crop, occluded_blob, BLOB_EXPAND, GAUSS_SZ, 
-          GAUSS_SIGMA);
-
-        // If merge heatmaps, take max of them, save to one file
-        if (MERGE_HEATMAPS)
+ 
+        // If using contact normals for values of heatmap
+        if (HEATMAP_MODE == NORM_HEATMAPS)
         {
-          cv::Mat merge_blob = cv::max (visible_blob, occluded_blob);
+          // TODO: implement this. Load from contacts/<object>_norms.csv, transform into camera frame, get xyz +/- values. Then create mask accordingly - check that the blob_filter works for extremas, not just max! `.` need negative expansion for negative values! Otherwise have to do 0 to 1, then scale accordingly from 0 to 255. Or can just use max filter, than shift by -0.5, then *2. Yeah do that, that's quickest to implement now. Print min and max of cv::Mat to make sure they are -1 and 1.
+          /*
+          cv::Mat nx_crop, ny_crop, nz_crop;
+          bool nonempty = separator.create_normal_masks (endpoints, valid_idx,
+            RawDepthScaling::SCALE_H, RawDepthScaling::SCALE_W, uv,
+            nx_crop, ny_crop, nz_crop);
+          // Empty heatmaps. Do not include in training examples. Skip scene
+          if (! nonempty)
+          {
+            fprintf (stderr, "%sWARN: Empty heatmaps for both vis and occ, 0 contacts are visible in image. Skipping this scene...%s\n", WARN, ENDC);
+            n_empty_heatmaps += 1;
+            continue;
+          }
 
-          std::string mge_blob_base = "g" + std::to_string (g_i) +
-            "_mge_blob.png";
-          std::string mge_blob_path;
-          join_paths (heatmaps_subdir, mge_blob_base, mge_blob_path, false);
-          cv::imwrite (mge_blob_path, merge_blob);
-          fprintf (stderr, "%sWritten merged blobbed heatmap to %s%s\n",
-            OKCYAN, mge_blob_path.c_str (), ENDC);
+          cv::Mat nx_blob, ny_blob, nz_blob;
+          // Operate on the cropped img
+          blob_filter (nx_crop, nx_blob, BLOB_EXPAND, GAUSS_SZ, GAUSS_SIGMA);
+          blob_filter (ny_crop, ny_blob, BLOB_EXPAND, GAUSS_SZ, GAUSS_SIGMA);
+          blob_filter (nz_crop, nz_blob, BLOB_EXPAND, GAUSS_SZ, GAUSS_SIGMA);
+
+          // TODO: Instead of writing 3 images, combine nx ny nz into a SINGLE RGB image!!!! Then need to change png_to_npz.py to treat the image as 3 distinct channels, rather than a single channel as it has been doing with the vis and occ PNGs
+          //cv::Mat norm_blob = // concat nx ny nz into one RGB image
+
+          //std::string norm_blob_base = "g" + std::to_string (g_i) +
+          //  "_nrm_blob.png";
+          //std::string norm_blob_path;
+          //join_paths (heatmaps_subdir, norm_blob_base, norm_blob_path, false);
+          //cv::imwrite (norm_blob_path, norm_blob);
+          //fprintf (stderr, "%sWritten 3-channel normals blobbed heatmap to %s%s\n",
+          //  OKCYAN, norm_blob_path.c_str (), ENDC);
+          */
         }
-        // Else, save heatmaps to separate files
+
         else
         {
-          std::string vis_blob_base = "g" + std::to_string (g_i) +
-            "_vis_blob.png";
-          std::string vis_blob_path;
-          join_paths (heatmaps_subdir, vis_blob_base, vis_blob_path, false);
-          cv::imwrite (vis_blob_path, visible_blob);
-          fprintf (stderr, "%sWritten visible blobbed heatmap to %s%s\n",
-            OKCYAN, vis_blob_path.c_str (), ENDC);
+          // Create heatmaps, or masks with white dots at projected 2D points,
+          //   black everywhere else.
+          cv::Mat vis_crop, occ_crop;
+          bool nonempty = separator.create_masks (endpoints, occluded, valid_idx,
+            RawDepthScaling::SCALE_H, RawDepthScaling::SCALE_W, uv,
+            vis_crop, occ_crop, SCALE_HEATMAPS);
+          // Empty heatmaps. Do not include in training examples. Skip scene
+          if (! nonempty)
+          {
+            fprintf (stderr, "%sWARN: Empty heatmaps for both vis and occ, 0 contacts are visible in image. Skipping this scene...%s\n", WARN, ENDC);
+            n_empty_heatmaps += 1;
+            continue;
+          }
+         
+         
+          // Save visible and occluded channels 
+         
+          // Optional. Individual non-zero point. Saving because easier to test
+          //   different parameters of blob, than to regenerate contact points and
+          //   raytracing.
+          /*
+          std::string visible_path = heatmaps_prefix;
+          visible_path += "_g" + std::to_string (g_i) + "_vis.png";
+          cv::imwrite (visible_path, vis_crop);  //visible_img);
+          fprintf (stderr, "%sWritten visible heatmap to %s%s\n", OKCYAN,
+            visible_path.c_str (), ENDC);
+        
+          std::string occluded_path = heatmaps_prefix;
+          occluded_path += "_g" + std::to_string (g_i) + "_occ.png";
+          cv::imwrite (occluded_path, occ_crop);  //occluded_img);
+          fprintf (stderr, "%sWritten occluded heatmap to %s%s\n", OKCYAN,
+            occluded_path.c_str (), ENDC);
+          */
 
-          std::string occ_blob_base = "g" + std::to_string (g_i) +
-            "_occ_blob.png";
-          std::string occ_blob_path;
-          join_paths (heatmaps_subdir, occ_blob_base, occ_blob_path, false);
-          cv::imwrite (occ_blob_path, occluded_blob);
-          fprintf (stderr, "%sWritten occluded blobbed heatmap to %s%s\n",
-            OKCYAN, occ_blob_path.c_str (), ENDC);
+
+          // Blob the visible and occluded images, to create heatmaps. Save to
+          //   file.
+          // In my visualize_dataset.py on adv_synth of dexnet, used
+          //   BLOB_EXPAND=2, BLOB_GAUSS=0.5, for 32 x 32 images. Python gaussian
+          //   function doesn't have size, only sigma.
+          cv::Mat visible_blob, occluded_blob;         
+          // Operate on the cropped img
+          blob_filter (vis_crop, visible_blob, BLOB_EXPAND, GAUSS_SZ,
+            GAUSS_SIGMA);
+          blob_filter (occ_crop, occluded_blob, BLOB_EXPAND, GAUSS_SZ, 
+            GAUSS_SIGMA);
+
+          // If merge heatmaps, take max of them, save to one file
+          if (HEATMAP_MODE == MERGE_HEATMAPS)
+          {
+            cv::Mat merge_blob = cv::max (visible_blob, occluded_blob);
+         
+            std::string mge_blob_base = "g" + std::to_string (g_i) +
+              "_mge_blob.png";
+            std::string mge_blob_path;
+            join_paths (heatmaps_subdir, mge_blob_base, mge_blob_path, false);
+            cv::imwrite (mge_blob_path, merge_blob);
+            fprintf (stderr, "%sWritten merged blobbed heatmap to %s%s\n",
+              OKCYAN, mge_blob_path.c_str (), ENDC);
+          }
+          // Else, save heatmaps to separate files
+          else
+          {
+            std::string vis_blob_base = "g" + std::to_string (g_i) +
+              "_vis_blob.png";
+            std::string vis_blob_path;
+            join_paths (heatmaps_subdir, vis_blob_base, vis_blob_path, false);
+            cv::imwrite (vis_blob_path, visible_blob);
+            fprintf (stderr, "%sWritten visible blobbed heatmap to %s%s\n",
+              OKCYAN, vis_blob_path.c_str (), ENDC);
+
+            std::string occ_blob_base = "g" + std::to_string (g_i) +
+              "_occ_blob.png";
+            std::string occ_blob_path;
+            join_paths (heatmaps_subdir, occ_blob_base, occ_blob_path, false);
+            cv::imwrite (occ_blob_path, occluded_blob);
+            fprintf (stderr, "%sWritten occluded blobbed heatmap to %s%s\n",
+              OKCYAN, occ_blob_path.c_str (), ENDC);
+          }
+ 
+          /*
+          // Debug blob_filter()
+          // Convert cv::Mat to std::vector
+          // https://gist.github.com/mryssng/f43c9ae4cae13b204855e108a004c73a
+          std::vector <float> vis_blob_vec;
+          if (visible_blob.isContinuous())
+          {
+            vis_blob_vec.assign((uchar*)visible_blob.datastart,
+              (uchar*)visible_blob.dataend);
+          }
+          else
+          {
+            for (int i = 0; i < visible_blob.rows; ++i)
+            {
+              vis_blob_vec.insert(vis_blob_vec.end(), visible_blob.ptr<uchar>(i), visible_blob.ptr<uchar>(i)+visible_blob.cols);
+            }
+          }
+          */
+        
+          // Debug blob_filter()
+          // Find unique elts
+          // https://stackoverflow.com/questions/1041620/whats-the-most-efficient-way-to-erase-duplicates-and-sort-a-vector
+          //sort (vis_blob_vec.begin (), vis_blob_vec.end ());
+          //vis_blob_vec.erase (unique (vis_blob_vec.begin (), vis_blob_vec.end ()),
+          //  vis_blob_vec.end ());
+          //fprintf (stderr, "%ld unique values in visible image:\n",
+          //  vis_blob_vec.size ());
+          //for (int i = 0; i < vis_blob_vec.size (); i ++)
+          //{
+          //  std::cerr << vis_blob_vec.at (i) << std::endl;
+          //}
+         
+         
+          if (DISPLAY_IMAGES)
+          {
+            // Display heatmaps to debug
+            //cv::namedWindow ("Visible contacts", cv::WINDOW_AUTOSIZE);
+            cv::Mat dst;
+            //cv::normalize (visible_img, dst, 0, 1, cv::NORM_MINMAX);
+            //cv::imshow ("Visible contacts", visible_img);
+            //cv::normalize (visible_blob, dst, 0, 1, cv::NORM_MINMAX);
+            // These displayed versions have sharp edges for some reason. Actual image
+            //   does show Gaussian blurred. Use inspect_channels.py to inspect, and
+            //   visualize_heatmaps.py to visualize heatmap overlay on depth image.
+            std::cerr << "Displaying visible heatmap\n";
+            cv::imshow ("Visible contacts", visible_blob);
+            cv::waitKey (0);
+          
+            //cv::namedWindow ("Occluded contacts", cv::WINDOW_AUTOSIZE);
+            //cv::normalize (occluded_img, dst, 0, 1, cv::NORM_MINMAX);
+            //cv::imshow ("Occluded contacts", occluded_img);
+            //cv::normalize (occluded_blob, dst, 0, 1, cv::NORM_MINMAX);
+            std::cerr << "Displaying occluded heatmap\n";
+            cv::imshow ("Occluded contacts", occluded_blob);
+            // Press in the open window to close it
+            cv::waitKey (0);
+          }
         }
  
         n_examples_saved += 1;
- 
-        /*
-        // Debug blob_filter()
-        // Convert cv::Mat to std::vector
-        // https://gist.github.com/mryssng/f43c9ae4cae13b204855e108a004c73a
-        std::vector <float> vis_blob_vec;
-        if (visible_blob.isContinuous())
-        {
-          vis_blob_vec.assign((uchar*)visible_blob.datastart,
-            (uchar*)visible_blob.dataend);
-        }
-        else
-        {
-          for (int i = 0; i < visible_blob.rows; ++i)
-          {
-            vis_blob_vec.insert(vis_blob_vec.end(), visible_blob.ptr<uchar>(i), visible_blob.ptr<uchar>(i)+visible_blob.cols);
-          }
-        }
-        */
-       
-        // Debug blob_filter()
-        // Find unique elts
-        // https://stackoverflow.com/questions/1041620/whats-the-most-efficient-way-to-erase-duplicates-and-sort-a-vector
-        //sort (vis_blob_vec.begin (), vis_blob_vec.end ());
-        //vis_blob_vec.erase (unique (vis_blob_vec.begin (), vis_blob_vec.end ()),
-        //  vis_blob_vec.end ());
-        //fprintf (stderr, "%ld unique values in visible image:\n",
-        //  vis_blob_vec.size ());
-        //for (int i = 0; i < vis_blob_vec.size (); i ++)
-        //{
-        //  std::cerr << vis_blob_vec.at (i) << std::endl;
-        //}
- 
- 
-        if (DISPLAY_IMAGES)
-        {
-          // Display heatmaps to debug
-          //cv::namedWindow ("Visible contacts", cv::WINDOW_AUTOSIZE);
-          cv::Mat dst;
-          //cv::normalize (visible_img, dst, 0, 1, cv::NORM_MINMAX);
-          //cv::imshow ("Visible contacts", visible_img);
-          //cv::normalize (visible_blob, dst, 0, 1, cv::NORM_MINMAX);
-          // These displayed versions have sharp edges for some reason. Actual image
-          //   does show Gaussian blurred. Use inspect_channels.py to inspect, and
-          //   visualize_heatmaps.py to visualize heatmap overlay on depth image.
-          std::cerr << "Displaying visible heatmap\n";
-          cv::imshow ("Visible contacts", visible_blob);
-          cv::waitKey (0);
-        
-          //cv::namedWindow ("Occluded contacts", cv::WINDOW_AUTOSIZE);
-          //cv::normalize (occluded_img, dst, 0, 1, cv::NORM_MINMAX);
-          //cv::imshow ("Occluded contacts", occluded_img);
-          //cv::normalize (occluded_blob, dst, 0, 1, cv::NORM_MINMAX);
-          std::cerr << "Displaying occluded heatmap\n";
-          cv::imshow ("Occluded contacts", occluded_blob);
-          // Press in the open window to close it
-          cv::waitKey (0);
-        }
  
  
         // Output label file with object name and grasp quality for this scene

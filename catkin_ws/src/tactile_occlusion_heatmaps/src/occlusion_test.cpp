@@ -401,7 +401,7 @@ int main (int argc, char ** argv)
 
   // Octree resolution, in meters
   // 0.005 too large, some endpoints judged as occluded should be in front.
-  float octree_res = 0.002;
+  float OCTREE_RES = 0.002;
 
   // Load 3 x 4 camera intrinsics matrix, to project 3D to 2D
   Eigen::MatrixXf P;
@@ -577,7 +577,7 @@ int main (int argc, char ** argv)
 
       // Make octree to hold point cloud, for raytrace test
       // Ref: http://pointclouds.org/documentation/tutorials/octree.php
-      RayTracer raytracer = RayTracer (cloud_ptr, octree_res, VIS_RAYTRACE,
+      RayTracer raytracer = RayTracer (cloud_ptr, OCTREE_RES, VIS_RAYTRACE,
         nh);
 
       // basename() returns file name without extension

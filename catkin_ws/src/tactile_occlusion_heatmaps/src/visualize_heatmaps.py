@@ -14,6 +14,8 @@ import os
 import csv
 import argparse
 
+import numpy as np
+
 # ROS
 import rospkg
 
@@ -51,8 +53,12 @@ def main ():
     help='Specify to NOT save any visualized images.')
   arg_parser.add_argument ('--uinput', action='store_true',
     help='Specify to use keyboard interaction, useful for debugging.')
+  arg_parser.add_argument ('--scale-heatmaps', action='store_true',
+    help='Specify the flag if it was specified to occlusion_test.cpp to generate the heatmaps. Rescale heatmaps back to min/max depth values.')
 
   args = arg_parser.parse_args ()
+
+  SCALE_HEATMAPS = args.scale_heatmaps
 
 
   DISPLAY_IMAGES = args.display
@@ -137,9 +143,12 @@ def main ():
 
         # Calculate raw depths from the integers in image
         depth_im = scaler.scale_ints_to_depths (depth_im)
-        # TODO 2018 11 26: This is a bug. Tactile heatmaps shouldn't be scaled the same way as depth images!!! They should be in range 0 to 1, not the depth ranges!
-        vis_im = scaler.scale_ints_to_depths (vis_im)
-        occ_im = scaler.scale_ints_to_depths (occ_im)
+        if SCALE_HEATMAPS:
+          vis_im = scaler.scale_ints_to_depths (vis_im)
+          occ_im = scaler.scale_ints_to_depths (occ_im)
+        else:
+          vis_im = vis_im.astype (np.float32) / 255.0
+          occ_im = occ_im.astype (np.float32) / 255.0
      
         fig = plt.figure (figsize=(15,6))
      
@@ -192,7 +201,7 @@ def main ():
             ansi.ENDC))
 
           # TODO TEMPORARY so can just save all depth images and skip the grasps
-          #break
+          break
        
      
         if DISPLAY_IMAGES:

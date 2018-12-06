@@ -35,7 +35,7 @@ from depth_scene_rendering.config_read_yaml import ConfigReadYAML
 from tactile_occlusion_heatmaps.config_paths import \
   get_heatmap_blob_fmt, \
   get_renders_data_path, get_heatmaps_data_path, \
-  get_vis_path, get_vis_heatmap_fmt
+  get_vis_path, get_vis_depth_fmt, get_vis_heatmap_fmt
 from depth_to_image import RawDepthScaling
 
 
@@ -58,6 +58,9 @@ def main ():
   DISPLAY_IMAGES = args.display
   SAVE_IMG = not args.no_save
   UINPUT = args.uinput
+
+  # User adjust parameter. Save just a single axis, for paper or presentation
+  SAVE_DEPTH = False
 
   pkg_path = rospkg.RosPack ().get_path ('depth_scene_rendering')
   scene_list_path = os.path.join (pkg_path, "config/scenes_noisy.yaml")
@@ -164,22 +167,33 @@ def main ():
      
      
         fig.tight_layout ()
-     
-        ax = plt.gca ()
-        ax.set_aspect (1)
+
         if SAVE_IMG:
           dest = os.path.join (vis_dir,
             get_vis_heatmap_fmt () % (
               os.path.splitext (os.path.basename (scene_base)) [0], g_i))
-          fig.savefig (dest)
      
-          # To save individual axis cleanly
-          #extent = ax.get_window_extent ().transformed (fig.dpi_scale_trans.inverted ())
-          #fig.savefig (dest, bbox_inches=extent)
-       
+          fig.savefig (dest)
           print ('%sWritten entire plot to %s%s' % (ansi.OKCYAN, dest,
             ansi.ENDC))
      
+        # Save an individual axis
+        if SAVE_DEPTH and g_i == 0:
+          #ax = plt.gca ()
+          ax = plt.subplot (1,3,1)
+          ax.set_aspect (1)
+
+          # To save individual axis cleanly
+          depth_dest = os.path.join (vis_dir, get_vis_depth_fmt () % (
+            os.path.splitext (os.path.basename (scene_base)) [0]))
+          extent = ax.get_window_extent ().transformed (fig.dpi_scale_trans.inverted ())
+          fig.savefig (depth_dest, bbox_inches=extent)
+          print ('%sWritten depth image axis to %s%s' % (ansi.OKCYAN, depth_dest,
+            ansi.ENDC))
+
+          # TODO TEMPORARY so can just save all depth images and skip the grasps
+          #break
+       
      
         if DISPLAY_IMAGES:
           plt.show ()

@@ -22,7 +22,7 @@ from util.matplotlib_util import truetype, black_background, black_legend, \
 from util.ansi_colors import ansi_colors as ansi
 
 from depth_scene_rendering.config_consts import obj_names
-from tactile_occlusion_heatmaps.config_paths import get_analyses_path
+from tactile_occlusion_heatmaps.config_paths import get_models_path
 
 
 def plot_bars (obj_ids, obj_errs, obj_names_ordered, lbls_by_value, out_name):
@@ -123,7 +123,7 @@ def main ():
   #model_name = 'model_gukpulhstc'
   #model_name = 'model_ltjyjulfjc'  # v+gp7
 
-  val_err_path = os.path.join (get_analyses_path (), model_name,
+  val_err_path = os.path.join (get_models_path (), model_name,
     'val_err_by_class.csv')
 
   # Load csv file of per-class validation error, outputted by predictor
@@ -150,7 +150,7 @@ def main ():
 
   # Percentage of labels
   # Assumption: Labels are binary classification, there are only 2 labels, 0/1
-  lbls_pc_path = os.path.join (get_analyses_path (), model_name,
+  lbls_pc_path = os.path.join (get_models_path (), model_name,
     'lbls_by_value.csv')
   lbls_by_value = []
   with open (lbls_pc_path, 'rb') as lbls_pc_f:

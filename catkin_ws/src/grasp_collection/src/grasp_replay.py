@@ -54,7 +54,7 @@ def main ():
   #   same number of contacts as grasp_collect.py! Not sure why.
   SAVE_NORMALS = False
 
-  SUFFIXES = ['temp']
+  SUFFIXES = ['']
   # Replay more than 1 set of collections. Useful for while grasp_collect.py is
   #   running, to know how many total grasps have been collected
   #SUFFIXES = [str(i) for i in range (1, 15)]
@@ -62,9 +62,9 @@ def main ():
 
   objs = ConfigReadYAML.read_scene_paths ()
   # List of strings
-  #obj_names = objs [ConfigReadYAML.NAME_IDX]
+  obj_names = objs [ConfigReadYAML.NAME_IDX]
   #obj_names = ['nozzle', 'part3']
-  obj_names = ['bar_clamp']
+  #obj_names = ['bar_clamp']
   # List of list of strings, paths to .pcd scene files
   scene_paths = objs [ConfigReadYAML.SCENE_IDX]
 
@@ -73,6 +73,7 @@ def main ():
 
   n_grasps = [0] * len (obj_names)
 
+  skip_obj = False
 
   for w_i in range (len (obj_names)):
 
@@ -196,13 +197,13 @@ def main ():
         g_i = 0
         while g_i < len (grasps):
   
-          print ('Grasp %d, %d contacts' % (g_i, cmeta [g_i]))
+          print ('Grasp %d, %d contacts, energy %g' % (g_i, cmeta [g_i], energies [g_i]))
           GraspitCommander.setRobotPose (grasps [g_i].pose)
           # Must set dofs to loaded ones, otherwise fingers won't close half of
           #   the time, and won't reproduce the recorded contacts!!
           #GraspitCommander.forceRobotDof (grasps [g_i].dofs)
-          print (grasps [g_i].pose)
-          print (grasps [g_i].dofs)
+          #print (grasps [g_i].pose)
+          #print (grasps [g_i].dofs)
 
           # This gets a lot more contacts!!! the Warning below prints every
           #   time, always more than the number saved!!!
@@ -225,11 +226,14 @@ def main ():
           #GraspitCommander.saveImage (img_path)
  
           if UINPUT:
-            uinput = raw_input ('Press enter to go to next grasp, b to go back to previous, r to repeat current, or q to quit: ')
+            uinput = raw_input ('Press enter to go to next grasp, b to go back to previous, r to repeat current, s to next object, or q to quit: ')
             if uinput.lower () == 'b':
               g_i -= 2
-            if uinput.lower () == 'r':
+            elif uinput.lower () == 'r':
               g_i -= 1
+            elif uinput.lower () == 's':
+              skip_obj = True
+              break
             elif uinput.lower () == 'q':
               terminate = True
               break
@@ -250,10 +254,10 @@ def main ():
           GraspIO.write_contacts (os.path.basename (world_fname), None,
             normals_m.T, None, SUFFIXES [u_i])
 
-        if terminate:
+        if terminate or skip_obj:
           break
  
-      if terminate:
+      if terminate or skip_obj:
         break
 
     if terminate:

@@ -92,6 +92,11 @@ def get_vis_path ():
   return path
 
 
+def get_vis_depth_fmt ():
+
+  return ('%s_depth.png')
+
+
 def get_vis_heatmap_fmt ():
 
   # String is scene_path of the .pcd rendered scene, i.e.
@@ -106,6 +111,17 @@ def get_vis_3d_fmt ():
   #   os.path.splitext (os.path.basename (scene_path)) [0]
   # Integer is grasp number from grasp_collect.py, g_i
   return ('%s_g%d_3d.png')
+
+
+def get_models_path ():
+
+  root = get_data_root ()
+  path = os.path.join (root, 'models')
+
+  if not os.path.exists (path):
+    os.makedirs (path)
+
+  return path
 
 
 def get_analyses_path ():

@@ -16,14 +16,14 @@ ENDC="\e[0m"
 
 # Render scenes
 # Change n_camera_poses to change the number of scenes generated per object
-cmd="blensor -b -P `rospack find depth_scene_rendering`/src/scene_generation.py"
-echo -e "$MAGENTA$cmd$ENDC"
-$cmd
+#cmd="blensor -b -P `rospack find depth_scene_rendering`/src/scene_generation.py"
+#echo -e "$MAGENTA$cmd$ENDC"
+#$cmd
 
 # Generate cropped object images from scenes
-cmd="rosrun depth_scene_rendering postprocess_scenes"
-echo -e "$MAGENTA$cmd$ENDC"
-$cmd
+#cmd="rosrun depth_scene_rendering postprocess_scenes"
+#echo -e "$MAGENTA$cmd$ENDC"
+#$cmd
 
 # NOTE: Only need to run ONCE for all objects
 #   This doesn't need to be rerun all the time. It only needs to be run once,

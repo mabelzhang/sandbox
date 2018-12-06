@@ -24,6 +24,9 @@ class ConfigReadYAML:
   ID_IDX = 1
   SCENE_IDX = 2
 
+  pkg_path = rospkg.RosPack ().get_path ('depth_scene_rendering')
+  config_path = os.path.join (pkg_path, 'config')
+
   @staticmethod
   def read_scene_paths (scene_base='scenes_noisy.yaml'):
 
@@ -34,8 +37,7 @@ class ConfigReadYAML:
     # List of list of strings
     scene_paths = []
 
-    pkg_path = rospkg.RosPack ().get_path ('depth_scene_rendering')
-    scene_list_path = os.path.join (pkg_path, 'config', scene_base)
+    scene_list_path = os.path.join (ConfigReadYAML.config_path, scene_base)
 
     print ('Reading scene paths from %s' % scene_list_path)
 
@@ -66,6 +68,7 @@ class ConfigReadYAML:
   #   obj_names: List of strings, may repeat
   #   obj_ids: List of integers, may repeat
   #   scene_paths: List of list of strings
+  #   outname: basename of output file
   @staticmethod
   def write_scene_paths (obj_names, obj_ids, scene_paths, outname):
 
@@ -107,11 +110,12 @@ class ConfigReadYAML:
     yaml_str = yaml.dump (scene_list_yaml, default_flow_style=False)
     #print (yaml_str)
 
-    with open (outname, 'w') as outf:
+    scene_list_path = os.path.join (ConfigReadYAML.config_path, outname)
+    with open (scene_list_path, 'w') as outf:
       outf.write (yaml_str)
 
-    print ('%sWritten scene paths to file %s%s' % (ansi.OKCYAN, outname,
-      ansi.ENDC))
+    print ('%sWritten scene paths to file %s%s' % (ansi.OKCYAN,
+      scene_list_path, ansi.ENDC))
 
     return n_paths
 

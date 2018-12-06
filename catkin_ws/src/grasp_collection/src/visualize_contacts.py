@@ -32,7 +32,10 @@ from grasp_collection.config_consts import ENERGY_ABBREV
 
 def main ():
 
-  SUFFIX = 'temp'
+  SUFFIX = ''
+
+  ONE_BY_ONE = False
+
 
   rospy.init_node ('visualize_contacts', anonymous=True)
 
@@ -46,8 +49,8 @@ def main ():
   obj_names = objs [ConfigReadYAML.NAME_IDX]
 
   # For marker color based on grasp quality
-  ENERGY_MIN = 0.7 #0.4
-  ENERGY_MAX = 1.6 #0.6
+  ENERGY_MIN = -1.8 #0.7 #0.4
+  ENERGY_MAX = -0.8 #1.6 #0.6
   # Number of segments to calculate colormap
   N_COLOR_SEG = 10
   #SEG_WIDTH = (ENERGY_MAX - ENERGY_MIN) / N_COLOR_SEG
@@ -62,16 +65,17 @@ def main ():
 
   terminate = False
 
-  # Delete all markers so next round starts clean
-  del_mkr = Marker ()
-  create_marker (Marker.SPHERE_LIST, 'contacts', '/world', 0,
-    0, 0, 0, 0, 0, 0, 0.5, CONTACT_SIZE, CONTACT_SIZE, CONTACT_SIZE,
-    del_mkr, duration=0)
-  del_mkr.action = Marker.DELETEALL
-  vis_pub.publish (del_mkr)
-
   # Loop through each object
   for o_i in range (len (obj_names)):
+
+    # Delete all markers so next round starts clean
+    del_mkr = Marker ()
+    create_marker (Marker.SPHERE_LIST, 'contacts', '/world', 0,
+      0, 0, 0, 0, 0, 0, 0.5, CONTACT_SIZE, CONTACT_SIZE, CONTACT_SIZE,
+      del_mkr, duration=0)
+    del_mkr.action = Marker.DELETEALL
+    vis_pub.publish (del_mkr)
+
 
     # File name of world XML, one file per object
     world_fname = os.path.join (world_subdir, obj_names [o_i])
@@ -94,6 +98,8 @@ def main ():
     # List of nGrasps elts
     energies = GraspIO.read_energies (os.path.basename (world_fname),
       ENERGY_ABBREV, SUFFIX)
+    print ('Energy min: %g, max: %g, mean: %g, median: %g' % (np.min (energies),
+      np.max (energies), np.mean (energies), np.median (energies)))
 
     # A set of contacts per object
     o_contacts_mkr = Marker ()
@@ -118,10 +124,10 @@ def main ():
       normals_arr = MarkerArray ()
 
       # Energies are negative. Use absolute value
-      fraction = (abs (energies [g_i]) - ENERGY_MIN) / (ENERGY_MAX - ENERGY_MIN)
+      #fraction = (abs (energies [g_i]) - ENERGY_MIN) / (ENERGY_MAX - ENERGY_MIN)
+      fraction = 1 - (energies [g_i] - ENERGY_MIN) / (ENERGY_MAX - ENERGY_MIN)
       color_tuple = mpl_color (fraction, N_COLOR_SEG, colormap_name='jet')
-      print ('energy: %g' % (abs (energies [g_i])))
-      #print ('fraction: %g' % fraction)
+      print ('energy: %g, fraction: %g' % (energies [g_i], fraction))
 
       color = ColorRGBA ()
       color.r = color_tuple [0]
@@ -168,31 +174,32 @@ def main ():
         normals_arr.markers.append (normals_mkr)
         o_normals_arr.markers.append (normals_mkr)
 
-        print ('Normal length: %g' % (np.linalg.norm (normals_m [p_i, :] - contacts_m [p_i, :])))
+        #print ('Normal length: %g' % (np.linalg.norm (normals_m [p_i, :] - contacts_m [p_i, :])))
 
       # Update for next grasp
       ct_start_i += cmeta [g_i]
 
-      for i in range (5):
-        vis_pub.publish (mesh_mkr)
-        vis_pub.publish (contacts_mkr)
-        vis_arr_pub.publish (normals_arr)
-        rospy.sleep (0.5)
+      if ONE_BY_ONE:
+        for i in range (5):
+          vis_pub.publish (mesh_mkr)
+          vis_pub.publish (contacts_mkr)
+          vis_arr_pub.publish (normals_arr)
+          rospy.sleep (0.5)
 
-      uinput = raw_input ('Press enter to go to next grasp, s to skip to next object, q to quit: ')
-      if uinput.lower () == 's':
-        break
-      elif uinput.lower () == 'q':
-        terminate = True
-        break
+        uinput = raw_input ('Press enter to go to next grasp, s to skip to next object, q to quit: ')
+        if uinput.lower () == 's':
+          break
+        elif uinput.lower () == 'q':
+          terminate = True
+          break
 
-      # Delete all markers so next round starts clean
-      del_mkr = Marker ()
-      create_marker (Marker.SPHERE_LIST, 'contacts', '/world', 0,
-        0, 0, 0, 0, 0, 0, 0.5, CONTACT_SIZE, CONTACT_SIZE, CONTACT_SIZE,
-        del_mkr, duration=0)
-      del_mkr.action = Marker.DELETEALL
-      vis_pub.publish (del_mkr)
+        # Delete all markers so next round starts clean
+        del_mkr = Marker ()
+        create_marker (Marker.SPHERE_LIST, 'contacts', '/world', 0,
+          0, 0, 0, 0, 0, 0, 0.5, CONTACT_SIZE, CONTACT_SIZE, CONTACT_SIZE,
+          del_mkr, duration=0)
+        del_mkr.action = Marker.DELETEALL
+        vis_pub.publish (del_mkr)
 
 
     #print (o_contacts_mkr.points)
@@ -201,6 +208,7 @@ def main ():
     if terminate:
       break
 
+    # Cumulative per-object contacts
     for i in range (5):
       vis_pub.publish (mesh_mkr)
       vis_pub.publish (o_contacts_mkr)

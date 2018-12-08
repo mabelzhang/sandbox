@@ -30,6 +30,7 @@ import matplotlib.pyplot as plt
 # Custom packages
 from util.ansi_colors import ansi_colors as ansi
 from util.image_util import np_from_depth, show_image, matshow_image
+from util.matplotlib_util import black_background, black_colorbar
 from grasp_collection.config_paths import get_contacts_path
 from depth_scene_rendering.config_read_yaml import ConfigReadYAML
 
@@ -37,7 +38,8 @@ from depth_scene_rendering.config_read_yaml import ConfigReadYAML
 from tactile_occlusion_heatmaps.config_paths import \
   get_heatmap_blob_fmt, \
   get_renders_data_path, get_heatmaps_data_path, \
-  get_vis_path, get_vis_depth_fmt, get_vis_heatmap_fmt
+  get_vis_path, get_vis_depth_fmt, get_vis_vis_fmt, get_vis_occ_fmt, \
+  get_vis_heatmap_fmt
 from depth_to_image import RawDepthScaling
 
 
@@ -55,18 +57,31 @@ def main ():
     help='Specify to use keyboard interaction, useful for debugging.')
   arg_parser.add_argument ('--scale-heatmaps', action='store_true',
     help='Specify the flag if it was specified to occlusion_test.cpp to generate the heatmaps. Rescale heatmaps back to min/max depth values.')
+  arg_parser.add_argument ('--black-bg', action='store_true',
+    help='Generate plots with black background.')
 
   args = arg_parser.parse_args ()
 
   SCALE_HEATMAPS = args.scale_heatmaps
+  BLACK_BG = args.black_bg
 
 
   DISPLAY_IMAGES = args.display
-  SAVE_IMG = not args.no_save
   UINPUT = args.uinput
 
+  SAVE_IMG = not args.no_save
+  # Number of grasps per object to save images
+  N_TO_SAVE = 1
+
   # User adjust parameter. Save just a single axis, for paper or presentation
-  SAVE_DEPTH = False
+  # Indices in the 3 subplots
+  DEPTH_IDX = 1
+  VIS_IDX = 2
+  OCC_IDX = 3
+  # NOTE: Make sure these names match with the subplot indices!
+  SUBPLOT_NAMES = [get_vis_depth_fmt (), get_vis_vis_fmt (), get_vis_occ_fmt ()]
+  #SAVE_SUBPLOTS = [DEPTH_IDX]
+  SAVE_SUBPLOTS = [OCC_IDX]
 
   pkg_path = rospkg.RosPack ().get_path ('depth_scene_rendering')
   scene_list_path = os.path.join (pkg_path, "config/scenes_noisy.yaml")
@@ -156,23 +171,39 @@ def main ():
         # gray_r
         depth_obj = plt.imshow (depth_im [:, :, 0], cmap=plt.cm.jet)
           #clim=[MIN_DEPTH, MAX_DEPTH])
-        plt.title ('Raw Depth')
-        plt.colorbar (depth_obj, fraction=0.046, pad=0.01)
+        tt1 = plt.title ('Raw Depth')
+        cb1 = plt.colorbar (depth_obj, fraction=0.046, pad=0.01)
+        if BLACK_BG:
+          black_background (title_hdl=tt1)
+          black_colorbar (cb1)
      
         ax = plt.subplot (1,3,2)
+        # Plot a white background first, so that black background plots produce
+        #   the same heatmap appearances as white background ones.
+        # Ref plot white image https://stackoverflow.com/questions/28234416/plotting-a-white-grayscale-image-in-python-matplotlib
+        plt.imshow (np.ones ((depth_im.shape[0], depth_im.shape[1])),
+          cmap='gray', vmin=0, vmax=1, alpha=1.0)
         plt.imshow (depth_im [:, :, 0], cmap=plt.cm.jet, alpha=0.4)
-        vis_obj = plt.imshow (vis_im [:, :, 0], cmap=plt.cm.jet, alpha=0.6)
+        vis_obj = plt.imshow (vis_im [:, :, 0], cmap=plt.cm.jet, alpha=0.7)
           #clim=[MIN_DEPTH, MAX_DEPTH])
-        plt.title ('Visible')
-        plt.colorbar (vis_obj, fraction=0.046, pad=0.01)
+        tt2 = plt.title ('Visible')
+        cb2 = plt.colorbar (vis_obj, fraction=0.046, pad=0.01)
+        if BLACK_BG:
+          black_background (title_hdl=tt2)
+          black_colorbar (cb2)
      
         ax = plt.subplot (1,3,3)
+        plt.imshow (np.ones ((depth_im.shape[0], depth_im.shape[1])),
+          cmap='gray', vmin=0, vmax=1, alpha=1.0)
         plt.imshow (depth_im [:, :, 0], cmap=plt.cm.jet, alpha=0.4)
-        occ_obj = plt.imshow (occ_im [:, :, 0], cmap=plt.cm.jet, alpha=0.6)
+        occ_obj = plt.imshow (occ_im [:, :, 0], cmap=plt.cm.jet, alpha=0.7)
           #clim=[MIN_DEPTH, MAX_DEPTH])
-        plt.title ('Occluded')
+        tt3 = plt.title ('Occluded')
         # Flush colorbar with image
-        fig.colorbar (occ_obj, fraction=0.046, pad=0.01)
+        cb3 = plt.colorbar (occ_obj, fraction=0.046, pad=0.01)
+        if BLACK_BG:
+          black_background (title_hdl=tt3)
+          black_colorbar (cb3)
      
      
         fig.tight_layout ()
@@ -182,32 +213,40 @@ def main ():
             get_vis_heatmap_fmt () % (
               os.path.splitext (os.path.basename (scene_base)) [0], g_i))
      
-          fig.savefig (dest)
+          if BLACK_BG:
+            plt.savefig (dest, bbox_inches='tight',
+              facecolor=fig.get_facecolor (), edgecolor='none', transparent=True)
+          else:
+            fig.savefig (dest)
           print ('%sWritten entire plot to %s%s' % (ansi.OKCYAN, dest,
             ansi.ENDC))
      
         # Save an individual axis
-        if SAVE_DEPTH and g_i == 0:
-          #ax = plt.gca ()
-          ax = plt.subplot (1,3,1)
-          ax.set_aspect (1)
+        for subplot_i in SAVE_SUBPLOTS:
 
+          # For depth image, only need to save 1st one, `.` all the same
+          if subplot_i == DEPTH_IDX and g_i != 0:
+            continue
+
+          ax = plt.subplot (1,3,subplot_i)
+          ax.set_aspect (1)
+          plt.axis ('off')
+ 
           # To save individual axis cleanly
-          depth_dest = os.path.join (vis_dir, get_vis_depth_fmt () % (
+          depth_dest = os.path.join (vis_dir, SUBPLOT_NAMES [subplot_i-1] % (
             os.path.splitext (os.path.basename (scene_base)) [0]))
           extent = ax.get_window_extent ().transformed (fig.dpi_scale_trans.inverted ())
           fig.savefig (depth_dest, bbox_inches=extent)
           print ('%sWritten depth image axis to %s%s' % (ansi.OKCYAN, depth_dest,
             ansi.ENDC))
 
-          # TODO TEMPORARY so can just save all depth images and skip the grasps
-          break
-       
-     
         if DISPLAY_IMAGES:
           plt.show ()
 
         plt.close (fig)
+
+        if g_i >= N_TO_SAVE - 1:
+          break
 
         if UINPUT:
           uinput = raw_input ('Press s to skip to next scene, o to skip to next objet, q to quit, or anything else to go to next grasp in this scene: ')

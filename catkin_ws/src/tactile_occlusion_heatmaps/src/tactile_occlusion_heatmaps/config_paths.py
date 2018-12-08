@@ -92,9 +92,13 @@ def get_vis_path ():
   return path
 
 
+# For individual subplots in visualize_heatmaps.py
 def get_vis_depth_fmt ():
-
   return ('%s_depth.png')
+def get_vis_vis_fmt ():
+  return ('%s_vis.png')
+def get_vis_occ_fmt ():
+  return ('%s_occ.png')
 
 
 def get_vis_heatmap_fmt ():

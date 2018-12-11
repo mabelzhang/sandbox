@@ -81,7 +81,7 @@ def main ():
   # NOTE: Make sure these names match with the subplot indices!
   SUBPLOT_NAMES = [get_vis_depth_fmt (), get_vis_vis_fmt (), get_vis_occ_fmt ()]
   #SAVE_SUBPLOTS = [DEPTH_IDX]
-  SAVE_SUBPLOTS = [OCC_IDX]
+  SAVE_SUBPLOTS = [DEPTH_IDX, VIS_IDX, OCC_IDX]
 
   pkg_path = rospkg.RosPack ().get_path ('depth_scene_rendering')
   scene_list_path = os.path.join (pkg_path, "config/scenes_noisy.yaml")

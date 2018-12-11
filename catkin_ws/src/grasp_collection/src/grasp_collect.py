@@ -141,7 +141,7 @@ def main ():
   UINPUT = args.debug
 
   # Set to False if debugging and don't want to overwrite previously saved data!
-  SAVE_GRASPS = True
+  SAVE_GRASPS = False
   print ('%sSAVE_GRASPS is set to %s. Make sure this is what you want!%s' % (
     ansi.OKCYAN, str(SAVE_GRASPS), ansi.ENDC))
 
@@ -190,9 +190,9 @@ def main ():
   #   there are grasps ranking in top 20 from 30000s. Time is not linear wrt
   #   steps, so setting to 30000 will take a lot shorter time than 70000.
   # Bigger number gets better grasps
-  #max_steps = 70000
+  max_steps = 70000
   #max_steps = 40000  # Quickest without error
-  max_steps = 140000
+  #max_steps = 140000
 
   # Replaced this with config_consts, because grasps don't need to be
   #   regenerated all the time! It's always about the same for the same object.
@@ -204,9 +204,9 @@ def main ():
 
   start_time = time.time ()
 
-  objs_to_collect = range (len (worlds))
+  #objs_to_collect = range (len (worlds))
   #objs_to_collect = range (3, len (worlds))
-  #objs_to_collect = [4]
+  objs_to_collect = [4]
 
   ns_contacts_ttl = [0] * len (objs_to_collect)
   ns_valid_grasps = [0] * len (objs_to_collect)

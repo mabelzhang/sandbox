@@ -35,6 +35,8 @@ def main ():
   SUFFIX = ''
 
   ONE_BY_ONE = False
+  # Whether to visualize normals
+  VIS_NORMS = True
 
 
   rospy.init_node ('visualize_contacts', anonymous=True)
@@ -183,7 +185,8 @@ def main ():
         for i in range (5):
           vis_pub.publish (mesh_mkr)
           vis_pub.publish (contacts_mkr)
-          vis_arr_pub.publish (normals_arr)
+          if VIS_NORMS:
+            vis_arr_pub.publish (normals_arr)
           rospy.sleep (0.5)
 
         uinput = raw_input ('Press enter to go to next grasp, s to skip to next object, q to quit: ')
@@ -212,7 +215,8 @@ def main ():
     for i in range (5):
       vis_pub.publish (mesh_mkr)
       vis_pub.publish (o_contacts_mkr)
-      vis_arr_pub.publish (o_normals_arr)
+      if VIS_NORMS:
+        vis_arr_pub.publish (o_normals_arr)
       rospy.sleep (0.5)
 
     uinput = raw_input ('Press enter to go to next object, q to quit: ')

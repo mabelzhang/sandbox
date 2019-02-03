@@ -45,6 +45,9 @@ I don't know why this is needed. This line in package.xml should have exported
   model://robotiq_hand_description detectable by Gazebo(!):
     <gazebo_ros gazebo_plugin_path="${prefix}/lib" gazebo_model_path="${prefix}/.." />
 
+If it doesn't, then export the environment variable manually:
+export GAZEBO_MODEL_PATH=$(dirname `rospack find robotiq_hand_description`):$GAZEBO_MODEL_PATH
+
 This makes sure hand CAD files are loaded, so the hand displays correctly!
 
 

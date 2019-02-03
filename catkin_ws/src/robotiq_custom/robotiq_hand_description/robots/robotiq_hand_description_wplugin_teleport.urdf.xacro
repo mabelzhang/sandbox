@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="robotiq_hand_description" >
+
+  <xacro:include filename="$(find robotiq_hand_description)/urdf/robotiq_hand.urdf.xacro" />
+
+  <!-- Must use world if you need to use manually converted SDF for
+    tactile sensors to work. If use name other than world, SDF doesn't generate
+    correctly!! -->
+  <link name="world"/>
+
+  <!-- Prefix must be specified to match the <side> tag in <gazebo><plugin>
+     tag. Gazebo plugin will look for joint names containing either l_ or r_
+     prefix, based on the <side> tag. If you don't specify the correct prefix,
+     the plugin won't find any joints. -->
+  <!-- Fixed hand -->
+  <xacro:robotiq_hand prefix="l_" parent="world" reflect="-1">
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+  </xacro:robotiq_hand>
+
+  <!-- Import all Gazebo-customization elements, including Gazebo colors and
+      tactile sensors -->
+  <!--xacro:include filename="$(find robotiq_hand_description)/urdf/robotiq_hand.urdf.xacro" /-->
+  <xacro:include filename="$(find robotiq_hand_description)/urdf/robotiq_hand_wtactile.gazebo" />
+  <!--xacro:include filename="$(find robotiq_hand_description)/urdf/robotiq_hand_wtactile_nosensor.gazebo" /-->
+  <!-- Colors
+    These prefixes are in robotiq_hand_wtactile.gazebo robotiq_finger xacro -->
+  <xacro:robotiq_colors prefix="l_" finger_prefix="l_finger_1_"/>
+  <xacro:robotiq_colors prefix="l_" finger_prefix="l_finger_2_"/>
+  <xacro:robotiq_colors prefix="l_" finger_prefix="l_finger_middle_"/>
+
+  <!-- Tactile sensors -->
+  <!-- Robotiq naming:
+    finger_idx, corresponds to indices in robotiq_takktile takktile_consts.py:
+      0 for Finger A (finger_middle)
+      1 for Finger B (finger_2)
+      2 for Finger C (finger_1) -->
+  <xacro:robotiq_takktile_sensors finger_prefix="l_finger_1_" finger_idx="2" />
+  <xacro:robotiq_takktile_link finger_prefix="l_finger_1_" finger_idx="2" sensor_idx="0" />
+  <xacro:robotiq_takktile_link finger_prefix="l_finger_1_" finger_idx="2" sensor_idx="1" />
+  <xacro:robotiq_takktile_link finger_prefix="l_finger_1_" finger_idx="2" sensor_idx="2" />
+  <xacro:robotiq_takktile_link finger_prefix="l_finger_1_" finger_idx="2" sensor_idx="3" />
+  <xacro:robotiq_takktile_link finger_prefix="l_finger_1_" finger_idx="2" sensor_idx="4" />
+  <xacro:robotiq_takktile_link finger_prefix="l_finger_1_" finger_idx="2" sensor_idx="5" />
+
+  <xacro:robotiq_takktile_sensors finger_prefix="l_finger_2_" finger_idx="1" />
+  <xacro:robotiq_takktile_link finger_prefix="l_finger_2_" finger_idx="1" sensor_idx="0" />
+  <xacro:robotiq_takktile_link finger_prefix="l_finger_2_" finger_idx="1" sensor_idx="1" />
+  <xacro:robotiq_takktile_link finger_prefix="l_finger_2_" finger_idx="1" sensor_idx="2" />
+  <xacro:robotiq_takktile_link finger_prefix="l_finger_2_" finger_idx="1" sensor_idx="3" />
+  <xacro:robotiq_takktile_link finger_prefix="l_finger_2_" finger_idx="1" sensor_idx="4" />
+  <xacro:robotiq_takktile_link finger_prefix="l_finger_2_" finger_idx="1" sensor_idx="5" />
+
+  <xacro:robotiq_takktile_sensors finger_prefix="l_finger_middle_" finger_idx="0" />
+  <xacro:robotiq_takktile_link finger_prefix="l_finger_middle_" finger_idx="0" sensor_idx="0" />
+  <xacro:robotiq_takktile_link finger_prefix="l_finger_middle_" finger_idx="0" sensor_idx="1" />
+  <xacro:robotiq_takktile_link finger_prefix="l_finger_middle_" finger_idx="0" sensor_idx="2" />
+  <xacro:robotiq_takktile_link finger_prefix="l_finger_middle_" finger_idx="0" sensor_idx="3" />
+  <xacro:robotiq_takktile_link finger_prefix="l_finger_middle_" finger_idx="0" sensor_idx="4" />
+  <xacro:robotiq_takktile_link finger_prefix="l_finger_middle_" finger_idx="0" sensor_idx="5" />
+
+
+
+  <!-- Copied from atlas_description/robots/atlas_v4_robotiq_hands.urdf.xacro
+    This lets you control the hand -->
+  <gazebo>
+    <plugin name="left_robotiq_hand_plugin" filename="libRobotiqHandPlugin_teleport.so">
+      <side>left</side>
+      <kp_position>5.0</kp_position>
+      <kd_position>0.5</kd_position>
+    </plugin>
+  </gazebo>
+
+  <!-- Don't use this. If you use this, SDF won't load plugin! -->
+  <!--gazebo>
+    <static>1</static>
+  </gazebo-->
+
+</robot>

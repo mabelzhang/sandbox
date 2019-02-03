@@ -1,0 +1,517 @@
+<?xml version="1.0"?>
+
+<!-- Mabel Zhang
+     16 Feb 2018
+
+     Copied and adapted from my reflex_gazebo full_reflex_model.gazebo.
+
+     Included by ../robots/robotiq_hand_description_wplugin.urdf.xacro
+ -->
+
+<!-- TODO: I give up naming <sensor><contact><collision> here. It doesn't always
+  match the one that gz sdf generates, because gz sdf lumps the fixed
+  joint links together, and appends a _# after the collision name. The
+  bad part is, it doesn't do all the links in order!! So 1-6 is not
+  always in order for sensors 0-5, 6-11, 12-17!!!
+
+  Instead, I will manually run in ../robots:
+  $ xacro robotiq_hand_description_wplugin.urdf.xacro > robotiq_hand_description_wplugin.urdf
+  $ gz sdf - -print robotiq_hand_description_wplugin.urdf > robotiq_hand_description_wplugin.sdf
+
+  *** Then MANUALLY inspect the SDF file, to make sure the suffix _# of all the
+    sensor link names in <contact><collision> match the actual
+    <link><collision name=""> tags! ***
+    This is the most important step. Otherwise contact sensors will never fire!
+    Their <sensor><collisioN> tag MUST match the actual link's
+      <link><collision name=""> name!!! Otherwise the sensors are registered to
+      nothing!
+
+  Then in my launch file (e.g. gym_gazebo spawn_robotiq.launch), when call
+    gazebo_ros spawn_model, use:
+    -sdf -file $(find robotiq_hand_description)/robots/robotiq_hand_description_wplugin.sdf
+    instead of the traditional
+    -urdf -param robot_description
+    Latter takes the URDF, which doesn't have the right name.
+    Load the SDF that I manually verified, directly.
+-->
+
+
+
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Gazebo colors
+
+    <gazebo reference> field refers to <link> names in robotiq_hand.urdf.xacro
+
+    Tutorial: http://gazebosim.org/tutorials?tut=ros_urdf&cat=connect_ros
+
+    prefix: l_, r_
+    finger_prefix: l_finger_1_, l_finger_2_, l_finger_middle_
+
+    Finger_2 is counterclockwise from finger_middle
+    With official Robotiq hardware documentation naming, these correspond to
+      finger_middle = Finger A
+      finger_2 = Finger B
+      finger_1 = Finger C
+   -->
+
+  <xacro:macro name="robotiq_colors" params="prefix finger_prefix">
+
+    <gazebo reference="${finger_prefix}link_0">
+      <material>Gazebo/DarkGrey</material>
+    </gazebo>
+ 
+    <gazebo reference="${finger_prefix}link_1">
+      <material>Gazebo/DarkGrey</material>
+      <!--material>
+        <ambient>1 0 0 1</ambient>
+        <diffuse>1 0 0 1</diffuse>
+        <specular>0.1 0.1 0.1 1</specular>
+      </material-->
+    </gazebo>
+ 
+    <gazebo reference="${finger_prefix}link_2">
+      <material>Gazebo/DarkGrey</material>
+    </gazebo>
+ 
+    <gazebo reference="${finger_prefix}link_3">
+      <material>Gazebo/Red</material>
+    </gazebo>
+ 
+    <gazebo reference="${finger_prefix}link_proximal_actuating_hinge">
+      <material>Gazebo/DarkGrey</material>
+    </gazebo>
+ 
+    <gazebo reference="${finger_prefix}link_paraproximal_actuating_hinge">
+      <material>Gazebo/DarkGrey</material>
+    </gazebo>
+ 
+    <gazebo reference="${finger_prefix}link_proximal_actuating_bar">
+      <material>Gazebo/DarkGrey</material>
+    </gazebo>
+ 
+    <gazebo reference="${finger_prefix}link_paraproximal_bar">
+      <material>Gazebo/DarkGrey</material>
+    </gazebo>
+ 
+    <gazebo reference="${finger_prefix}link_median_actuating_hinge">
+      <material>Gazebo/DarkGrey</material>
+    </gazebo>
+ 
+    <gazebo reference="${finger_prefix}link_median_bar">
+      <material>Gazebo/DarkGrey</material>
+    </gazebo>
+ 
+    <gazebo reference="${finger_prefix}link_paramedian_hinge">
+      <material>Gazebo/DarkGrey</material>
+    </gazebo>
+ 
+    <gazebo reference="${finger_prefix}link_median_bar_underactuated">
+      <material>Gazebo/DarkGrey</material>
+    </gazebo>
+ 
+    <gazebo reference="${finger_prefix}link_paradistal_hinge">
+      <material>Gazebo/DarkGrey</material>
+    </gazebo>
+ 
+    <gazebo reference="${prefix}palm">
+      <material>Gazebo/DarkGrey</material>
+    </gazebo>
+ 
+  </xacro:macro>
+
+
+
+  <!--
+    finger_prefix: l_finger_1_, l_finger_2_, l_finger_middle_
+    finger_idx, corresponds to indices in robotiq_takktile takktile_consts.py:
+      0 for Finger A (finger_middle), sensor indices 0-5;
+      1 for Finger B (finger_2, CCW from thumb), sensor indices 6-11;
+      2 for Finger C (finger_1), sensor indices 12-17.
+
+    Finger_2 is counterclockwise from finger_middle
+    With official Robotiq hardware documentation naming, these correspond to
+      finger_middle = Finger A
+      finger_2 = Finger B
+      finger_1 = Finger C
+
+    Coordinates are measured and defined in my robotiq_takktile
+      takktile_consts.py
+    Physical order on the fingertip, with finger pointing upwards:
+      Basically in CCW order.
+    5 4 3
+    0 1 2
+   -->
+
+  <!-- xacro:property format copied from reflex_gazebo
+     full_reflex_model.urdf.xacro, not sure where I found this is possible! -->
+  <!-- left, right, mid, top, bottom, are written with TakkTile facing me,
+     fingertip pointing up. -->
+
+  <!-- x from finger_*_link_3 to each row of sensors -->
+  <xacro:property name="x_link_3_to_bottom_row" value="${0.02}" />
+  <xacro:property name="x_bottom_to_top_row" value="${0.01}" />
+  <xacro:property name="x_link_3_to_top_row"
+    value="${x_link_3_to_bottom_row + x_bottom_to_top_row}" />
+
+  <!-- z from finger_*_link_3 to each column of sensors -->
+  <xacro:property name="z_link_3_to_left_col" value="${-0.007}" />
+  <xacro:property name="z_link_3_to_mid_col" value="${0.0}" />
+  <xacro:property name="z_link_3_to_right_col" value="${+0.007}" />
+
+  <!-- y (thickness of board) from center of screw to center thickness of sensor rectangle -->
+  <xacro:property name="y_thick" value="${+0.007}" />
+
+  <!-- How much distance to put sensor on top of finger. Used 0.00045 for ReFlex -->
+  <xacro:property name="y_popup" value="0.0045" />
+
+  <!-- Sensor sizes, from original Y. Tenzer 2012 paper -->
+  <xacro:property name="xdim" value="0.009" />  <!-- 0.005, along column -->
+  <xacro:property name="ydim" value="0.0012" />  <!-- thickness -->
+  <xacro:property name="zdim" value="0.006" />  <!-- 0.003, along row -->
+
+
+  <!-- Links are all the same since I don't use origin xyz tags in them. So
+    only need one identical block for all 18 sensor links.
+
+    sensor_idx: 0 to 5 -->
+  <xacro:macro name="robotiq_takktile_link" params="finger_prefix finger_idx sensor_idx">
+
+    <!-- Links with positions at contact sensors. These links are needed for
+      gazebo tags below to refer to. -->
+    <link name="${finger_prefix}sensor_${finger_idx * 6 + sensor_idx}_link">
+      <!-- This mass and inertia are tested to be stable in Gazebo. If you
+        increase by 10, the finger will start jumping very bad when moved.
+        Sensor mass is very very small!-->
+      <inertial>
+        <mass value="0.00001"/>
+        <inertia
+          ixx="0.00000000001" ixy="0.0" ixz="0.0"
+                         iyy="0.00000000001"  iyz="0.0"
+                                           izz="0.00000000001"/>
+      </inertial>
+
+      <visual>
+        <origin xyz="0 ${y_popup} 0" rpy="0 0 0" />
+        <geometry>
+          <box size="${xdim} ${ydim} ${zdim}"/>
+        </geometry>
+      </visual>
+
+      <collision>
+        <origin xyz="0 ${y_popup} 0" rpy="0 0 0" />
+        <geometry>
+          <box size="${xdim} ${ydim} ${zdim}"/>
+        </geometry>
+      </collision>
+    </link>
+  </xacro:macro>
+
+
+  <!-- Joints and contact sensor plugins -->
+  <!-- Links with positions at contact sensors. These links are needed for
+    gazebo tags below to refer to.
+    -->
+  <!-- This mass and inertia are tested to be stable in Gazebo. If you
+    increase by 10, the finger will start jumping very bad when moved.
+    Sensor mass is very very small!-->
+  <xacro:macro name="robotiq_takktile_sensors" params="finger_prefix finger_idx">
+
+    <!-- This doesn't solve the collision name problem in converted SDF -->
+    <!--link name="${finger_prefix}sensor_${finger_idx * 6 + 0}_link">
+      <inertial>
+        <mass value="0.00001"/>
+        <inertia
+          ixx="0.00000000001" ixy="0.0" ixz="0.0"
+                         iyy="0.00000000001"  iyz="0.0"
+                                           izz="0.00000000001"/>
+      </inertial>
+
+      <visual>
+        <origin xyz="0 ${y_popup} 0" rpy="0 0 0" />
+        <geometry>
+          <box size="${xdim} ${ydim} ${zdim}"/>
+        </geometry>
+      </visual>
+
+      <collision>
+        <origin xyz="0 ${y_popup} 0" rpy="0 0 0" />
+        <geometry>
+          <box size="${xdim} ${ydim} ${zdim}"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <link name="${finger_prefix}sensor_${finger_idx * 6 + 1}_link">
+      <inertial>
+        <mass value="0.00001"/>
+        <inertia
+          ixx="0.00000000001" ixy="0.0" ixz="0.0"
+                         iyy="0.00000000001"  iyz="0.0"
+                                           izz="0.00000000001"/>
+      </inertial>
+
+      <visual>
+        <origin xyz="0 ${y_popup} 0" rpy="0 0 0" />
+        <geometry>
+          <box size="${xdim} ${ydim} ${zdim}"/>
+        </geometry>
+      </visual>
+
+      <collision>
+        <origin xyz="0 ${y_popup} 0" rpy="0 0 0" />
+        <geometry>
+          <box size="${xdim} ${ydim} ${zdim}"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <link name="${finger_prefix}sensor_${finger_idx * 6 + 2}_link">
+      <inertial>
+        <mass value="0.00001"/>
+        <inertia
+          ixx="0.00000000001" ixy="0.0" ixz="0.0"
+                         iyy="0.00000000001"  iyz="0.0"
+                                           izz="0.00000000001"/>
+      </inertial>
+
+      <visual>
+        <origin xyz="0 ${y_popup} 0" rpy="0 0 0" />
+        <geometry>
+          <box size="${xdim} ${ydim} ${zdim}"/>
+        </geometry>
+      </visual>
+
+      <collision>
+        <origin xyz="0 ${y_popup} 0" rpy="0 0 0" />
+        <geometry>
+          <box size="${xdim} ${ydim} ${zdim}"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <link name="${finger_prefix}sensor_${finger_idx * 6 + 3}_link">
+      <inertial>
+        <mass value="0.00001"/>
+        <inertia
+          ixx="0.00000000001" ixy="0.0" ixz="0.0"
+                         iyy="0.00000000001"  iyz="0.0"
+                                           izz="0.00000000001"/>
+      </inertial>
+
+      <visual>
+        <origin xyz="0 ${y_popup} 0" rpy="0 0 0" />
+        <geometry>
+          <box size="${xdim} ${ydim} ${zdim}"/>
+        </geometry>
+      </visual>
+
+      <collision>
+        <origin xyz="0 ${y_popup} 0" rpy="0 0 0" />
+        <geometry>
+          <box size="${xdim} ${ydim} ${zdim}"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <link name="${finger_prefix}sensor_${finger_idx * 6 + 4}_link">
+      <inertial>
+        <mass value="0.00001"/>
+        <inertia
+          ixx="0.00000000001" ixy="0.0" ixz="0.0"
+                         iyy="0.00000000001"  iyz="0.0"
+                                           izz="0.00000000001"/>
+      </inertial>
+
+      <visual>
+        <origin xyz="0 ${y_popup} 0" rpy="0 0 0" />
+        <geometry>
+          <box size="${xdim} ${ydim} ${zdim}"/>
+        </geometry>
+      </visual>
+
+      <collision>
+        <origin xyz="0 ${y_popup} 0" rpy="0 0 0" />
+        <geometry>
+          <box size="${xdim} ${ydim} ${zdim}"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <link name="${finger_prefix}sensor_${finger_idx * 6 + 5}_link">
+      <inertial>
+        <mass value="0.00001"/>
+        <inertia
+          ixx="0.00000000001" ixy="0.0" ixz="0.0"
+                         iyy="0.00000000001"  iyz="0.0"
+                                           izz="0.00000000001"/>
+      </inertial>
+
+      <visual>
+        <origin xyz="0 ${y_popup} 0" rpy="0 0 0" />
+        <geometry>
+          <box size="${xdim} ${ydim} ${zdim}"/>
+        </geometry>
+      </visual>
+
+      <collision>
+        <origin xyz="0 ${y_popup} 0" rpy="0 0 0" />
+        <geometry>
+          <box size="${xdim} ${ydim} ${zdim}"/>
+        </geometry>
+      </collision>
+    </link-->
+
+
+
+    <!-- Joints to connect links to Robotiq link finger_#_link_3 -->
+    <joint name="${finger_prefix}sensor_${finger_idx * 6 + 0}_joint" type="fixed">
+      <origin xyz="${x_link_3_to_bottom_row} ${y_thick} ${z_link_3_to_left_col}" />
+      <parent link="${finger_prefix}link_3" />
+      <child link="${finger_prefix}sensor_${finger_idx * 6 + 0}_link" />
+      <limit effort="0" velocity="0" lower="0" upper="0" />
+    </joint>
+
+    <joint name="${finger_prefix}sensor_${finger_idx * 6 + 1}_joint" type="fixed">
+      <origin xyz="${x_link_3_to_bottom_row} ${y_thick} ${z_link_3_to_mid_col}" />
+      <parent link="${finger_prefix}link_3" />
+      <child link="${finger_prefix}sensor_${finger_idx * 6 + 1}_link" />
+      <limit effort="0" velocity="0" lower="0" upper="0" />
+    </joint>
+
+    <joint name="${finger_prefix}sensor_${finger_idx * 6 + 2}_joint" type="fixed">
+      <origin xyz="${x_link_3_to_bottom_row} ${y_thick} ${z_link_3_to_right_col}" />
+      <parent link="${finger_prefix}link_3" />
+      <child link="${finger_prefix}sensor_${finger_idx * 6 + 2}_link" />
+      <limit effort="0" velocity="0" lower="0" upper="0" />
+    </joint>
+
+    <joint name="${finger_prefix}sensor_${finger_idx * 6 + 3}_joint" type="fixed">
+      <origin xyz="${x_link_3_to_top_row} ${y_thick} ${z_link_3_to_right_col}" />
+      <parent link="${finger_prefix}link_3" />
+      <child link="${finger_prefix}sensor_${finger_idx * 6 + 3}_link" />
+      <limit effort="0" velocity="0" lower="0" upper="0" />
+    </joint>
+
+    <joint name="${finger_prefix}sensor_${finger_idx * 6 + 4}_joint" type="fixed">
+      <origin xyz="${x_link_3_to_top_row} ${y_thick} ${z_link_3_to_mid_col}" />
+      <parent link="${finger_prefix}link_3" />
+      <child link="${finger_prefix}sensor_${finger_idx * 6 + 4}_link" />
+      <limit effort="0" velocity="0" lower="0" upper="0" />
+    </joint>
+
+    <joint name="${finger_prefix}sensor_${finger_idx * 6 + 5}_joint" type="fixed">
+      <origin xyz="${x_link_3_to_top_row} ${y_thick} ${z_link_3_to_left_col}" />
+      <parent link="${finger_prefix}link_3" />
+      <child link="${finger_prefix}sensor_${finger_idx * 6 + 5}_link" />
+      <limit effort="0" velocity="0" lower="0" upper="0" />
+    </joint>
+
+
+
+    <!-- Contact sensors
+      To simulate individual sensors on fingers
+      Refers to joint names in URDF.
+      Tutorial: http://gazebosim.org/tutorials?tut=contact_sensor
+        URDF syntax http://answers.gazebosim.org/question/8713/adding-contact-sensor-in-xacro-to-urdf/-->
+ 
+    <gazebo reference="${finger_prefix}sensor_${finger_idx * 6 + 0}_link">
+      <sensor name="${finger_prefix}sensor_${finger_idx * 6 + 0}" type="contact">
+        <!-- plugin name must use numbers for finger, `.` contact_sensor.cpp
+          needs to sscanf which finger and sensor it is for. Too much work to
+          use a string. -->
+        <plugin name="l_finger_${finger_idx}_sensor_${finger_idx * 6 + 0}_plugin" filename="libcontact_sensor_plugin.so" />
+        <contact>
+          <!-- NOTE: This name is not defined by you in URDF, it is defined
+            automatically by SDF, by appending _collision to whatever the parent
+            link's name is. You can use $ xacro file.xacro > file.urdf, and then
+            $ gz sdf - -print file.urdf to find out the name. -->
+          <collision>${finger_prefix}link_3_fixed_joint_lump__${finger_prefix}sensor_${finger_idx * 6 + 0}_link_collision_1</collision>
+        </contact>
+      </sensor>
+    </gazebo>
+ 
+    <gazebo reference="${finger_prefix}sensor_${finger_idx * 6 + 1}_link">
+      <sensor name="${finger_prefix}sensor_${finger_idx * 6 + 1}" type="contact">
+        <!-- plugin name must use numbers for finger -->
+        <plugin name="l_finger_${finger_idx}_sensor_${finger_idx * 6 + 1}_plugin" filename="libcontact_sensor_plugin.so" />
+        <contact>
+          <!-- NOTE: This name is not defined by you in URDF, it is defined
+            automatically by SDF, by appending _collision to whatever the parent
+            link's name is. You can use $ xacro file.xacro > file.urdf, and then
+            $ gz sdf - -print file.urdf to find out the name. -->
+          <collision>${finger_prefix}link_3_fixed_joint_lump__${finger_prefix}sensor_${finger_idx * 6 + 1}_link_collision_2</collision>
+        </contact>
+      </sensor>
+    </gazebo>
+ 
+    <gazebo reference="${finger_prefix}sensor_${finger_idx * 6 + 2}_link">
+      <sensor name="${finger_prefix}sensor_${finger_idx * 6 + 2}" type="contact">
+        <!-- plugin name must use numbers for finger -->
+        <plugin name="l_finger_${finger_idx}_sensor_${finger_idx * 6 + 2}_plugin" filename="libcontact_sensor_plugin.so" />
+        <contact>
+          <!-- NOTE: This name is not defined by you in URDF, it is defined
+            automatically by SDF, by appending _collision to whatever the parent
+            link's name is. You can use $ xacro file.xacro > file.urdf, and then
+            $ gz sdf - -print file.urdf to find out the name. -->
+          <collision>${finger_prefix}link_3_fixed_joint_lump__${finger_prefix}sensor_${finger_idx * 6 + 2}_link_collision_3</collision>
+        </contact>
+      </sensor>
+    </gazebo>
+ 
+    <gazebo reference="${finger_prefix}sensor_${finger_idx * 6 + 3}_link">
+      <sensor name="${finger_prefix}sensor_${finger_idx * 6 + 3}" type="contact">
+        <!-- plugin name must use numbers for finger -->
+        <plugin name="l_finger_${finger_idx}_sensor_${finger_idx * 6 + 3}_plugin" filename="libcontact_sensor_plugin.so" />
+        <contact>
+          <!-- NOTE: This name is not defined by you in URDF, it is defined
+            automatically by SDF, by appending _collision to whatever the parent
+            link's name is. You can use $ xacro file.xacro > file.urdf, and then
+            $ gz sdf - -print file.urdf to find out the name. -->
+          <collision>${finger_prefix}link_3_fixed_joint_lump__${finger_prefix}sensor_${finger_idx * 6 + 3}_link_collision_4</collision>
+        </contact>
+      </sensor>
+    </gazebo>
+ 
+    <gazebo reference="${finger_prefix}sensor_${finger_idx * 6 + 4}_link">
+      <sensor name="${finger_prefix}sensor_${finger_idx * 6 + 4}" type="contact">
+        <!-- plugin name must use numbers for finger -->
+        <plugin name="l_finger_${finger_idx}_sensor_${finger_idx * 6 + 4}_plugin" filename="libcontact_sensor_plugin.so" />
+        <contact>
+          <!-- NOTE: This name is not defined by you in URDF, it is defined
+            automatically by SDF, by appending _collision to whatever the parent
+            link's name is. You can use $ xacro file.xacro > file.urdf, and then
+            $ gz sdf - -print file.urdf to find out the name. -->
+          <collision>${finger_prefix}link_3_fixed_joint_lump__${finger_prefix}sensor_${finger_idx * 6 + 4}_link_collision_5</collision>
+        </contact>
+      </sensor>
+    </gazebo>
+ 
+    <gazebo reference="${finger_prefix}sensor_${finger_idx * 6 + 5}_link">
+      <sensor name="${finger_prefix}sensor_${finger_idx * 6 + 5}" type="contact">
+        <!-- plugin name must use numbers for finger -->
+        <plugin name="l_finger_${finger_idx}_sensor_${finger_idx * 6 + 5}_plugin" filename="libcontact_sensor_plugin.so" />
+        <contact>
+          <!-- NOTE: If you don't get any collisions, this name is probably wrong.
+            This name must match the link's <collision> name, which is not
+            defined by you (sdf will ignore your name). It is defined
+            automatically by SDF, by appending _collision to whatever the parent
+            link's name is. You can use $ xacro file.xacro > file.urdf, and then
+            $ gz sdf - -print file.urdf to find out the name. -->
+          <collision>${finger_prefix}link_3_fixed_joint_lump__${finger_prefix}sensor_${finger_idx * 6 + 5}_link_collision_6</collision>
+          <!-- C++ plugin prints GetCollisionName() is:
+                 robotiq::l_finger_1_link_3::l_finger_1_link_3_collision_l_finger_1_sensor_12_link
+                 This name is defined here. It doesn't tell you whether it's correct.
+               gz sdf print says the actual <link><collision> name, parent link above of this sensor, is:
+                 l_finger_1_link_3_fixed_joint_lump__l_finger_1_sensor_17_link_collision_6
+               gz sdf print translates this contact collision name to:
+                 l_finger_1_link_3_collision_l_finger_1_sensor_12_link
+               This does not match teh <link><collision> name in sdf. So it is wrong.
+            -->
+        </contact>
+      </sensor>
+    </gazebo>
+
+  </xacro:macro>
+
+</robot>

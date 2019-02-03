@@ -25,7 +25,7 @@ from depth_scene_rendering.config_consts import objects
 from util.matplotlib_util import mpl_color
 
 # Local
-from grasp_io import GraspIO
+from grasp_collection.grasp_io import GraspIO
 from grasp_collection.config_paths import world_subdir
 from grasp_collection.config_consts import ENERGY_ABBREV
 

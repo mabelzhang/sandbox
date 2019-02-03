@@ -50,6 +50,7 @@ class GraspIO:
       grasps_fname, ansi.ENDC))
 
 
+  # Returns graspit_interface/Grasp
   @staticmethod
   def read_grasps (world_name, suffix=''):
 

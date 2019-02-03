@@ -1,0 +1,79 @@
+Mabel Zhang
+19 Feb 2018
+
+If you ever need to change robotiq_hand_wtactile.gazebo and re-generate SDF
+  file manually (it must be regenerate manually, because <sensor><collision>
+  names do not match the dynamically generated <link><collision> names, so
+  contact sensor doesn't work. And you cannot define it in URDF, SDF ignores
+  it!), do these 2 things manually:
+
+Step 1 & 2 can be done by robots/gen_sdf.sh:
+$ robots/gen_sdf.sh robotiq_hand_description_wplugin_teleport
+
+1.
+Only edit the .urdf.xacro file. The .urdf and .sdf files are generated from it.
+$ xacro robotiq_hand_description_wplugin.urdf.xacro > robotiq_hand_description_wplugin.urdf
+$ gz sdf --print robotiq_hand_description_wplugin.urdf > robotiq_hand_description_wplugin.sdf
+
+Quickest way:
+Search for lump__l_finger_1_sensor_ in the
+  <sensor><collision> tags, and make sure that LAST NUMBER after _collision_#
+  is in order, 1 2 3 4 5 6, as you go down the page.
+
+If you forget what the above means, you can do the more careful way to refresh
+  your memory, before you use the quick way:
+Manually inspect the sdf file, search for lump__l_finger_1_sensor_,
+  and make sure the _collision_# number at the end in
+  <sensor><collision>
+  matches the actual names in
+  <link><collision>
+  Otherwise tactile sensors won't work!
+
+This makes sure tactile sensors work in Gazebo.
+
+
+2.
+In SDF file, manually replace the model://robotiq_hand_description path with
+  model://robotiq/robotiq_hand_description:
+:%s/model:\/\/robotiq_hand/model:\/\/robotiq\/robotiq_hand/g
+
+Otherwise the mesh files won't be found, either you get a bunch of big black
+  and red boxes in Gazebo, or Gazebo just freezes.
+
+I don't know why this is needed. This line in package.xml should have exported
+  the parent directory of this ROS package, which should have made
+  model://robotiq_hand_description detectable by Gazebo(!):
+    <gazebo_ros gazebo_plugin_path="${prefix}/lib" gazebo_model_path="${prefix}/.." />
+
+This makes sure hand CAD files are loaded, so the hand displays correctly!
+
+
+
+
+To test the tactile sensors
+
+  Launch Gazebo
+  roslaunch gym_gazebo camera_table.launch gui:=true
+
+  Set at_random=False, then run:
+  rosrun gym_gazebo spawn_objects.py
+
+  Close gripper
+  rosrun robotiq_takktile robotiq_control.py
+  robotiq_act
+  robotiq_close
+
+And see that Gazebo window prints out tactile contacts.
+If you commented out the printouts, you can see rostopics;
+  rostopic echo /left_hand/contact
+
+If you also run
+  rosrun robotiq_s_model_articulated_gazebo_plugins sim_takktile_node.py
+Then you can also check this rostopic:
+  rostopic echo /takktile/calibrated
+
+
+
+
+
+

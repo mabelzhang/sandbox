@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+
+<!--
+  Mabel Zhang
+  19 Jan 2019
+
+  Copied from robotiq_s_model_articulated_gazebo/launch/robotiq_gripper_empty_world.launch
+
+  Launched by ../src/spawn_hand.py
+
+  To load sdf with meshes correctly
+  export GAZEBO_MODEL_PATH=/media/master/Data_Ubuntu/courses/research/graspingRepo/visuotactile_grasping/catkin_ws/src/:$GAZEBO_MODEL_PATH
+ -->
+
+<launch>
+
+  <arg name="teleport" default="true" />
+
+  <group unless="$(arg teleport)">
+    <param name="robot_description" command="xacro --inorder '$(find robotiq_hand_description)/robots/robotiq_hand_description_wplugin.urdf.xacro'" />
+
+    <!-- Use SDF to make tactile sensors work.
+      Because the contact sensor names suffix _# don't stay in order, so can't
+      name them in the robotiq_hand_wtactile.gazebo file!!! Manually editing the
+      SDF instead. -->
+    <node name="spawn_model" pkg="gazebo_ros" type="spawn_model"
+      args="-sdf -file $(find robotiq_hand_description)/robots/robotiq_hand_description_wplugin.sdf -model robotiq -timeout 120 -z 1"
+      respawn="false" output="screen" />
+  </group>
+
+  <!-- Teleport hand, with z-prismatic joint attached to a floating link, NOT
+    world. -->
+  <group if="$(arg teleport)">
+    <param name="robot_description" command="xacro --inorder '$(find robotiq_hand_description)/robots/robotiq_hand_description_wplugin_teleport.urdf.xacro'" />
+
+    <node name="spawn_model" pkg="gazebo_ros" type="spawn_model"
+      args="-sdf -file $(find robotiq_hand_description)/robots/robotiq_hand_description_wplugin_teleport.sdf -model robotiq -timeout 120 -z 1"
+      respawn="false" output="screen" />
+  </group>
+
+
+  <!-- Publish tf.
+    This subscribes to joint_states, published by Gazebo plugin in
+      robotiq_s_model_articulated_gazebo_plugin RobotiqHandPlugin.cpp,
+      which is loaded by robotiq_hand_description_wplugin.urdf.xacro,
+      which is on robot_description, and its SDF version is spawned above. -->
+  <node pkg="robot_state_publisher" type="robot_state_publisher"
+    name="robot_state_publisher" respawn="false" output="screen">
+    <param name="publish_frequency" type="double" value="50.0" />
+    <remap from="joint_states" to="/robotiq_hands/left_hand/joint_states" />
+  </node>
+
+  <!-- Robotiq controller -->
+  <node pkg="robotiq_control" type="robotiq_control.py" name="robotiq_control"  
+    respawn="false" output="screen" args="--sim">
+  </node>
+
+
+</launch>

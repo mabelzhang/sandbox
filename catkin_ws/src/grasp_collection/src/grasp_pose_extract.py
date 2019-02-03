@@ -26,7 +26,7 @@ from depth_scene_rendering.config_read_yaml import ConfigReadYAML
 from util.ros_util import matrix_from_Pose, _7tuple_from_matrix
 
 # Local
-from grasp_io import GraspIO
+from grasp_collection.grasp_io import GraspIO
 from grasp_collection.config_paths import world_subdir
 from grasp_collection.config_consts import N_POSE_PARAMS, N_PARAMS_QUAT
 

@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+
+<!-- 19 Jan 2019
+
+  -->
+
+<launch>
+
+  <arg name="gui" default="true" />
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="gui" value="$(arg gui)"/>
+    <arg name="headless" value="false"/>
+    <arg name="debug" value="false"/>
+
+    <!-- Note that another place to specify physics engine is in your .world file.
+      e.g. gazebo_ros_camera specifies ode. If different from here, not sure
+      which takes priority. -->
+    <arg name="physics" value="ode"/>
+  </include>
+
+
+  <include file="$(find grasp_drop_test)/launch/spawn_robotiq.launch" />
+
+</launch>

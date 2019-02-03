@@ -41,7 +41,7 @@ from util.ansi_colors import ansi_colors as ansi
 # Local
 from grasp_collection.config_consts import worlds, SEARCH_ENERGY, ENERGY_ABBREV
 from grasp_collection.config_paths import world_subdir
-from grasp_io import GraspIO
+from grasp_collection.grasp_io import GraspIO
 from grasp_collect import find_contacts
 
 

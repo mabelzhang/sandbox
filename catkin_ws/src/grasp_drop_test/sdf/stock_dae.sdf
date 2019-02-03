@@ -1,0 +1,104 @@
+<?xml version="1.0"?>
+
+<!-- Mabel Zhang
+     8 Jan 2018
+
+     Used by ../src/spawn_objects.py to dynamically replace REPLACE_STOCK string and load the updated SDF into Gazebo sim!
+  -->
+
+<sdf version='1.6'>
+  <model name='model_dae'>
+    <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+    <link name='dae_link'>
+      <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+      <inertial>
+        <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+        <inertia>
+          <ixx>1.0</ixx>
+          <ixy>0.0</ixy>
+          <ixz>0.0</ixz>
+          <iyy>1.0</iyy>
+          <iyz>0.0</iyz>
+          <izz>1.0</izz>
+        </inertia>
+        <!-- kg. 0.25 is 0.5 lbs -->
+        <!--mass>0.5</mass-->
+        <mass>0.25</mass>
+      </inertial>
+      <velocity_decay>
+        <linear>0.0</linear>
+        <angular>0.0</angular>
+      </velocity_decay>
+      <visual name="visual_dae">
+          <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+          <geometry>
+              <mesh>
+                  <scale>1 1 1</scale>
+                  <!-- Best way. Use this with the trick in package.xml here http://answers.gazebosim.org/question/6568/uri-paths-to-packages-in-the-sdf-model-file -->
+                  <!--uri>model://gym_gazebo/worlds/00.dae</uri-->
+                  <uri>REPLACE_STOCK_URI</uri>
+                  <!-- This just freezes Gazebo... vertex colors baked to texture map using MeshLab, because Gazebo doesn't support Collada's color feature, but supports texture mapping. So only way to see black white labels in gazebo is through texture mapping. -->
+                  <!--uri>model://gym_gazebo/worlds/00_textured.dae</uri-->
+                  <!-- Second best way. Relative path. -->
+                  <!--uri>file://../../../../../train/task_grasping/CAD/jpl_iros2017_CAD/task-labels-v2/002_master_chef_can/preopen/00.dae</uri-->
+                  <!-- Worst way. Copy the file to ~/.gazebo/models/. Will need to do this on every computer -->
+                  <!--uri>model://002_master_chef_can/meshes/00.dae</uri-->
+                  <!-- Worst way. Absolute path - different on every machine! Will need to change this line on every machine -->
+                  <!--uri>file:///home/master/graspingRepo/train/task_grasping/CAD/jpl_iros2017_CAD/task-labels-v2/002_master_chef_can/preopen/00.dae</uri-->
+              </mesh>
+          </geometry>
+          <!-- Don't use any additional colors, need the black and white task labels!
+               > Found that Gazebo does not support vertex coloring yet! Only texture maps. I tried converting one model from vertex color to texture map in MeshLab, and Gazebo just freezes on loading now. If can't get Gazebo to display black/white meshes, might have to fall back to python-plyfile again... TODO
+            -->
+          <material>
+              <ambient>REPLACE_STOCK_RGB 1.0</ambient>
+          </material>
+          <cast_shadows>true</cast_shadows>
+          <laser_retro>100.0</laser_retro>
+      </visual>
+      <collision name="collision_dae">
+          <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+          <max_contacts>250</max_contacts>
+          <geometry>
+              <!-- Use an optimized mesh for collision, esp if original mesh has a lot of polygons! Meshlab can optimize polygons easily. -->
+              <mesh>
+                  <uri>REPLACE_STOCK_URI</uri>
+              </mesh>
+          </geometry>
+          <surface>
+              <friction>
+                  <ode>
+                      <mu>0.5</mu>
+                      <mu2>0.2</mu2>
+                      <fdir1>1.0 0 0</fdir1>
+                      <slip1>0</slip1>
+                      <slip2>0</slip2>
+                  </ode>
+              </friction>
+              <bounce>
+                  <restitution_coefficient>0</restitution_coefficient>
+                  <threshold>1000000.0</threshold>
+              </bounce>
+              <contact>
+                  <ode>
+                      <soft_cfm>0</soft_cfm>
+                      <soft_erp>0.2</soft_erp>
+                      <kp>1e15</kp>
+                      <kd>1e13</kd>
+                      <max_vel>100.0</max_vel>
+                      <min_depth>0.0001</min_depth>
+                  </ode>
+              </contact>
+          </surface>
+          <laser_retro>100.0</laser_retro>
+      </collision>
+      <gravity>true</gravity>
+      <self_collide>true</self_collide>
+      <kinematic>false</kinematic>
+    </link>
+    <static>false</static>
+    <!--static>true</static-->
+    <!--static>REPLACE_STOCK_STATIC</static-->
+  </model>
+</sdf>
+

@@ -1,0 +1,7 @@
+
+Run Robotiq controller
+$ rosrun robotiq_takktile robotiq_control.py
+
+Close gripper
+$ rosservice call robotiq_takktile/robotiq/close
+

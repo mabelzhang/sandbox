@@ -20,6 +20,9 @@ worlds = [
   'dexnet/turbine_housing',
   'dexnet/vase']
 
+def world_to_object_base (world):
+  return world.split ('/') [1]
+
 
 # Quality measure for GraspIt planning.
 # Default quality measure: search_energy="GUIDED_POTENTIAL_QUALITY_ENERGY"

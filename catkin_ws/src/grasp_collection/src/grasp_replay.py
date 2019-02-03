@@ -34,9 +34,9 @@ from tactile_occlusion_heatmaps.config_paths import get_vis_path
 
 # Local
 from grasp_collection.config_paths import world_subdir
-from grasp_collect import find_contacts
-from grasp_io import GraspIO
+from grasp_collection.grasp_io import GraspIO
 from grasp_collection.config_consts import ENERGY_ABBREV
+from grasp_collect import find_contacts
 
 
 def main ():

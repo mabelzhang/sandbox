@@ -44,7 +44,7 @@ from depth_scene_rendering.config_read_yaml import ConfigReadYAML
 from grasp_collection.config_consts import worlds, \
   SEARCH_ENERGY, ENERGY_ABBREV, N_POSE_PARAMS, N_PARAMS_QUAT
 from grasp_collection.config_paths import world_subdir
-from grasp_io import GraspIO
+from grasp_collection.grasp_io import GraspIO
 
 
 def find_contacts (T_W_O):
@@ -204,9 +204,9 @@ def main ():
 
   start_time = time.time ()
 
-  #objs_to_collect = range (len (worlds))
+  objs_to_collect = range (len (worlds))
   #objs_to_collect = range (3, len (worlds))
-  objs_to_collect = [4]
+  #objs_to_collect = [4]
 
   ns_contacts_ttl = [0] * len (objs_to_collect)
   ns_valid_grasps = [0] * len (objs_to_collect)

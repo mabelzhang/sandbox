@@ -1,0 +1,4271 @@
+<sdf version='1.6'>
+  <model name='robotiq_hand_description'>
+    <link name='l_palm'>
+      <pose frame=''>0 0 0 0 -0 0</pose>
+      <inertial>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <mass>1.3</mass>
+        <inertia>
+          <ixx>0.0035</ixx>
+          <ixy>0</ixy>
+          <ixz>-0</ixz>
+          <iyy>0.0035</iyy>
+          <iyz>0</iyz>
+          <izz>0.0035</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_palm_collision'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.1 0.1 0.1</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_palm_visual'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://robotiq/robotiq_hand_description/meshes/s-model_articulated/visual/palm.STL</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <velocity_decay/>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_robotiq_hand_joint' type='revolute'>
+      <child>l_palm</child>
+      <parent>world</parent>
+      <axis>
+        <limit>
+          <lower>0</lower>
+          <upper>0</upper>
+        </limit>
+        <dynamics>
+          <damping>0</damping>
+          <friction>0</friction>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+        <xyz>0 0 1</xyz>
+      </axis>
+    </joint>
+    <link name='l_finger_1_link_0'>
+      <pose frame=''>-0.0455 0.0214 0.036 3.14159 -7e-06 1.57159</pose>
+      <inertial>
+        <pose frame=''>-0.01 0 0 0 -0 0</pose>
+        <mass>0.1</mass>
+        <inertia>
+          <ixx>1.8e-05</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>2.5e-05</iyy>
+          <iyz>0</iyz>
+          <izz>2.5e-05</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_1_link_0_collision'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://robotiq/robotiq_hand_description/meshes/s-model_articulated/collision/link_0.STL</uri>
+          </mesh>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_1_link_0_visual'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://robotiq/robotiq_hand_description/meshes/s-model_articulated/visual/link_0.STL</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_palm_finger_1_joint' type='revolute'>
+      <child>l_finger_1_link_0</child>
+      <parent>l_palm</parent>
+      <axis>
+        <xyz>1 0.000796 0</xyz>
+        <limit>
+          <lower>-0.2967</lower>
+          <upper>0.2967</upper>
+          <effort>60</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <damping>1</damping>
+          <friction>0</friction>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_1_link_1'>
+      <pose frame=''>-0.0455 0.0214 0.036 3.14159 4e-06 -2.62099</pose>
+      <inertial>
+        <pose frame=''>0.00053 0.03218 0 0 -0 1.5708</pose>
+        <mass>0.047</mass>
+        <inertia>
+          <ixx>4.99332e-06</ixx>
+          <ixy>9.1312e-07</ixy>
+          <ixz>-1.2e-09</ixz>
+          <iyy>6.43453e-05</iyy>
+          <iyz>-7e-11</iyz>
+          <izz>6.06192e-05</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_1_link_1_collision'>
+        <pose frame=''>0 0.05717 0 0 -0 1.5708</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://robotiq/robotiq_hand_description/meshes/s-model_articulated/collision/link_1.STL</uri>
+          </mesh>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+              <min_depth>0.001</min_depth>
+            </ode>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_1_link_1_visual'>
+        <pose frame=''>0 0.05717 0 0 -0 1.5708</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://robotiq/robotiq_hand_description/meshes/s-model_articulated/visual/link_1.STL</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_1_joint_1' type='revolute'>
+      <child>l_finger_1_link_1</child>
+      <parent>l_finger_1_link_0</parent>
+      <axis>
+        <xyz>-0 7e-06 -1</xyz>
+        <limit>
+          <lower>0</lower>
+          <upper>1.2217</upper>
+          <effort>60</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <damping>1</damping>
+          <friction>0</friction>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_1_link_2'>
+      <pose frame=''>-0.073927 0.070979 0.036 3.14159 4e-06 -2.62099</pose>
+      <inertial>
+        <pose frame=''>0.00048 0.02167 0.00018 0 -0 1.5708</pose>
+        <mass>0.03284</mass>
+        <inertia>
+          <ixx>3.48008e-06</ixx>
+          <ixy>3.194e-07</ixy>
+          <ixz>1.3041e-07</ixz>
+          <iyy>2.24812e-05</iyy>
+          <iyz>2.91e-09</iyz>
+          <izz>1.98635e-05</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_1_link_2_collision'>
+        <pose frame=''>0 0.0381 0.0075 0 -0 1.5708</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://robotiq/robotiq_hand_description/meshes/s-model_articulated/collision/link_2.STL</uri>
+          </mesh>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+              <min_depth>0.001</min_depth>
+            </ode>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_1_link_2_visual'>
+        <pose frame=''>0 0.0381 0.0075 0 -0 1.5708</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://robotiq/robotiq_hand_description/meshes/s-model_articulated/visual/link_2.STL</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_1_joint_2' type='revolute'>
+      <child>l_finger_1_link_2</child>
+      <parent>l_finger_1_link_1</parent>
+      <axis>
+        <xyz>-0 7e-06 -1</xyz>
+        <limit>
+          <lower>0</lower>
+          <upper>1.5708</upper>
+          <effort>60</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <damping>1</damping>
+          <friction>0</friction>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_1_link_3'>
+      <pose frame=''>-0.093325 0.104812 0.036001 -3.14159 -7e-06 1.57159</pose>
+      <inertial>
+        <pose frame=''>0.016276 0.000502 0.0002 0 -0 0</pose>
+        <mass>0.0336</mass>
+        <inertia>
+          <ixx>3.05607e-06</ixx>
+          <ixy>8.94512e-07</ixy>
+          <ixz>2.59469e-09</ixz>
+          <iyy>1.42879e-05</iyy>
+          <iyz>-1.1832e-08</iyz>
+          <izz>1.26499e-05</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_1_link_3_collision'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://robotiq/robotiq_hand_description/meshes/s-model_articulated/collision/link_3.STL</uri>
+          </mesh>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+              <min_depth>0.001</min_depth>
+            </ode>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='l_finger_1_link_3_fixed_joint_lump__l_finger_1_sensor_12_link_collision_1'>
+        <pose frame=''>0.02 0.0115 -0.007 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='l_finger_1_link_3_fixed_joint_lump__l_finger_1_sensor_13_link_collision_2'>
+        <pose frame=''>0.02 0.0115 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='l_finger_1_link_3_fixed_joint_lump__l_finger_1_sensor_14_link_collision_3'>
+        <pose frame=''>0.02 0.0115 0.007 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='l_finger_1_link_3_fixed_joint_lump__l_finger_1_sensor_15_link_collision_4'>
+        <pose frame=''>0.03 0.0115 0.007 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='l_finger_1_link_3_fixed_joint_lump__l_finger_1_sensor_16_link_collision_5'>
+        <pose frame=''>0.03 0.0115 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='l_finger_1_link_3_fixed_joint_lump__l_finger_1_sensor_17_link_collision_6'>
+        <pose frame=''>0.03 0.0115 -0.007 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_1_link_3_visual'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://robotiq/robotiq_hand_description/meshes/s-model_articulated/visual/link_3.STL</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Red</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name='l_finger_1_link_3_fixed_joint_lump__l_finger_1_sensor_12_link_visual_1'>
+        <pose frame=''>0.02 0.0115 -0.007 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>__default__</uri>
+            <name>__default__</name>
+          </script>
+        </material>
+      </visual>
+      <visual name='l_finger_1_link_3_fixed_joint_lump__l_finger_1_sensor_13_link_visual_2'>
+        <pose frame=''>0.02 0.0115 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>__default__</uri>
+            <name>__default__</name>
+          </script>
+        </material>
+      </visual>
+      <visual name='l_finger_1_link_3_fixed_joint_lump__l_finger_1_sensor_14_link_visual_3'>
+        <pose frame=''>0.02 0.0115 0.007 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>__default__</uri>
+            <name>__default__</name>
+          </script>
+        </material>
+      </visual>
+      <visual name='l_finger_1_link_3_fixed_joint_lump__l_finger_1_sensor_15_link_visual_4'>
+        <pose frame=''>0.03 0.0115 0.007 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>__default__</uri>
+            <name>__default__</name>
+          </script>
+        </material>
+      </visual>
+      <visual name='l_finger_1_link_3_fixed_joint_lump__l_finger_1_sensor_16_link_visual_5'>
+        <pose frame=''>0.03 0.0115 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>__default__</uri>
+            <name>__default__</name>
+          </script>
+        </material>
+      </visual>
+      <visual name='l_finger_1_link_3_fixed_joint_lump__l_finger_1_sensor_17_link_visual_6'>
+        <pose frame=''>0.03 0.0115 -0.007 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>__default__</uri>
+            <name>__default__</name>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <velocity_decay/>
+      <velocity_decay/>
+      <sensor name='l_finger_1_sensor_12' type='contact'>
+        <plugin name='l_finger_2_sensor_12_plugin' filename='libcontact_sensor_plugin.so'/>
+        <contact>
+          <collision>l_finger_1_link_3_fixed_joint_lump__l_finger_1_sensor_12_link_collision_1</collision>
+          <topic>__default_topic__</topic>
+        </contact>
+        <pose frame=''>0.02 0.007 -0.007 0 -0 0</pose>
+      </sensor>
+      <velocity_decay/>
+      <sensor name='l_finger_1_sensor_13' type='contact'>
+        <plugin name='l_finger_2_sensor_13_plugin' filename='libcontact_sensor_plugin.so'/>
+        <contact>
+          <collision>l_finger_1_link_3_fixed_joint_lump__l_finger_1_sensor_13_link_collision_2</collision>
+          <topic>__default_topic__</topic>
+        </contact>
+        <pose frame=''>0.02 0.007 0 0 -0 0</pose>
+      </sensor>
+      <velocity_decay/>
+      <sensor name='l_finger_1_sensor_14' type='contact'>
+        <plugin name='l_finger_2_sensor_14_plugin' filename='libcontact_sensor_plugin.so'/>
+        <contact>
+          <collision>l_finger_1_link_3_fixed_joint_lump__l_finger_1_sensor_14_link_collision_3</collision>
+          <topic>__default_topic__</topic>
+        </contact>
+        <pose frame=''>0.02 0.007 0.007 0 -0 0</pose>
+      </sensor>
+      <velocity_decay/>
+      <sensor name='l_finger_1_sensor_15' type='contact'>
+        <plugin name='l_finger_2_sensor_15_plugin' filename='libcontact_sensor_plugin.so'/>
+        <contact>
+          <collision>l_finger_1_link_3_fixed_joint_lump__l_finger_1_sensor_15_link_collision_4</collision>
+          <topic>__default_topic__</topic>
+        </contact>
+        <pose frame=''>0.03 0.007 0.007 0 -0 0</pose>
+      </sensor>
+      <velocity_decay/>
+      <sensor name='l_finger_1_sensor_16' type='contact'>
+        <plugin name='l_finger_2_sensor_16_plugin' filename='libcontact_sensor_plugin.so'/>
+        <contact>
+          <collision>l_finger_1_link_3_fixed_joint_lump__l_finger_1_sensor_16_link_collision_5</collision>
+          <topic>__default_topic__</topic>
+        </contact>
+        <pose frame=''>0.03 0.007 0 0 -0 0</pose>
+      </sensor>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+      <sensor name='l_finger_1_sensor_17' type='contact'>
+        <plugin name='l_finger_2_sensor_17_plugin' filename='libcontact_sensor_plugin.so'/>
+        <contact>
+          <collision>l_finger_1_link_3_fixed_joint_lump__l_finger_1_sensor_17_link_collision_6</collision>
+          <topic>__default_topic__</topic>
+        </contact>
+        <pose frame=''>0.03 0.007 -0.007 0 -0 0</pose>
+      </sensor>
+    </link>
+    <joint name='l_finger_1_joint_3' type='revolute'>
+      <child>l_finger_1_link_3</child>
+      <parent>l_finger_1_link_2</parent>
+      <axis>
+        <xyz>-0 7e-06 -1</xyz>
+        <limit>
+          <lower>-0.6632</lower>
+          <upper>1.0471</upper>
+          <effort>60</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <damping>1</damping>
+          <friction>0</friction>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_1_link_paradistal_hinge'>
+      <pose frame=''>-0.093325 0.104812 0.046001 3.14159 4e-06 -2.62099</pose>
+      <inertial>
+        <pose frame=''>0.00548 0 0 0 -0 0</pose>
+        <mass>0.00158</mass>
+        <inertia>
+          <ixx>1.907e-08</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1.097e-07</iyy>
+          <iyz>0</iyz>
+          <izz>1.261e-07</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_1_link_paradistal_hinge_collision'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02 0.02 0.002</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_1_link_paradistal_hinge_visual'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02 0.02 0.002</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_1_joint_paradistal_hinge' type='revolute'>
+      <child>l_finger_1_link_paradistal_hinge</child>
+      <parent>l_finger_1_link_2</parent>
+      <axis>
+        <xyz>-0 7e-06 -1</xyz>
+        <limit>
+          <lower>-3.1416</lower>
+          <upper>3.1416</upper>
+          <effort>100</effort>
+          <velocity>100</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_1_link_median_actuating_hinge'>
+      <pose frame=''>-0.073927 0.070979 0.026 3.14159 6e-06 -2.25099</pose>
+      <inertial>
+        <pose frame=''>0.0092 0.00514 0 0 -0 0</pose>
+        <mass>0.00359</mass>
+        <inertia>
+          <ixx>2.4735e-07</ixx>
+          <ixy>2.3619e-07</ixy>
+          <ixz>0</ixz>
+          <iyy>4.7681e-07</iyy>
+          <iyz>0</iyz>
+          <izz>7.1813e-07</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_1_link_median_actuating_hinge_collision'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02 0.02 0.002</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_1_link_median_actuating_hinge_visual'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02 0.02 0.002</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_1_joint_median_actuating_hinge' type='revolute'>
+      <child>l_finger_1_link_median_actuating_hinge</child>
+      <parent>l_finger_1_link_1</parent>
+      <axis>
+        <xyz>-0 7e-06 -1</xyz>
+        <limit>
+          <lower>-3.1416</lower>
+          <upper>3.1416</upper>
+          <effort>100</effort>
+          <velocity>100</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_1_link_median_bar'>
+      <pose frame=''>-0.095933 0.06788 0.026 3.14159 -7e-06 1.71069</pose>
+      <inertial>
+        <pose frame=''>0.01905 -0.00107 0 0 -0 0</pose>
+        <mass>0.00538</mass>
+        <inertia>
+          <ixx>6.639e-08</ixx>
+          <ixy>-1.0996e-07</ixy>
+          <ixz>9.4e-10</ixz>
+          <iyy>3.05318e-06</iyy>
+          <iyz>0</iyz>
+          <izz>3.04657e-06</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_1_link_median_bar_collision'>
+        <pose frame=''>0.01905 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.0381 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_1_link_median_bar_visual'>
+        <pose frame=''>0.01905 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.0381 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_1_joint_median_actuating_hinge_median_bar' type='revolute'>
+      <child>l_finger_1_link_median_bar</child>
+      <parent>l_finger_1_link_median_actuating_hinge</parent>
+      <axis>
+        <xyz>-0 7e-06 -1</xyz>
+        <limit>
+          <lower>-3.1416</lower>
+          <upper>3.1416</upper>
+          <effort>100</effort>
+          <velocity>100</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_1_link_paramedian_hinge'>
+      <pose frame=''>-0.073927 0.070979 0.046 3.14159 4e-06 -2.62099</pose>
+      <inertial>
+        <pose frame=''>-0.01025 0.00046 0 0 -0 0</pose>
+        <mass>0.00276</mass>
+        <inertia>
+          <ixx>4.213e-08</ixx>
+          <ixy>-1.491e-08</ixy>
+          <ixz>0</ixz>
+          <iyy>5.0258e-07</iyy>
+          <iyz>0</iyz>
+          <izz>5.4007e-07</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_1_link_paramedian_hinge_collision'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02 0.02 0.002</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_1_link_paramedian_hinge_visual'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02 0.02 0.002</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_1_joint_paramedian_hinge' type='revolute'>
+      <child>l_finger_1_link_paramedian_hinge</child>
+      <parent>l_finger_1_link_1</parent>
+      <axis>
+        <xyz>-0 7e-06 -1</xyz>
+        <limit>
+          <lower>-3.1416</lower>
+          <upper>3.1416</upper>
+          <effort>100</effort>
+          <velocity>100</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_1_link_median_bar_underactuated'>
+      <pose frame=''>-0.086207 0.06773 0.046 3.14159 -6e-06 2.09139</pose>
+      <inertial>
+        <pose frame=''>0.01905 -0.00107 0 0 -0 0</pose>
+        <mass>0.00538</mass>
+        <inertia>
+          <ixx>6.639e-08</ixx>
+          <ixy>-1.0996e-07</ixy>
+          <ixz>-9.4e-10</ixz>
+          <iyy>3.05318e-06</iyy>
+          <iyz>0</iyz>
+          <izz>3.04657e-06</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_1_link_median_bar_underactuated_collision'>
+        <pose frame=''>0.01905 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.0381 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_1_link_median_bar_underactuated_visual'>
+        <pose frame=''>0.01905 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.0381 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_1_joint_paramedian_hinge_median_bar_underactuated' type='revolute'>
+      <child>l_finger_1_link_median_bar_underactuated</child>
+      <parent>l_finger_1_link_paramedian_hinge</parent>
+      <axis>
+        <xyz>-0 7e-06 -1</xyz>
+        <limit>
+          <lower>-3.1416</lower>
+          <upper>3.1416</upper>
+          <effort>100</effort>
+          <velocity>100</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_1_link_paraproximal_actuating_hinge'>
+      <pose frame=''>-0.0455 0.0214 0.046 3.14159 4e-06 -2.62099</pose>
+      <inertial>
+        <pose frame=''>0.0064 0 0 0 -0 0</pose>
+        <mass>0.00362</mass>
+        <inertia>
+          <ixx>1.2043e-07</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>5.3588e-07</iyy>
+          <iyz>0</iyz>
+          <izz>6.5322e-07</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_1_link_paraproximal_actuating_hinge_collision'>
+        <pose frame=''>0.01143 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02286 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_1_link_paraproximal_actuating_hinge_visual'>
+        <pose frame=''>0.01143 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02286 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_1_joint_paraproximal_actuating_hinge' type='revolute'>
+      <child>l_finger_1_link_paraproximal_actuating_hinge</child>
+      <parent>l_finger_1_link_0</parent>
+      <axis>
+        <xyz>-0 7e-06 -1</xyz>
+        <limit>
+          <lower>-3.1416</lower>
+          <upper>3.1416</upper>
+          <effort>100</effort>
+          <velocity>100</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_1_link_paraproximal_bar'>
+      <pose frame=''>-0.065332 0.010029 0.046 3.14159 -6e-06 2.09219</pose>
+      <inertial>
+        <pose frame=''>0.02858 -0.00129 0 0 -0 0</pose>
+        <mass>0.00732</mass>
+        <inertia>
+          <ixx>9.065e-08</ixx>
+          <ixy>-2.7047e-07</ixy>
+          <ixz>1.42e-09</ixz>
+          <iyy>8.78034e-06</iyy>
+          <iyz>0</iyz>
+          <izz>8.77558e-06</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_1_link_paraproximal_bar_collision'>
+        <pose frame=''>0.02885 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.0577 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_1_link_paraproximal_bar_visual'>
+        <pose frame=''>0.02885 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.0577 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_1_joint_paraproximal_bar' type='revolute'>
+      <child>l_finger_1_link_paraproximal_bar</child>
+      <parent>l_finger_1_link_paraproximal_actuating_hinge</parent>
+      <axis>
+        <xyz>-0 7e-06 -1</xyz>
+        <limit>
+          <lower>-3.1416</lower>
+          <upper>3.1416</upper>
+          <effort>100</effort>
+          <velocity>100</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_1_link_proximal_actuating_hinge'>
+      <pose frame=''>-0.0455 0.0214 0.026 3.14159 4e-06 -2.62099</pose>
+      <inertial>
+        <pose frame=''>0.0012 -0.00162 -0.00161 0 -0 0</pose>
+        <mass>0.02647</mass>
+        <inertia>
+          <ixx>1.56447e-06</ixx>
+          <ixy>2.36226e-07</ixy>
+          <ixz>-1.4862e-07</ixz>
+          <iyy>2.21068e-06</iyy>
+          <iyz>-1.4369e-07</iyz>
+          <izz>3.23175e-06</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_1_link_proximal_actuating_hinge_collision'>
+        <pose frame=''>0.01429 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02858 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_1_link_proximal_actuating_hinge_visual'>
+        <pose frame=''>0.01429 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02858 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_1_joint_proximal_actuating_hinge' type='revolute'>
+      <child>l_finger_1_link_proximal_actuating_hinge</child>
+      <parent>l_finger_1_link_0</parent>
+      <axis>
+        <xyz>-0 7e-06 -1</xyz>
+        <limit>
+          <lower>-3.1416</lower>
+          <upper>3.1416</upper>
+          <effort>100</effort>
+          <velocity>100</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_1_link_proximal_actuating_bar'>
+      <pose frame=''>-0.070294 0.007184 0.026 3.14159 -7e-06 1.80059</pose>
+      <inertial>
+        <pose frame=''>0.02699 -0.00122 0 0 -0 0</pose>
+        <mass>0.00659</mass>
+        <inertia>
+          <ixx>8.348e-08</ixx>
+          <ixy>-2.179e-07</ixy>
+          <ixz>1.34e-09</ixz>
+          <iyy>7.19076e-06</iyy>
+          <iyz>0</iyz>
+          <izz>7.18272e-06</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_1_link_proximal_actuating_bar_collision'>
+        <pose frame=''>0.026789 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.05398 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_1_link_proximal_actuating_bar_visual'>
+        <pose frame=''>0.026789 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.05398 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_1_joint_proximal_actuating_bar' type='revolute'>
+      <child>l_finger_1_link_proximal_actuating_bar</child>
+      <parent>l_finger_1_link_proximal_actuating_hinge</parent>
+      <axis>
+        <xyz>-0 7e-06 -1</xyz>
+        <limit>
+          <lower>-3.1416</lower>
+          <upper>3.1416</upper>
+          <effort>100</effort>
+          <velocity>100</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_2_link_0'>
+      <pose frame=''>-0.0455 0.0214 -0.036 3.14159 -7e-06 1.57159</pose>
+      <inertial>
+        <pose frame=''>-0.01 0 0 0 -0 0</pose>
+        <mass>0.1</mass>
+        <inertia>
+          <ixx>1.8e-05</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>2.5e-05</iyy>
+          <iyz>0</iyz>
+          <izz>2.5e-05</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_2_link_0_collision'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://robotiq/robotiq_hand_description/meshes/s-model_articulated/collision/link_0.STL</uri>
+          </mesh>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_2_link_0_visual'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://robotiq/robotiq_hand_description/meshes/s-model_articulated/visual/link_0.STL</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_palm_finger_2_joint' type='revolute'>
+      <child>l_finger_2_link_0</child>
+      <parent>l_palm</parent>
+      <axis>
+        <xyz>1 0.000796 0</xyz>
+        <limit>
+          <lower>-0.2967</lower>
+          <upper>0.2967</upper>
+          <effort>60</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <damping>1</damping>
+          <friction>0</friction>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_2_link_1'>
+      <pose frame=''>-0.0455 0.0214 -0.036 3.14159 4e-06 -2.62099</pose>
+      <inertial>
+        <pose frame=''>0.00053 0.03218 0 0 -0 1.5708</pose>
+        <mass>0.047</mass>
+        <inertia>
+          <ixx>4.99332e-06</ixx>
+          <ixy>9.1312e-07</ixy>
+          <ixz>-1.2e-09</ixz>
+          <iyy>6.43453e-05</iyy>
+          <iyz>-7e-11</iyz>
+          <izz>6.06192e-05</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_2_link_1_collision'>
+        <pose frame=''>0 0.05717 0 0 -0 1.5708</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://robotiq/robotiq_hand_description/meshes/s-model_articulated/collision/link_1.STL</uri>
+          </mesh>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+              <min_depth>0.001</min_depth>
+            </ode>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_2_link_1_visual'>
+        <pose frame=''>0 0.05717 0 0 -0 1.5708</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://robotiq/robotiq_hand_description/meshes/s-model_articulated/visual/link_1.STL</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_2_joint_1' type='revolute'>
+      <child>l_finger_2_link_1</child>
+      <parent>l_finger_2_link_0</parent>
+      <axis>
+        <xyz>-0 7e-06 -1</xyz>
+        <limit>
+          <lower>0</lower>
+          <upper>1.2217</upper>
+          <effort>60</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <damping>1</damping>
+          <friction>0</friction>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_2_link_2'>
+      <pose frame=''>-0.073927 0.070979 -0.036 3.14159 4e-06 -2.62099</pose>
+      <inertial>
+        <pose frame=''>0.00048 0.02167 0.00018 0 -0 1.5708</pose>
+        <mass>0.03284</mass>
+        <inertia>
+          <ixx>3.48008e-06</ixx>
+          <ixy>3.194e-07</ixy>
+          <ixz>1.3041e-07</ixz>
+          <iyy>2.24812e-05</iyy>
+          <iyz>2.91e-09</iyz>
+          <izz>1.98635e-05</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_2_link_2_collision'>
+        <pose frame=''>0 0.0381 0.0075 0 -0 1.5708</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://robotiq/robotiq_hand_description/meshes/s-model_articulated/collision/link_2.STL</uri>
+          </mesh>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+              <min_depth>0.001</min_depth>
+            </ode>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_2_link_2_visual'>
+        <pose frame=''>0 0.0381 0.0075 0 -0 1.5708</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://robotiq/robotiq_hand_description/meshes/s-model_articulated/visual/link_2.STL</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_2_joint_2' type='revolute'>
+      <child>l_finger_2_link_2</child>
+      <parent>l_finger_2_link_1</parent>
+      <axis>
+        <xyz>-0 7e-06 -1</xyz>
+        <limit>
+          <lower>0</lower>
+          <upper>1.5708</upper>
+          <effort>60</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <damping>1</damping>
+          <friction>0</friction>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_2_link_3'>
+      <pose frame=''>-0.093325 0.104812 -0.035999 -3.14159 -7e-06 1.57159</pose>
+      <inertial>
+        <pose frame=''>0.016276 0.000502 0.0002 0 -0 0</pose>
+        <mass>0.0336</mass>
+        <inertia>
+          <ixx>3.05607e-06</ixx>
+          <ixy>8.94512e-07</ixy>
+          <ixz>2.59469e-09</ixz>
+          <iyy>1.42879e-05</iyy>
+          <iyz>-1.1832e-08</iyz>
+          <izz>1.26499e-05</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_2_link_3_collision'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://robotiq/robotiq_hand_description/meshes/s-model_articulated/collision/link_3.STL</uri>
+          </mesh>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+              <min_depth>0.001</min_depth>
+            </ode>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='l_finger_2_link_3_fixed_joint_lump__l_finger_2_sensor_10_link_collision_1'>
+        <pose frame=''>0.03 0.0115 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='l_finger_2_link_3_fixed_joint_lump__l_finger_2_sensor_11_link_collision_2'>
+        <pose frame=''>0.03 0.0115 -0.007 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='l_finger_2_link_3_fixed_joint_lump__l_finger_2_sensor_6_link_collision_3'>
+        <pose frame=''>0.02 0.0115 -0.007 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='l_finger_2_link_3_fixed_joint_lump__l_finger_2_sensor_7_link_collision_4'>
+        <pose frame=''>0.02 0.0115 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='l_finger_2_link_3_fixed_joint_lump__l_finger_2_sensor_8_link_collision_5'>
+        <pose frame=''>0.02 0.0115 0.007 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='l_finger_2_link_3_fixed_joint_lump__l_finger_2_sensor_9_link_collision_6'>
+        <pose frame=''>0.03 0.0115 0.007 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_2_link_3_visual'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://robotiq/robotiq_hand_description/meshes/s-model_articulated/visual/link_3.STL</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Red</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name='l_finger_2_link_3_fixed_joint_lump__l_finger_2_sensor_10_link_visual_1'>
+        <pose frame=''>0.03 0.0115 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>__default__</uri>
+            <name>__default__</name>
+          </script>
+        </material>
+      </visual>
+      <visual name='l_finger_2_link_3_fixed_joint_lump__l_finger_2_sensor_11_link_visual_2'>
+        <pose frame=''>0.03 0.0115 -0.007 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>__default__</uri>
+            <name>__default__</name>
+          </script>
+        </material>
+      </visual>
+      <visual name='l_finger_2_link_3_fixed_joint_lump__l_finger_2_sensor_6_link_visual_3'>
+        <pose frame=''>0.02 0.0115 -0.007 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>__default__</uri>
+            <name>__default__</name>
+          </script>
+        </material>
+      </visual>
+      <visual name='l_finger_2_link_3_fixed_joint_lump__l_finger_2_sensor_7_link_visual_4'>
+        <pose frame=''>0.02 0.0115 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>__default__</uri>
+            <name>__default__</name>
+          </script>
+        </material>
+      </visual>
+      <visual name='l_finger_2_link_3_fixed_joint_lump__l_finger_2_sensor_8_link_visual_5'>
+        <pose frame=''>0.02 0.0115 0.007 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>__default__</uri>
+            <name>__default__</name>
+          </script>
+        </material>
+      </visual>
+      <visual name='l_finger_2_link_3_fixed_joint_lump__l_finger_2_sensor_9_link_visual_6'>
+        <pose frame=''>0.03 0.0115 0.007 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>__default__</uri>
+            <name>__default__</name>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <velocity_decay/>
+      <velocity_decay/>
+      <sensor name='l_finger_2_sensor_10' type='contact'>
+        <plugin name='l_finger_1_sensor_10_plugin' filename='libcontact_sensor_plugin.so'/>
+        <contact>
+          <collision>l_finger_2_link_3_fixed_joint_lump__l_finger_2_sensor_10_link_collision_5</collision>
+          <topic>__default_topic__</topic>
+        </contact>
+        <pose frame=''>0.03 0.007 0 0 -0 0</pose>
+      </sensor>
+      <velocity_decay/>
+      <sensor name='l_finger_2_sensor_11' type='contact'>
+        <plugin name='l_finger_1_sensor_11_plugin' filename='libcontact_sensor_plugin.so'/>
+        <contact>
+          <collision>l_finger_2_link_3_fixed_joint_lump__l_finger_2_sensor_11_link_collision_6</collision>
+          <topic>__default_topic__</topic>
+        </contact>
+        <pose frame=''>0.03 0.007 -0.007 0 -0 0</pose>
+      </sensor>
+      <velocity_decay/>
+      <sensor name='l_finger_2_sensor_6' type='contact'>
+        <plugin name='l_finger_1_sensor_6_plugin' filename='libcontact_sensor_plugin.so'/>
+        <contact>
+          <collision>l_finger_2_link_3_fixed_joint_lump__l_finger_2_sensor_6_link_collision_1</collision>
+          <topic>__default_topic__</topic>
+        </contact>
+        <pose frame=''>0.02 0.007 -0.007 0 -0 0</pose>
+      </sensor>
+      <velocity_decay/>
+      <sensor name='l_finger_2_sensor_7' type='contact'>
+        <plugin name='l_finger_1_sensor_7_plugin' filename='libcontact_sensor_plugin.so'/>
+        <contact>
+          <collision>l_finger_2_link_3_fixed_joint_lump__l_finger_2_sensor_7_link_collision_2</collision>
+          <topic>__default_topic__</topic>
+        </contact>
+        <pose frame=''>0.02 0.007 0 0 -0 0</pose>
+      </sensor>
+      <velocity_decay/>
+      <sensor name='l_finger_2_sensor_8' type='contact'>
+        <plugin name='l_finger_1_sensor_8_plugin' filename='libcontact_sensor_plugin.so'/>
+        <contact>
+          <collision>l_finger_2_link_3_fixed_joint_lump__l_finger_2_sensor_8_link_collision_3</collision>
+          <topic>__default_topic__</topic>
+        </contact>
+        <pose frame=''>0.02 0.007 0.007 0 -0 0</pose>
+      </sensor>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+      <sensor name='l_finger_2_sensor_9' type='contact'>
+        <plugin name='l_finger_1_sensor_9_plugin' filename='libcontact_sensor_plugin.so'/>
+        <contact>
+          <collision>l_finger_2_link_3_fixed_joint_lump__l_finger_2_sensor_9_link_collision_4</collision>
+          <topic>__default_topic__</topic>
+        </contact>
+        <pose frame=''>0.03 0.007 0.007 0 -0 0</pose>
+      </sensor>
+    </link>
+    <joint name='l_finger_2_joint_3' type='revolute'>
+      <child>l_finger_2_link_3</child>
+      <parent>l_finger_2_link_2</parent>
+      <axis>
+        <xyz>-0 7e-06 -1</xyz>
+        <limit>
+          <lower>-0.6632</lower>
+          <upper>1.0471</upper>
+          <effort>60</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <damping>1</damping>
+          <friction>0</friction>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_2_link_paradistal_hinge'>
+      <pose frame=''>-0.093325 0.104812 -0.025999 3.14159 4e-06 -2.62099</pose>
+      <inertial>
+        <pose frame=''>0.00548 0 0 0 -0 0</pose>
+        <mass>0.00158</mass>
+        <inertia>
+          <ixx>1.907e-08</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1.097e-07</iyy>
+          <iyz>0</iyz>
+          <izz>1.261e-07</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_2_link_paradistal_hinge_collision'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02 0.02 0.002</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_2_link_paradistal_hinge_visual'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02 0.02 0.002</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_2_joint_paradistal_hinge' type='revolute'>
+      <child>l_finger_2_link_paradistal_hinge</child>
+      <parent>l_finger_2_link_2</parent>
+      <axis>
+        <xyz>-0 7e-06 -1</xyz>
+        <limit>
+          <lower>-3.1416</lower>
+          <upper>3.1416</upper>
+          <effort>100</effort>
+          <velocity>100</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_2_link_median_actuating_hinge'>
+      <pose frame=''>-0.073927 0.070979 -0.046 3.14159 6e-06 -2.25099</pose>
+      <inertial>
+        <pose frame=''>0.0092 0.00514 0 0 -0 0</pose>
+        <mass>0.00359</mass>
+        <inertia>
+          <ixx>2.4735e-07</ixx>
+          <ixy>2.3619e-07</ixy>
+          <ixz>0</ixz>
+          <iyy>4.7681e-07</iyy>
+          <iyz>0</iyz>
+          <izz>7.1813e-07</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_2_link_median_actuating_hinge_collision'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02 0.02 0.002</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_2_link_median_actuating_hinge_visual'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02 0.02 0.002</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_2_joint_median_actuating_hinge' type='revolute'>
+      <child>l_finger_2_link_median_actuating_hinge</child>
+      <parent>l_finger_2_link_1</parent>
+      <axis>
+        <xyz>-0 7e-06 -1</xyz>
+        <limit>
+          <lower>-3.1416</lower>
+          <upper>3.1416</upper>
+          <effort>100</effort>
+          <velocity>100</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_2_link_median_bar'>
+      <pose frame=''>-0.095933 0.06788 -0.046 3.14159 -7e-06 1.71069</pose>
+      <inertial>
+        <pose frame=''>0.01905 -0.00107 0 0 -0 0</pose>
+        <mass>0.00538</mass>
+        <inertia>
+          <ixx>6.639e-08</ixx>
+          <ixy>-1.0996e-07</ixy>
+          <ixz>9.4e-10</ixz>
+          <iyy>3.05318e-06</iyy>
+          <iyz>0</iyz>
+          <izz>3.04657e-06</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_2_link_median_bar_collision'>
+        <pose frame=''>0.01905 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.0381 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_2_link_median_bar_visual'>
+        <pose frame=''>0.01905 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.0381 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_2_joint_median_actuating_hinge_median_bar' type='revolute'>
+      <child>l_finger_2_link_median_bar</child>
+      <parent>l_finger_2_link_median_actuating_hinge</parent>
+      <axis>
+        <xyz>-0 7e-06 -1</xyz>
+        <limit>
+          <lower>-3.1416</lower>
+          <upper>3.1416</upper>
+          <effort>100</effort>
+          <velocity>100</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_2_link_paramedian_hinge'>
+      <pose frame=''>-0.073927 0.070979 -0.026 3.14159 4e-06 -2.62099</pose>
+      <inertial>
+        <pose frame=''>-0.01025 0.00046 0 0 -0 0</pose>
+        <mass>0.00276</mass>
+        <inertia>
+          <ixx>4.213e-08</ixx>
+          <ixy>-1.491e-08</ixy>
+          <ixz>0</ixz>
+          <iyy>5.0258e-07</iyy>
+          <iyz>0</iyz>
+          <izz>5.4007e-07</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_2_link_paramedian_hinge_collision'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02 0.02 0.002</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_2_link_paramedian_hinge_visual'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02 0.02 0.002</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_2_joint_paramedian_hinge' type='revolute'>
+      <child>l_finger_2_link_paramedian_hinge</child>
+      <parent>l_finger_2_link_1</parent>
+      <axis>
+        <xyz>-0 7e-06 -1</xyz>
+        <limit>
+          <lower>-3.1416</lower>
+          <upper>3.1416</upper>
+          <effort>100</effort>
+          <velocity>100</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_2_link_median_bar_underactuated'>
+      <pose frame=''>-0.086207 0.06773 -0.026 3.14159 -6e-06 2.09139</pose>
+      <inertial>
+        <pose frame=''>0.01905 -0.00107 0 0 -0 0</pose>
+        <mass>0.00538</mass>
+        <inertia>
+          <ixx>6.639e-08</ixx>
+          <ixy>-1.0996e-07</ixy>
+          <ixz>-9.4e-10</ixz>
+          <iyy>3.05318e-06</iyy>
+          <iyz>0</iyz>
+          <izz>3.04657e-06</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_2_link_median_bar_underactuated_collision'>
+        <pose frame=''>0.01905 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.0381 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_2_link_median_bar_underactuated_visual'>
+        <pose frame=''>0.01905 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.0381 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_2_joint_paramedian_hinge_median_bar_underactuated' type='revolute'>
+      <child>l_finger_2_link_median_bar_underactuated</child>
+      <parent>l_finger_2_link_paramedian_hinge</parent>
+      <axis>
+        <xyz>-0 7e-06 -1</xyz>
+        <limit>
+          <lower>-3.1416</lower>
+          <upper>3.1416</upper>
+          <effort>100</effort>
+          <velocity>100</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_2_link_paraproximal_actuating_hinge'>
+      <pose frame=''>-0.0455 0.0214 -0.026 3.14159 4e-06 -2.62099</pose>
+      <inertial>
+        <pose frame=''>0.0064 0 0 0 -0 0</pose>
+        <mass>0.00362</mass>
+        <inertia>
+          <ixx>1.2043e-07</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>5.3588e-07</iyy>
+          <iyz>0</iyz>
+          <izz>6.5322e-07</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_2_link_paraproximal_actuating_hinge_collision'>
+        <pose frame=''>0.01143 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02286 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_2_link_paraproximal_actuating_hinge_visual'>
+        <pose frame=''>0.01143 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02286 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_2_joint_paraproximal_actuating_hinge' type='revolute'>
+      <child>l_finger_2_link_paraproximal_actuating_hinge</child>
+      <parent>l_finger_2_link_0</parent>
+      <axis>
+        <xyz>-0 7e-06 -1</xyz>
+        <limit>
+          <lower>-3.1416</lower>
+          <upper>3.1416</upper>
+          <effort>100</effort>
+          <velocity>100</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_2_link_paraproximal_bar'>
+      <pose frame=''>-0.065332 0.010029 -0.026 3.14159 -6e-06 2.09219</pose>
+      <inertial>
+        <pose frame=''>0.02858 -0.00129 0 0 -0 0</pose>
+        <mass>0.00732</mass>
+        <inertia>
+          <ixx>9.065e-08</ixx>
+          <ixy>-2.7047e-07</ixy>
+          <ixz>1.42e-09</ixz>
+          <iyy>8.78034e-06</iyy>
+          <iyz>0</iyz>
+          <izz>8.77558e-06</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_2_link_paraproximal_bar_collision'>
+        <pose frame=''>0.02885 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.0577 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_2_link_paraproximal_bar_visual'>
+        <pose frame=''>0.02885 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.0577 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_2_joint_paraproximal_bar' type='revolute'>
+      <child>l_finger_2_link_paraproximal_bar</child>
+      <parent>l_finger_2_link_paraproximal_actuating_hinge</parent>
+      <axis>
+        <xyz>-0 7e-06 -1</xyz>
+        <limit>
+          <lower>-3.1416</lower>
+          <upper>3.1416</upper>
+          <effort>100</effort>
+          <velocity>100</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_2_link_proximal_actuating_hinge'>
+      <pose frame=''>-0.0455 0.0214 -0.046 3.14159 4e-06 -2.62099</pose>
+      <inertial>
+        <pose frame=''>0.0012 -0.00162 -0.00161 0 -0 0</pose>
+        <mass>0.02647</mass>
+        <inertia>
+          <ixx>1.56447e-06</ixx>
+          <ixy>2.36226e-07</ixy>
+          <ixz>-1.4862e-07</ixz>
+          <iyy>2.21068e-06</iyy>
+          <iyz>-1.4369e-07</iyz>
+          <izz>3.23175e-06</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_2_link_proximal_actuating_hinge_collision'>
+        <pose frame=''>0.01429 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02858 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_2_link_proximal_actuating_hinge_visual'>
+        <pose frame=''>0.01429 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02858 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_2_joint_proximal_actuating_hinge' type='revolute'>
+      <child>l_finger_2_link_proximal_actuating_hinge</child>
+      <parent>l_finger_2_link_0</parent>
+      <axis>
+        <xyz>-0 7e-06 -1</xyz>
+        <limit>
+          <lower>-3.1416</lower>
+          <upper>3.1416</upper>
+          <effort>100</effort>
+          <velocity>100</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_2_link_proximal_actuating_bar'>
+      <pose frame=''>-0.070294 0.007184 -0.046 3.14159 -7e-06 1.80059</pose>
+      <inertial>
+        <pose frame=''>0.02699 -0.00122 0 0 -0 0</pose>
+        <mass>0.00659</mass>
+        <inertia>
+          <ixx>8.348e-08</ixx>
+          <ixy>-2.179e-07</ixy>
+          <ixz>1.34e-09</ixz>
+          <iyy>7.19076e-06</iyy>
+          <iyz>0</iyz>
+          <izz>7.18272e-06</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_2_link_proximal_actuating_bar_collision'>
+        <pose frame=''>0.026789 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.05398 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_2_link_proximal_actuating_bar_visual'>
+        <pose frame=''>0.026789 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.05398 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_2_joint_proximal_actuating_bar' type='revolute'>
+      <child>l_finger_2_link_proximal_actuating_bar</child>
+      <parent>l_finger_2_link_proximal_actuating_hinge</parent>
+      <axis>
+        <xyz>-0 7e-06 -1</xyz>
+        <limit>
+          <lower>-3.1416</lower>
+          <upper>3.1416</upper>
+          <effort>100</effort>
+          <velocity>100</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_middle_link_0'>
+      <pose frame=''>0.0455 0.0214 0 0 -0 1.57</pose>
+      <inertial>
+        <pose frame=''>-0.01 0 0 0 -0 0</pose>
+        <mass>0.1</mass>
+        <inertia>
+          <ixx>1.8e-05</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>2.5e-05</iyy>
+          <iyz>0</iyz>
+          <izz>2.5e-05</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_middle_link_0_collision'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://robotiq/robotiq_hand_description/meshes/s-model_articulated/collision/link_0.STL</uri>
+          </mesh>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_middle_link_0_visual'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://robotiq/robotiq_hand_description/meshes/s-model_articulated/visual/link_0.STL</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_palm_finger_middle_joint' type='revolute'>
+      <child>l_finger_middle_link_0</child>
+      <parent>l_palm</parent>
+      <axis>
+        <xyz>-1 0.000796 0</xyz>
+        <limit>
+          <lower>0</lower>
+          <upper>0</upper>
+          <effort>60</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <damping>1</damping>
+          <friction>0</friction>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_middle_link_1'>
+      <pose frame=''>0.0455 0.0214 0 0 0 -0.5206</pose>
+      <inertial>
+        <pose frame=''>0.00053 0.03218 0 0 -0 1.5708</pose>
+        <mass>0.047</mass>
+        <inertia>
+          <ixx>4.99332e-06</ixx>
+          <ixy>9.1312e-07</ixy>
+          <ixz>-1.2e-09</ixz>
+          <iyy>6.43453e-05</iyy>
+          <iyz>-7e-11</iyz>
+          <izz>6.06192e-05</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_middle_link_1_collision'>
+        <pose frame=''>0 0.05717 0 0 -0 1.5708</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://robotiq/robotiq_hand_description/meshes/s-model_articulated/collision/link_1.STL</uri>
+          </mesh>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+              <min_depth>0.001</min_depth>
+            </ode>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_middle_link_1_visual'>
+        <pose frame=''>0 0.05717 0 0 -0 1.5708</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://robotiq/robotiq_hand_description/meshes/s-model_articulated/visual/link_1.STL</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_middle_joint_1' type='revolute'>
+      <child>l_finger_middle_link_1</child>
+      <parent>l_finger_middle_link_0</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>0</lower>
+          <upper>1.2217</upper>
+          <effort>60</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <damping>1</damping>
+          <friction>0</friction>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_middle_link_2'>
+      <pose frame=''>0.073927 0.070979 0 0 0 -0.5206</pose>
+      <inertial>
+        <pose frame=''>0.00048 0.02167 0.00018 0 -0 1.5708</pose>
+        <mass>0.03284</mass>
+        <inertia>
+          <ixx>3.48008e-06</ixx>
+          <ixy>3.194e-07</ixy>
+          <ixz>1.3041e-07</ixz>
+          <iyy>2.24812e-05</iyy>
+          <iyz>2.91e-09</iyz>
+          <izz>1.98635e-05</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_middle_link_2_collision'>
+        <pose frame=''>0 0.0381 0.0075 0 -0 1.5708</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://robotiq/robotiq_hand_description/meshes/s-model_articulated/collision/link_2.STL</uri>
+          </mesh>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+              <min_depth>0.001</min_depth>
+            </ode>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_middle_link_2_visual'>
+        <pose frame=''>0 0.0381 0.0075 0 -0 1.5708</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://robotiq/robotiq_hand_description/meshes/s-model_articulated/visual/link_2.STL</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_middle_joint_2' type='revolute'>
+      <child>l_finger_middle_link_2</child>
+      <parent>l_finger_middle_link_1</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>0</lower>
+          <upper>1.5708</upper>
+          <effort>60</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <damping>1</damping>
+          <friction>0</friction>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_middle_link_3'>
+      <pose frame=''>0.093325 0.104812 0 0 -0 1.57</pose>
+      <inertial>
+        <pose frame=''>0.016276 0.000502 0.0002 0 -0 0</pose>
+        <mass>0.0336</mass>
+        <inertia>
+          <ixx>3.05607e-06</ixx>
+          <ixy>8.94512e-07</ixy>
+          <ixz>2.59469e-09</ixz>
+          <iyy>1.42879e-05</iyy>
+          <iyz>-1.1832e-08</iyz>
+          <izz>1.26499e-05</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_middle_link_3_collision'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://robotiq/robotiq_hand_description/meshes/s-model_articulated/collision/link_3.STL</uri>
+          </mesh>
+        </geometry>
+        <surface>
+          <contact>
+            <ode>
+              <min_depth>0.001</min_depth>
+            </ode>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='l_finger_middle_link_3_fixed_joint_lump__l_finger_middle_sensor_0_link_collision_1'>
+        <pose frame=''>0.02 0.0115 -0.007 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='l_finger_middle_link_3_fixed_joint_lump__l_finger_middle_sensor_1_link_collision_2'>
+        <pose frame=''>0.02 0.0115 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='l_finger_middle_link_3_fixed_joint_lump__l_finger_middle_sensor_2_link_collision_3'>
+        <pose frame=''>0.02 0.0115 0.007 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='l_finger_middle_link_3_fixed_joint_lump__l_finger_middle_sensor_3_link_collision_4'>
+        <pose frame=''>0.03 0.0115 0.007 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='l_finger_middle_link_3_fixed_joint_lump__l_finger_middle_sensor_4_link_collision_5'>
+        <pose frame=''>0.03 0.0115 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='l_finger_middle_link_3_fixed_joint_lump__l_finger_middle_sensor_5_link_collision_6'>
+        <pose frame=''>0.03 0.0115 -0.007 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_middle_link_3_visual'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://robotiq/robotiq_hand_description/meshes/s-model_articulated/visual/link_3.STL</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Red</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <visual name='l_finger_middle_link_3_fixed_joint_lump__l_finger_middle_sensor_0_link_visual_1'>
+        <pose frame=''>0.02 0.0115 -0.007 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>__default__</uri>
+            <name>__default__</name>
+          </script>
+        </material>
+      </visual>
+      <visual name='l_finger_middle_link_3_fixed_joint_lump__l_finger_middle_sensor_1_link_visual_2'>
+        <pose frame=''>0.02 0.0115 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>__default__</uri>
+            <name>__default__</name>
+          </script>
+        </material>
+      </visual>
+      <visual name='l_finger_middle_link_3_fixed_joint_lump__l_finger_middle_sensor_2_link_visual_3'>
+        <pose frame=''>0.02 0.0115 0.007 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>__default__</uri>
+            <name>__default__</name>
+          </script>
+        </material>
+      </visual>
+      <visual name='l_finger_middle_link_3_fixed_joint_lump__l_finger_middle_sensor_3_link_visual_4'>
+        <pose frame=''>0.03 0.0115 0.007 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>__default__</uri>
+            <name>__default__</name>
+          </script>
+        </material>
+      </visual>
+      <visual name='l_finger_middle_link_3_fixed_joint_lump__l_finger_middle_sensor_4_link_visual_5'>
+        <pose frame=''>0.03 0.0115 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>__default__</uri>
+            <name>__default__</name>
+          </script>
+        </material>
+      </visual>
+      <visual name='l_finger_middle_link_3_fixed_joint_lump__l_finger_middle_sensor_5_link_visual_6'>
+        <pose frame=''>0.03 0.0115 -0.007 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.009 0.0012 0.006</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>__default__</uri>
+            <name>__default__</name>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <velocity_decay/>
+      <velocity_decay/>
+      <sensor name='l_finger_middle_sensor_0' type='contact'>
+        <plugin name='l_finger_0_sensor_0_plugin' filename='libcontact_sensor_plugin.so'/>
+        <contact>
+          <collision>l_finger_middle_link_3_fixed_joint_lump__l_finger_middle_sensor_0_link_collision_1</collision>
+          <topic>__default_topic__</topic>
+        </contact>
+        <pose frame=''>0.02 0.007 -0.007 0 -0 0</pose>
+      </sensor>
+      <velocity_decay/>
+      <sensor name='l_finger_middle_sensor_1' type='contact'>
+        <plugin name='l_finger_0_sensor_1_plugin' filename='libcontact_sensor_plugin.so'/>
+        <contact>
+          <collision>l_finger_middle_link_3_fixed_joint_lump__l_finger_middle_sensor_1_link_collision_2</collision>
+          <topic>__default_topic__</topic>
+        </contact>
+        <pose frame=''>0.02 0.007 0 0 -0 0</pose>
+      </sensor>
+      <velocity_decay/>
+      <sensor name='l_finger_middle_sensor_2' type='contact'>
+        <plugin name='l_finger_0_sensor_2_plugin' filename='libcontact_sensor_plugin.so'/>
+        <contact>
+          <collision>l_finger_middle_link_3_fixed_joint_lump__l_finger_middle_sensor_2_link_collision_3</collision>
+          <topic>__default_topic__</topic>
+        </contact>
+        <pose frame=''>0.02 0.007 0.007 0 -0 0</pose>
+      </sensor>
+      <velocity_decay/>
+      <sensor name='l_finger_middle_sensor_3' type='contact'>
+        <plugin name='l_finger_0_sensor_3_plugin' filename='libcontact_sensor_plugin.so'/>
+        <contact>
+          <collision>l_finger_middle_link_3_fixed_joint_lump__l_finger_middle_sensor_3_link_collision_4</collision>
+          <topic>__default_topic__</topic>
+        </contact>
+        <pose frame=''>0.03 0.007 0.007 0 -0 0</pose>
+      </sensor>
+      <velocity_decay/>
+      <sensor name='l_finger_middle_sensor_4' type='contact'>
+        <plugin name='l_finger_0_sensor_4_plugin' filename='libcontact_sensor_plugin.so'/>
+        <contact>
+          <collision>l_finger_middle_link_3_fixed_joint_lump__l_finger_middle_sensor_4_link_collision_5</collision>
+          <topic>__default_topic__</topic>
+        </contact>
+        <pose frame=''>0.03 0.007 0 0 -0 0</pose>
+      </sensor>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+      <sensor name='l_finger_middle_sensor_5' type='contact'>
+        <plugin name='l_finger_0_sensor_5_plugin' filename='libcontact_sensor_plugin.so'/>
+        <contact>
+          <collision>l_finger_middle_link_3_fixed_joint_lump__l_finger_middle_sensor_5_link_collision_6</collision>
+          <topic>__default_topic__</topic>
+        </contact>
+        <pose frame=''>0.03 0.007 -0.007 0 -0 0</pose>
+      </sensor>
+    </link>
+    <joint name='l_finger_middle_joint_3' type='revolute'>
+      <child>l_finger_middle_link_3</child>
+      <parent>l_finger_middle_link_2</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-0.6632</lower>
+          <upper>1.0471</upper>
+          <effort>60</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <damping>1</damping>
+          <friction>0</friction>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_middle_link_paradistal_hinge'>
+      <pose frame=''>0.093325 0.104812 -0.01 0 0 -0.5206</pose>
+      <inertial>
+        <pose frame=''>0.00548 0 0 0 -0 0</pose>
+        <mass>0.00158</mass>
+        <inertia>
+          <ixx>1.907e-08</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1.097e-07</iyy>
+          <iyz>0</iyz>
+          <izz>1.261e-07</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_middle_link_paradistal_hinge_collision'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02 0.02 0.002</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_middle_link_paradistal_hinge_visual'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02 0.02 0.002</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_middle_joint_paradistal_hinge' type='revolute'>
+      <child>l_finger_middle_link_paradistal_hinge</child>
+      <parent>l_finger_middle_link_2</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-3.1416</lower>
+          <upper>3.1416</upper>
+          <effort>100</effort>
+          <velocity>100</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_middle_link_median_actuating_hinge'>
+      <pose frame=''>0.073927 0.070979 0.01 0 0 -0.8906</pose>
+      <inertial>
+        <pose frame=''>0.0092 0.00514 0 0 -0 0</pose>
+        <mass>0.00359</mass>
+        <inertia>
+          <ixx>2.4735e-07</ixx>
+          <ixy>2.3619e-07</ixy>
+          <ixz>0</ixz>
+          <iyy>4.7681e-07</iyy>
+          <iyz>0</iyz>
+          <izz>7.1813e-07</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_middle_link_median_actuating_hinge_collision'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02 0.02 0.002</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_middle_link_median_actuating_hinge_visual'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02 0.02 0.002</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_middle_joint_median_actuating_hinge' type='revolute'>
+      <child>l_finger_middle_link_median_actuating_hinge</child>
+      <parent>l_finger_middle_link_1</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-3.1416</lower>
+          <upper>3.1416</upper>
+          <effort>100</effort>
+          <velocity>100</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_middle_link_median_bar'>
+      <pose frame=''>0.095933 0.06788 0.01 0 -0 1.4309</pose>
+      <inertial>
+        <pose frame=''>0.01905 -0.00107 0 0 -0 0</pose>
+        <mass>0.00538</mass>
+        <inertia>
+          <ixx>6.639e-08</ixx>
+          <ixy>-1.0996e-07</ixy>
+          <ixz>9.4e-10</ixz>
+          <iyy>3.05318e-06</iyy>
+          <iyz>0</iyz>
+          <izz>3.04657e-06</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_middle_link_median_bar_collision'>
+        <pose frame=''>0.01905 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.0381 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_middle_link_median_bar_visual'>
+        <pose frame=''>0.01905 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.0381 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_middle_joint_median_actuating_hinge_median_bar' type='revolute'>
+      <child>l_finger_middle_link_median_bar</child>
+      <parent>l_finger_middle_link_median_actuating_hinge</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-3.1416</lower>
+          <upper>3.1416</upper>
+          <effort>100</effort>
+          <velocity>100</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_middle_link_paramedian_hinge'>
+      <pose frame=''>0.073927 0.070979 -0.01 0 0 -0.5206</pose>
+      <inertial>
+        <pose frame=''>-0.01025 0.00046 0 0 -0 0</pose>
+        <mass>0.00276</mass>
+        <inertia>
+          <ixx>4.213e-08</ixx>
+          <ixy>-1.491e-08</ixy>
+          <ixz>0</ixz>
+          <iyy>5.0258e-07</iyy>
+          <iyz>0</iyz>
+          <izz>5.4007e-07</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_middle_link_paramedian_hinge_collision'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02 0.02 0.002</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_middle_link_paramedian_hinge_visual'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02 0.02 0.002</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_middle_joint_paramedian_hinge' type='revolute'>
+      <child>l_finger_middle_link_paramedian_hinge</child>
+      <parent>l_finger_middle_link_1</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-3.1416</lower>
+          <upper>3.1416</upper>
+          <effort>100</effort>
+          <velocity>100</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_middle_link_median_bar_underactuated'>
+      <pose frame=''>0.086207 0.06773 -0.01 0 -0 1.0502</pose>
+      <inertial>
+        <pose frame=''>0.01905 -0.00107 0 0 -0 0</pose>
+        <mass>0.00538</mass>
+        <inertia>
+          <ixx>6.639e-08</ixx>
+          <ixy>-1.0996e-07</ixy>
+          <ixz>-9.4e-10</ixz>
+          <iyy>3.05318e-06</iyy>
+          <iyz>0</iyz>
+          <izz>3.04657e-06</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_middle_link_median_bar_underactuated_collision'>
+        <pose frame=''>0.01905 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.0381 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_middle_link_median_bar_underactuated_visual'>
+        <pose frame=''>0.01905 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.0381 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_middle_joint_paramedian_hinge_median_bar_underactuated' type='revolute'>
+      <child>l_finger_middle_link_median_bar_underactuated</child>
+      <parent>l_finger_middle_link_paramedian_hinge</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-3.1416</lower>
+          <upper>3.1416</upper>
+          <effort>100</effort>
+          <velocity>100</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_middle_link_paraproximal_actuating_hinge'>
+      <pose frame=''>0.0455 0.0214 -0.01 0 0 -0.5206</pose>
+      <inertial>
+        <pose frame=''>0.0064 0 0 0 -0 0</pose>
+        <mass>0.00362</mass>
+        <inertia>
+          <ixx>1.2043e-07</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>5.3588e-07</iyy>
+          <iyz>0</iyz>
+          <izz>6.5322e-07</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_middle_link_paraproximal_actuating_hinge_collision'>
+        <pose frame=''>0.01143 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02286 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_middle_link_paraproximal_actuating_hinge_visual'>
+        <pose frame=''>0.01143 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02286 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_middle_joint_paraproximal_actuating_hinge' type='revolute'>
+      <child>l_finger_middle_link_paraproximal_actuating_hinge</child>
+      <parent>l_finger_middle_link_0</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-3.1416</lower>
+          <upper>3.1416</upper>
+          <effort>100</effort>
+          <velocity>100</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_middle_link_paraproximal_bar'>
+      <pose frame=''>0.065332 0.010029 -0.01 0 -0 1.0494</pose>
+      <inertial>
+        <pose frame=''>0.02858 -0.00129 0 0 -0 0</pose>
+        <mass>0.00732</mass>
+        <inertia>
+          <ixx>9.065e-08</ixx>
+          <ixy>-2.7047e-07</ixy>
+          <ixz>1.42e-09</ixz>
+          <iyy>8.78034e-06</iyy>
+          <iyz>0</iyz>
+          <izz>8.77558e-06</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_middle_link_paraproximal_bar_collision'>
+        <pose frame=''>0.02885 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.0577 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_middle_link_paraproximal_bar_visual'>
+        <pose frame=''>0.02885 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.0577 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_middle_joint_paraproximal_bar' type='revolute'>
+      <child>l_finger_middle_link_paraproximal_bar</child>
+      <parent>l_finger_middle_link_paraproximal_actuating_hinge</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-3.1416</lower>
+          <upper>3.1416</upper>
+          <effort>100</effort>
+          <velocity>100</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_middle_link_proximal_actuating_hinge'>
+      <pose frame=''>0.0455 0.0214 0.01 0 0 -0.5206</pose>
+      <inertial>
+        <pose frame=''>0.0012 -0.00162 -0.00161 0 -0 0</pose>
+        <mass>0.02647</mass>
+        <inertia>
+          <ixx>1.56447e-06</ixx>
+          <ixy>2.36226e-07</ixy>
+          <ixz>-1.4862e-07</ixz>
+          <iyy>2.21068e-06</iyy>
+          <iyz>-1.4369e-07</iyz>
+          <izz>3.23175e-06</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_middle_link_proximal_actuating_hinge_collision'>
+        <pose frame=''>0.01429 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02858 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_middle_link_proximal_actuating_hinge_visual'>
+        <pose frame=''>0.01429 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.02858 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_middle_joint_proximal_actuating_hinge' type='revolute'>
+      <child>l_finger_middle_link_proximal_actuating_hinge</child>
+      <parent>l_finger_middle_link_0</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-3.1416</lower>
+          <upper>3.1416</upper>
+          <effort>100</effort>
+          <velocity>100</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <link name='l_finger_middle_link_proximal_actuating_bar'>
+      <pose frame=''>0.070294 0.007184 0.01 0 -0 1.341</pose>
+      <inertial>
+        <pose frame=''>0.02699 -0.00122 0 0 -0 0</pose>
+        <mass>0.00659</mass>
+        <inertia>
+          <ixx>8.348e-08</ixx>
+          <ixy>-2.179e-07</ixy>
+          <ixz>1.34e-09</ixz>
+          <iyy>7.19076e-06</iyy>
+          <iyz>0</iyz>
+          <izz>7.18272e-06</izz>
+        </inertia>
+      </inertial>
+      <collision name='l_finger_middle_link_proximal_actuating_bar_collision'>
+        <pose frame=''>0.026789 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.05398 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1.1</mu>
+              <mu2>1.1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='l_finger_middle_link_proximal_actuating_bar_visual'>
+        <pose frame=''>0.026789 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.05398 0.0075 0.002</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <velocity_decay/>
+      <gravity>1</gravity>
+      <velocity_decay/>
+      <self_collide>0</self_collide>
+    </link>
+    <joint name='l_finger_middle_joint_proximal_actuating_bar' type='revolute'>
+      <child>l_finger_middle_link_proximal_actuating_bar</child>
+      <parent>l_finger_middle_link_proximal_actuating_hinge</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-3.1416</lower>
+          <upper>3.1416</upper>
+          <effort>100</effort>
+          <velocity>100</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
+    </joint>
+    <joint name='l_finger_1_link_proximal_actuating_bar_median_actuating_hinge_couple' type='revolute'>
+      <parent>l_finger_1_link_median_actuating_hinge</parent>
+      <child>l_finger_1_link_proximal_actuating_bar</child>
+      <pose frame=''>0.05398 0 0 0 -0 0</pose>
+      <axis>
+        <dynamics>
+          <damping>0</damping>
+          <friction>0</friction>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <xyz>0 0 1</xyz>
+        <use_parent_model_frame>0</use_parent_model_frame>
+        <use_parent_model_frame>1</use_parent_model_frame>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+      </axis>
+    </joint>
+    <joint name='l_finger_1_link_median_bar_link_3_couple' type='revolute'>
+      <parent>l_finger_1_link_3</parent>
+      <child>l_finger_1_link_median_bar</child>
+      <pose frame=''>0.0381 0 0 0 -0 0</pose>
+      <axis>
+        <dynamics>
+          <damping>0</damping>
+          <friction>0</friction>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <xyz>0 0 1</xyz>
+        <use_parent_model_frame>0</use_parent_model_frame>
+        <use_parent_model_frame>1</use_parent_model_frame>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+      </axis>
+    </joint>
+    <joint name='l_finger_1_link_paramedian_bar_paradistal_hinge_couple' type='revolute'>
+      <parent>l_finger_1_link_paradistal_hinge</parent>
+      <child>l_finger_1_link_median_bar_underactuated</child>
+      <pose frame=''>0.0381 0 0 0 -0 0</pose>
+      <axis>
+        <dynamics>
+          <damping>0</damping>
+          <friction>0</friction>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <xyz>0 0 1</xyz>
+        <use_parent_model_frame>0</use_parent_model_frame>
+        <use_parent_model_frame>1</use_parent_model_frame>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+      </axis>
+    </joint>
+    <joint name='l_finger_1_link_paradistal_hinge_link_3_couple' type='revolute'>
+      <parent>l_finger_1_link_paradistal_hinge</parent>
+      <child>l_finger_1_link_3</child>
+      <pose frame=''>0.0381 0 0 0 -0 0</pose>
+      <axis>
+        <dynamics>
+          <damping>0</damping>
+          <friction>0</friction>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <xyz>0 0 1</xyz>
+        <use_parent_model_frame>0</use_parent_model_frame>
+        <use_parent_model_frame>1</use_parent_model_frame>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+      </axis>
+    </joint>
+    <joint name='l_finger_1_link_paraproximal_bar_paramedian_hinge_couple' type='revolute'>
+      <parent>l_finger_1_link_paramedian_hinge</parent>
+      <child>l_finger_1_link_paraproximal_bar</child>
+      <pose frame=''>0.0577 0 0 0 -0 0</pose>
+      <axis>
+        <dynamics>
+          <damping>0</damping>
+          <friction>0</friction>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <xyz>0 0 1</xyz>
+        <use_parent_model_frame>0</use_parent_model_frame>
+        <use_parent_model_frame>1</use_parent_model_frame>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+      </axis>
+    </joint>
+    <joint name='l_finger_2_link_proximal_actuating_bar_median_actuating_hinge_couple' type='revolute'>
+      <parent>l_finger_2_link_median_actuating_hinge</parent>
+      <child>l_finger_2_link_proximal_actuating_bar</child>
+      <pose frame=''>0.05398 0 0 0 -0 0</pose>
+      <axis>
+        <dynamics>
+          <damping>0</damping>
+          <friction>0</friction>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <xyz>0 0 1</xyz>
+        <use_parent_model_frame>0</use_parent_model_frame>
+        <use_parent_model_frame>1</use_parent_model_frame>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+      </axis>
+    </joint>
+    <joint name='l_finger_2_link_median_bar_link_3_couple' type='revolute'>
+      <parent>l_finger_2_link_3</parent>
+      <child>l_finger_2_link_median_bar</child>
+      <pose frame=''>0.0381 0 0 0 -0 0</pose>
+      <axis>
+        <dynamics>
+          <damping>0</damping>
+          <friction>0</friction>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <xyz>0 0 1</xyz>
+        <use_parent_model_frame>0</use_parent_model_frame>
+        <use_parent_model_frame>1</use_parent_model_frame>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+      </axis>
+    </joint>
+    <joint name='l_finger_2_link_paramedian_bar_paradistal_hinge_couple' type='revolute'>
+      <parent>l_finger_2_link_paradistal_hinge</parent>
+      <child>l_finger_2_link_median_bar_underactuated</child>
+      <pose frame=''>0.0381 0 0 0 -0 0</pose>
+      <axis>
+        <dynamics>
+          <damping>0</damping>
+          <friction>0</friction>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <xyz>0 0 1</xyz>
+        <use_parent_model_frame>0</use_parent_model_frame>
+        <use_parent_model_frame>1</use_parent_model_frame>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+      </axis>
+    </joint>
+    <joint name='l_finger_2_link_paradistal_hinge_link_3_couple' type='revolute'>
+      <parent>l_finger_2_link_paradistal_hinge</parent>
+      <child>l_finger_2_link_3</child>
+      <pose frame=''>0.0381 0 0 0 -0 0</pose>
+      <axis>
+        <dynamics>
+          <damping>0</damping>
+          <friction>0</friction>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <xyz>0 0 1</xyz>
+        <use_parent_model_frame>0</use_parent_model_frame>
+        <use_parent_model_frame>1</use_parent_model_frame>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+      </axis>
+    </joint>
+    <joint name='l_finger_2_link_paraproximal_bar_paramedian_hinge_couple' type='revolute'>
+      <parent>l_finger_2_link_paramedian_hinge</parent>
+      <child>l_finger_2_link_paraproximal_bar</child>
+      <pose frame=''>0.0577 0 0 0 -0 0</pose>
+      <axis>
+        <dynamics>
+          <damping>0</damping>
+          <friction>0</friction>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <xyz>0 0 1</xyz>
+        <use_parent_model_frame>0</use_parent_model_frame>
+        <use_parent_model_frame>1</use_parent_model_frame>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+      </axis>
+    </joint>
+    <joint name='l_finger_middle_link_proximal_actuating_bar_median_actuating_hinge_couple' type='revolute'>
+      <parent>l_finger_middle_link_median_actuating_hinge</parent>
+      <child>l_finger_middle_link_proximal_actuating_bar</child>
+      <pose frame=''>0.05398 0 0 0 -0 0</pose>
+      <axis>
+        <dynamics>
+          <damping>0</damping>
+          <friction>0</friction>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <xyz>0 0 1</xyz>
+        <use_parent_model_frame>0</use_parent_model_frame>
+        <use_parent_model_frame>1</use_parent_model_frame>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+      </axis>
+    </joint>
+    <joint name='l_finger_middle_link_median_bar_link_3_couple' type='revolute'>
+      <parent>l_finger_middle_link_3</parent>
+      <child>l_finger_middle_link_median_bar</child>
+      <pose frame=''>0.0381 0 0 0 -0 0</pose>
+      <axis>
+        <dynamics>
+          <damping>0</damping>
+          <friction>0</friction>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <xyz>0 0 1</xyz>
+        <use_parent_model_frame>0</use_parent_model_frame>
+        <use_parent_model_frame>1</use_parent_model_frame>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+      </axis>
+    </joint>
+    <joint name='l_finger_middle_link_paramedian_bar_paradistal_hinge_couple' type='revolute'>
+      <parent>l_finger_middle_link_paradistal_hinge</parent>
+      <child>l_finger_middle_link_median_bar_underactuated</child>
+      <pose frame=''>0.0381 0 0 0 -0 0</pose>
+      <axis>
+        <dynamics>
+          <damping>0</damping>
+          <friction>0</friction>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <xyz>0 0 1</xyz>
+        <use_parent_model_frame>0</use_parent_model_frame>
+        <use_parent_model_frame>1</use_parent_model_frame>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+      </axis>
+    </joint>
+    <joint name='l_finger_middle_link_paradistal_hinge_link_3_couple' type='revolute'>
+      <parent>l_finger_middle_link_paradistal_hinge</parent>
+      <child>l_finger_middle_link_3</child>
+      <pose frame=''>0.0381 0 0 0 -0 0</pose>
+      <axis>
+        <dynamics>
+          <damping>0</damping>
+          <friction>0</friction>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <xyz>0 0 1</xyz>
+        <use_parent_model_frame>0</use_parent_model_frame>
+        <use_parent_model_frame>1</use_parent_model_frame>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+      </axis>
+    </joint>
+    <joint name='l_finger_middle_link_paraproximal_bar_paramedian_hinge_couple' type='revolute'>
+      <parent>l_finger_middle_link_paramedian_hinge</parent>
+      <child>l_finger_middle_link_paraproximal_bar</child>
+      <pose frame=''>0.0577 0 0 0 -0 0</pose>
+      <axis>
+        <dynamics>
+          <damping>0</damping>
+          <friction>0</friction>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <xyz>0 0 1</xyz>
+        <use_parent_model_frame>0</use_parent_model_frame>
+        <use_parent_model_frame>1</use_parent_model_frame>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+      </axis>
+    </joint>
+    <plugin name='left_robotiq_hand_plugin' filename='libRobotiqHandPlugin_teleport.so'>
+      <side>left</side>
+      <kp_position>5.0</kp_position>
+      <kd_position>0.5</kd_position>
+    </plugin>
+    <!--static>1</static-->
+  </model>
+</sdf>

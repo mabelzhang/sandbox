@@ -8,7 +8,7 @@
 
 
 # Local
-from grasp_io import GraspIO
+from grasp_collection.grasp_io import GraspIO
 
 
 def main ():

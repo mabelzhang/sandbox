@@ -19,14 +19,15 @@ from geometry_msgs.msg import Pose, Point, Quaternion
 from grasp_collection.config_consts import worlds, world_to_object_base
 from grasp_collection.grasp_io import GraspIO
 from util.ansi_colors import ansi_colors as ansi
-from util.ros_util import call_trigger_rossrv, matrix_from_Pose, \
-  Pose_from_matrix
+from util.ros_util import call_trigger_rossrv, call_setbool_rossrv, \
+  matrix_from_Pose, Pose_from_matrix
 from util.gazebo_util import spawn_model, delete_model, xml_replace_static, \
   gravity_on, set_model_state, get_model_state
 
 # Local
 from config_consts import dae_suffix
 from config_paths import get_drop_tests_path
+from robotiq_frames import robotiq_dofs_graspit_to_gz #graspit_robotiq_to_gz
 
 
 class DropTestIO:
@@ -92,7 +93,11 @@ def main ():
   objs_to_collect = range (len (worlds))
 
   # Activate Robotiq
-  srv_success, _ = call_trigger_rossrv ('robotiq_takktile/robotiq/activate')
+  #   rICF: Enable individual control for fingers, so can control each DOF of
+  #     Robotiq in Gazebo to the DOFs from GraspIt gripper pose.
+  rICF = True
+  srv_success, _ = call_setbool_rossrv ('robotiq_takktile/robotiq/activate',
+    rICF)
 
   # For each object
   for w_i in range (len (objs_to_collect)):
@@ -117,7 +122,7 @@ def main ():
 
 
     # Load grasp poses from file
-    grasps = GraspIO.read_grasps (os.path.basename (world_fname))
+    grasps = GraspIO.read_grasps (os.path.basename (world_fname), suffix='temp')
 
     drop_res = []
 
@@ -138,12 +143,26 @@ def main ():
 
       # Move object to inverse matrix of grasp pose wrt object
       # Gripper pose wrt object
+      # TODO: grasp pose is wrong, probably `.` GraspIt hand coord frame is
+      #   different from Gazebo hand frame. Look at GraspIt hand frame and
+      #   transform gpose_mat accordingly!
       gpose_mat = matrix_from_Pose (grasp.pose)
+      # TEMPORARY for debugging
+      #gpose_mat = np.eye (4)
+      #gpose_mat [2, 3] = 0.5
+      #print (gpose_mat)
+
+      # Transform from GraspIt RobotIQ gripper frame to Gazebo Robotiq frame
+      #gpose_gz_mat = graspit_robotiq_to_gz (gpose_mat)
+
+
       # Object pose wrt gripper
       opose_mat = np.linalg.inv (gpose_mat)
       opose = Pose_from_matrix (opose_mat)
       # Set object pose wrt gripper
       srv_success = set_model_state (obj_base, opose, frame_id='robotiq')
+
+      raw_input ('Press key to continue ')
 
       # Get current object height wrt world
       obj_state = get_model_state (obj_base)
@@ -151,6 +170,19 @@ def main ():
         print ('%sERROR: Failed to get object state from Gazebo. Skipping object')
         continue
       obj_z = obj_state.pose.position.z
+
+
+      # TODO: Can't just close, need to set DOFs same as those in GraspIt!
+      print ('dofs:')
+      print (grasp.dofs)
+
+      for d_i in range (len (grasp.dofs)):
+        joint_name = robotiq_dofs_graspit_to_gz [d_i]
+        joint_pos = grasp.dofs [d_i]
+
+        # TODO: Write a new function in robotiq_control.py that lets me control
+        #   each joint's position individually...
+
 
 
       # Close gripper

@@ -18,7 +18,7 @@
 
 # ROS
 import rospy
-from std_srvs.srv import Trigger, TriggerResponse
+from std_srvs.srv import Trigger, TriggerResponse, SetBool, SetBoolResponse
 
 from copy import deepcopy
 import argparse
@@ -26,8 +26,8 @@ import argparse
 import numpy as np
 
 # Copied from robotiq_s_model_control/nodes/SModelSimpleController.py
-# Same definition as robotiq_s_model_articulated_msgs/SModelRobotOutput, SModelRobotInput,
-#   but real robot listens to these.
+# Same definition as robotiq_s_model_articulated_msgs/SModelRobotOutput,
+#   SModelRobotInput, but real robot listens to these.
 # For real robot
 from robotiq_s_model_control.msg import SModel_robot_output, SModel_robot_input
 # For Gazebo sim robot
@@ -38,6 +38,7 @@ from util.ansi_colors import ansi_colors
 
 # Local
 from robotiq_consts import RobotiqConsts as RC
+from robotiq_control.srvs import SetPositions, SetPositionsResponse
 
 
 # Call this before publishing an SModelRobotOutput, so we start at current
@@ -85,13 +86,45 @@ def update_oregs (iregs, cmd, sim=False):
 # Do not instantiate this class directly. Use the rosservice calls.
 class RobotiqControl:
 
+  # Only used for set_pos sim-only service
+  # Figures from robotiq_hand_description/urdf/robotiq_hand.urdf.xacro
+  # [0, 70] degrees
+  JOINT_1_MIN = 0
+  JOINT_1_MAX = 1.2217
+  JOINT_1_RANGE = JOINT_1_MAX - JOINT_1_MIN
+
+  # [0, 90] degrees
+  JOINT_2_MIN = 0
+  JOINT_2_MAX = 1.5708
+  JOINT_2_RANGE = JOINT_2_MAX - JOINT_2_MIN
+
+  # [-30, 60] degrees
+  JOINT_3_MIN = -0.6632
+  JOINT_3_MAX = 1.0471
+  JOINT_3_RANGE = JOINT_3_MAX - JOINT_3_MIN
+
+  # [-17, 17] degrees
+  PALM_F1_JOINT_MIN = -0.2967
+  PALM_F1_JOINT_MAX = 0.2967
+  PALM_F1_JOINT_RANGE = PALM_F1_JOINT_MAX - PALM_F1_JOINT_MIN
+
+  # [-17, 17] degrees
+  PALM_F2_JOINT_MIN = -0.2967
+  PALM_F2_JOINT_MAX = 0.2967
+  PALM_F2_JOINT_RANGE = PALM_F2_JOINT_MAX - PALM_F2_JOINT_MIN
+
+  # Dummy joint. Not allowed to move
+  PALM_FMIDDLE_JOINT_MIN = 0
+  PALM_FMIDDLE_JOINT_MAX = 0
+
+
   def __init__ (self, sim=False):
 
     # Advertise rosservice
-    self.activate_srv = rospy.Service ('robotiq_takktile/robotiq/activate', Trigger,
-      self.activate_handler)
-    self.deactivate_srv = rospy.Service ('robotiq_takktile/robotiq/deactivate', Trigger,
-      self.deactivate_handler)
+    self.activate_srv = rospy.Service ('robotiq_takktile/robotiq/activate',
+      SetBool, self.activate_handler)
+    self.deactivate_srv = rospy.Service ('robotiq_takktile/robotiq/deactivate',
+      Trigger, self.deactivate_handler)
 
     self.reset_oregs_srv = rospy.Service ('robotiq_takktile/robotiq/reset_oregs',
       Trigger, self.reset_oregs_handler)
@@ -107,6 +140,10 @@ class RobotiqControl:
       self.pinch_handler)
     self.wide_srv = rospy.Service ('robotiq_takktile/robotiq/wide', Trigger,
       self.wide_handler)
+
+    # Simulation-only, set joint positions to known grasp pose
+    self.position_srv = rospy.Service ('robotiq_takktile/robotiq/set_pos',
+      SetPositions, self.set_pos_handler)
 
     self.check_grasp_srv = rospy.Service (
       'robotiq_takktile/robotiq/check_grasp', Trigger, self.check_grasp_handler)
@@ -193,8 +230,9 @@ class RobotiqControl:
     return self.activated
 
 
+  # req.data: whether to enable rICF bit, for individual control for fingers
   def activate_handler (self, req):
-    success, err_msg = self.activate_hand ()
+    success, err_msg = self.activate_hand (req.data)
     if success:
       self.activated = True
     return TriggerResponse (success, err_msg)
@@ -420,7 +458,7 @@ class RobotiqControl:
       # Copied from robotiq_s_model_control/nodes/SModelSimpleController.py.
       self.robotiq_cmd.rPRA = 255
 
-    # If fingers individually controlled, set all three fingers to 0 (open)
+    # If fingers individually controlled, set all three fingers to 255 (closed)
     else:
       # Move with default force and speed
       self.robotiq_cmd.rSPA = 255
@@ -504,7 +542,8 @@ class RobotiqControl:
     print ('Setting rICF bit...')
 
     # Init robotiq_cmd to current hand state given by input registers
-    success, self.robotiq_cmd = update_oregs (self.robotiq_iregs, self.robotiq_cmd)
+    success, self.robotiq_cmd = update_oregs (self.robotiq_iregs,
+      self.robotiq_cmd)
 
     self.robotiq_cmd.rICF = rICF
 
@@ -513,6 +552,148 @@ class RobotiqControl:
     # Publish command to Robotiq hand
     self.robotiq_pub.publish (self.robotiq_cmd)
     rospy.sleep (2)
+
+
+  # Simulation-only. Try to set joints to specified positions for each DOF.
+  #   Caveat: Robotiq is compliant, distal link cannot be commanded directly.
+  # Parameters:
+  #   req: robotiq_control/SetPositions rossrv type
+  def set_pos_handler (self, req):
+
+    if not self.sim:
+      success = False
+      err_msg = 'ERROR: set_positions service is for simulation only.'
+
+    if self.robotiq_cmd.rICF == 0:
+      success = False
+      err_msg = 'ERROR: Cannot set per-DOF positions when rICF bit is 0. Reactivate with rICF=1, then retry.'
+
+    else:
+      success, err_msg = self.set_pos (req.positions)
+
+    return SetPositionsResponse (success, err_msg)
+
+
+  # Caveat: Robotiq is compliant, distal link cannot be commanded directly.
+  # Parameters:
+  #   positions: std_msgs/Float32[], size 11 for 11 DOFs
+  def set_pos (self, positions):
+
+    success = 
+    err_msg = ''
+
+    if not self.sim:
+      success = False
+      err_msg = 'ERROR: set_positions service is for simulation only.'
+      return success, err_msg
+
+    # Move with default force and speed
+    self.robotiq_cmd.rSPA = 255
+    self.robotiq_cmd.rFRA = 150
+    self.robotiq_cmd.rSPB = 255
+    self.robotiq_cmd.rFRB = 150
+    self.robotiq_cmd.rSPC = 255
+    self.robotiq_cmd.rFRC = 150
+
+
+    # Calculate preshape (palm) joints integer command
+     
+    # NOTE: Gazebo plugin says ICS indivudal scissor mode is not supported.
+    #   So this only works if GraspIt only ever gives mirrored preshape joints
+    #   for fingers 1 and 2.
+    f1_preshape = int (((positions.palm_finger_1_joint - \
+      self.PALM_F1_JOINT_MIN) / self.PALM_F1_JOINT_RANGE) * 255)
+    f2_preshape = int (((positions.palm_finger_2_joint - \
+      self.PALM_F2_JOINT_MIN) /  self.PALM_F2_JOINT_RANGE) * 255)
+   
+    # ICS not supported. Two forefingers must have mirrored values, f1 == -f2
+    if (abs (f1_preshape + f2_preshape) > 1e-2):
+      success = False
+      err_msg = 'ERROR: Individual scissor mode not supported in simulation. Cannot set finger 1 and 2 to different palm prehape values.'
+      return success, err_msg
+
+    # Set command bits in msg
+    self.robotiq_cmd.rMOD = rMOD
+
+
+    # Calculate finger joints integer command
+
+    # Command positions of proximal links (joint 1). Joint 2 and 3 are compliant
+    # TODO: Forgot which one of 123 is ABC, see 2017 notes
+    #   rPRA, rPRB, rPRC
+ 
+    self.robotiq_cmd.rPR = int (((positions.finger_middle_joint_1 - \
+      self.JOINT_1_MIN) / self.JOINT_1_RANGE) * 255)
+    #self.robotiq_cmd.rPR = int (((positions.finger_middle_joint_2 - \
+    #  self.JOINT_2_MIN) / self.JOINT_2_RANGE) * 255)
+    #self.robotiq_cmd.rPR = int (((positions.finger_middle_joint_3 - \
+    #  self.JOINT_3_MIN) / self.JOINT_3_RANGE) * 255)
+
+    self.robotiq_cmd.rPR = int (((positions.finger_1_joint_1 - \
+      self.JOINT_1_MIN) / self.JOINT_1_RANGE) * 255)
+    #self.robotiq_cmd.rPR = int (((positions.finger_1_joint_2 - \
+    #  self.JOINT_2_MIN) / self.JOINT_2_RANGE) * 255)
+    #self.robotiq_cmd.rPR = int (((positions.finger_1_joint_3 - \
+    #  self.JOINT_3_MIN) / self.JOINT_3_RANGE) * 255)
+   
+    self.robotiq_cmd.rPR = int (((positions.finger_2_joint_1 - \
+      self.JOINT_1_MIN) / self.JOINT_1_RANGE) * 255)
+    #self.robotiq_cmd.rPR = int (((positions.finger_2_joint_2 - \
+    #  self.JOINT_2_MIN) / self.JOINT_2_RANGE) * 255)
+    #self.robotiq_cmd.rPR = int (((positions.finger_2_joint_3 - \
+    #  self.JOINT_3_MIN) / self.JOINT_3_RANGE) * 255)
+
+
+ 
+    # Continue commanding until the fully actuated joints are within tolerance
+    #   threshold of commanded joint positions
+    # TODO: Make another function that subscribes to joint_states from Gazebo
+    #   plugin, activated only when self.sim==True, and sets member variables.
+    #   Here, compare to the member variables.
+    # TODO: Might need a termination condition or timeout, in case something
+    #   gets stuck.
+    while (not self.actual_matches_commanded (positions)):
+    
+      # Set finger joints
+      self.robotiq_pub.publish (self.robotiq_cmd)
+      rospy.sleep (0.2)  # TODO: tune
+
+
+    return success, err_msg
+
+
+  def actual_matches_commanded (self, commanded):
+
+    matched = False
+
+    # Tolerance of how much off actual position is from commanded position.
+    #   Distal links are expected to be off, since they are compliant, cannot
+    #   command them.
+    tolerance = 0.1  # TODO: Tune
+
+
+    # TODO: self.actual needs to be
+    #   set by a callback function that subscribes to Gazebo /joint_states.
+
+    # Only joint_1 is meaningful to check. joint 2 and 3 are compliant and
+    #   cannot be commanded.
+    if (abs (commanded.finger_middle_joint_1 - actual...) < tolerance) and \
+       (abs (commanded.finger_1_joint_1 - actual...) < tolerance) and \
+       (abs (commanded.finger_2_joint_1 - actual...) < tolerance):
+      matched = True
+    else:
+      # Print the differences of how far they're off
+
+    # Just print these
+    commanded.finger_middle_joint_2 - actual...
+    commanded.finger_1_joint_2 - actual...
+    commanded.finger_2_joint_2 - actual...
+
+    commanded.finger_middle_joint_3 - actual...
+    commanded.finger_1_joint_3 - actual...
+    commanded.finger_2_joint_3 - actual...
+
+    return matched
 
 
   # Check if a grasp is successful

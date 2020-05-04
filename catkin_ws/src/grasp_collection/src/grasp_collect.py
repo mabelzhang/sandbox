@@ -141,14 +141,15 @@ def main ():
   UINPUT = args.debug
 
   # Set to False if debugging and don't want to overwrite previously saved data!
-  SAVE_GRASPS = False
+  SAVE_GRASPS = True
   print ('%sSAVE_GRASPS is set to %s. Make sure this is what you want!%s' % (
     ansi.OKCYAN, str(SAVE_GRASPS), ansi.ENDC))
 
-  # Set to True to only write grasps below this threshold to disk
+  # Set to True to only write grasps below this threshold to disk. In the case
+  #   of TARGET_STRICT, this will be adjusted to True when the time comes.
   FILTER_BY_ENERGY = False
-  #ENERGY_THRESH = -0.52  # Robotiq
-  ENERGY_THRESH = -1.2  # HumanHand, not sure what is good, just using a number that gives even split of grasps collected into 50/50 good and bad
+  ENERGY_THRESH = -0.5 # TEMPORARY for Gazebo implementation   #-0.52  # Robotiq
+  #ENERGY_THRESH = -1.2  # HumanHand, not sure what is good, just using a number that gives even split of grasps collected into 50/50 good and bad
   # Choose whether to keep grasps > threshold, or < threshold.
   # True for removing bad ones, keeping good ones (to collect positive example).
   # False for removing good ones, keeping bad ones (negative examples).
@@ -204,9 +205,10 @@ def main ():
 
   start_time = time.time ()
 
-  objs_to_collect = range (len (worlds))
+  #objs_to_collect = range (len (worlds))
   #objs_to_collect = range (3, len (worlds))
   #objs_to_collect = [4]
+  objs_to_collect = [0]
 
   ns_contacts_ttl = [0] * len (objs_to_collect)
   ns_valid_grasps = [0] * len (objs_to_collect)

@@ -21,6 +21,8 @@
 // Removed hardcoding of joint indices. Instead, save them as member fields
 //   as they are found in FindJoints.
 
+// Joint control is in UpdateStates()
+
 // Mabel: Use the ones in officail repo
 #include <robotiq_s_model_articulated_msgs/SModelRobotInput.h>
 #include <robotiq_s_model_articulated_msgs/SModelRobotOutput.h>
@@ -219,8 +221,8 @@ void RobotiqHandPlugin::Load(gazebo::physics::ModelPtr _parent,
   this->pubJointStates = this->rosNode->advertise<sensor_msgs::JointState>(
     topicBase + std::string("_hand/joint_states"), 10);
 
-  // TODO: Broadcast tf according to joint_states!!!!
-  //   Wait what? How do you do that? Look at iiwa plugin. Or ReFlex tf broadcaster.
+  // TODO: Broadcast tf according to joint_states.
+  //   Look at iiwa plugin. Or ReFlex tf broadcaster.
 
   // Subscribe to user published handle control commands.
   ros::SubscribeOptions handleCommandSo =
@@ -312,7 +314,7 @@ bool RobotiqHandPlugin::VerifyCommand(
 void RobotiqHandPlugin::SetHandleCommand(
     const robotiq_s_model_articulated_msgs::SModelRobotOutput::ConstPtr &_msg)
 {
-  // Mabel
+  // DEBUG
   printf ("RobotiqHandPlugin SetHandleCommand() got a request to control hand joint angles\n");
 
   boost::mutex::scoped_lock lock(this->controlMutex);
@@ -380,7 +382,7 @@ bool RobotiqHandPlugin::IsHandFullyOpen()
 
 ////////////////////////////////////////////////////////////////////////////////
 // This function is called by Gazebo many times a second. So you want to update
-//   your joints here -Mabel.
+//   your joints here
 void RobotiqHandPlugin::UpdateStates()
 {
   boost::mutex::scoped_lock lock(this->controlMutex);

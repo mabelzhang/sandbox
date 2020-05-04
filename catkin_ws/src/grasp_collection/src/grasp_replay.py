@@ -54,7 +54,7 @@ def main ():
   #   same number of contacts as grasp_collect.py! Not sure why.
   SAVE_NORMALS = False
 
-  SUFFIXES = ['']
+  SUFFIXES = ['temp']
   # Replay more than 1 set of collections. Useful for while grasp_collect.py is
   #   running, to know how many total grasps have been collected
   #SUFFIXES = [str(i) for i in range (1, 15)]
@@ -246,8 +246,6 @@ def main ():
             g_i = 0
   
 
-        # TODO TEMPORARY save normals for debugging, before implementing normals
-        #   in grasp_collect.py
         if SAVE_NORMALS:
           # Write only normals, do not overwrite the existing contacts and cmeta
           #   files.

@@ -20,8 +20,8 @@
         </transform>
     </graspableBody>
     <robot>
-        <!--filename>models/robots/RobotIQ/RobotIQ.xml</filename-->
-        <filename>models/robots/HumanHand/HumanHand16DOF.xml</filename>
+        <filename>models/robots/RobotIQ/RobotIQ.xml</filename>
+        <!--filename>models/robots/HumanHand/HumanHand16DOF.xml</filename-->
         <dofValues>0 0 +0 +0 0 +0 +0 0 +0 +0</dofValues>
         <transform>
             <fullTransform>(+1 0 0 0)[+200 -200 +200]</fullTransform>
